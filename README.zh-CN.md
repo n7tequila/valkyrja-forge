@@ -2,7 +2,8 @@
 
 [English](README.md) | **简体中文**
 
-把「松散的需求讨论」变成「可追溯的 AI 编码」的一套 Claude Code 技能。
+把「松散的需求讨论」变成「可追溯的 AI 编码」的一套 Claude Code 技能：
+产品契约（PRD）、技术契约（架构）、可验证交付（OpenSpec）三层治理。
 
 核心主张：**AI 全程参与需求整理与代码实现，但每一步都可追溯、可审计，且不被 AI 悄悄篡改语义。**
 
@@ -32,8 +33,10 @@
       ▼
 Released PRD  ──────────────────── 产品 API：下游唯一可消费的契约
       │
-      │  valkyrja-spec
-      ▼
+      │                 技术讨论 ── valkyrja-arch ──→ docs/architecture/
+      │                            （ADEC 决策 · 采纳约定 · 共享契约）
+      │  valkyrja-spec                     │ design.md 消费（依据: ADEC-*）
+      ▼                                    ▼
 Requirement Baseline（需求基线：逐条裁决如何落地）
       │
       ▼
@@ -57,12 +60,13 @@ RN / DEC  →  PRD 的 REQ/BR/SEC/NFR  →  OpenSpec Requirement 的 Sources:  �
 
 ---
 
-## 两个技能
+## 三个技能
 
 | 技能 | 职责 | 状态 |
 |---|---|---|
-| **valkyrja-prd** | 讨论 / 决策 / 导入 / 合成 / 发布 PRD | 已在真实项目跑通完整流程 |
-| **valkyrja-spec** | 消费 Released PRD，驱动 OpenSpec 开发闭环 | Release Candidate，**尚未端到端验证** |
+| **valkyrja-prd** | 讨论 / 决策 / 导入 / 合成 / 发布 PRD（WHAT） | 已在真实项目跑通完整流程 |
+| **valkyrja-arch** | 技术选型决策（ADEC）/ 采纳约定 / 共享接口契约（HOW 的地基） | 已在真实项目完成首轮 adopt / decide / contract / publish |
+| **valkyrja-spec** | 消费 Released PRD 与技术地基，驱动 OpenSpec 开发闭环 | 已在真实项目验证至 apply 前全链（baseline → rebaseline 联锁） |
 
 ### valkyrja-prd
 
@@ -84,6 +88,18 @@ docs/product/initiatives/<slug>/
     ├── current.md         # 可反复重新生成的草稿
     └── releases/vX.Y.md   # 发布即冻结，下游唯一可消费的产品 API
 ```
+
+### valkyrja-arch
+
+技术契约治理层，与 valkyrja-prd 同构（discuss → decide），决策对象是工程技术。
+七个动作：`discuss`、`decide`、`adopt`、`contract`、`status`、`check`、`publish`。
+边界判据是**验收可观察性**：验收可测的属产品侧走 PRD，只约束工程内部的在此裁决为
+ADEC。产物落 `docs/architecture/`（决策 / 已采纳约定副本 / 版本化共享契约 /
+公共对象清单 / 规则候选 backlog）。
+
+自带**约定目录（catalog）**：`skills/valkyrja-arch/references/conventions/`，
+按 concern × stack 两轴组织，条目带出处与许可证四字段；`adopt` 时以自包含副本
+落入项目并铸 ADEC 记录偏离。条目以真实项目撞上的缺口驱动，事故背书的规则优先。
 
 ### valkyrja-spec
 
@@ -112,6 +128,7 @@ docs/product/initiatives/<slug>/
 
 ```
 /valkyrja:prd    <想做什么，自然语言即可>
+/valkyrja:arch   <想做什么，自然语言即可>
 /valkyrja:spec   <想做什么，自然语言即可>
 ```
 
@@ -201,20 +218,14 @@ openspec init --tools claude    # 在目标产品仓库内执行
 
 ```
 valkyrja-forge/
-├── README.md / README.zh-CN.md
-├── commands/
-│   └── valkyrja/                  # 斜杠命令命名空间 → /valkyrja:*
-│       ├── prd.md
-│       └── spec.md
-├── scripts/
-│   └── install-skills.sh          # 同时安装技能与命令
+├── README.md / README.zh-CN.md / NOTICE.md
+├── commands/valkyrja/             # 斜杠命令命名空间 → /valkyrja:{prd,arch,spec}
+├── docs/design/                   # 设计定稿（valkyrja-arch D1–D10 裁决记录）
+├── scripts/install-skills.sh      # 同时安装技能与命令
 └── skills/
-    ├── valkyrja-prd/
-    │   ├── SKILL.md
-    │   └── templates/             # decision / discussion / prd / status
-    └── valkyrja-spec/
-        ├── SKILL.md
-        └── templates/             # baseline / spec-delta / config-injection
+    ├── valkyrja-prd/              # SKILL.md + templates/
+    ├── valkyrja-arch/             # SKILL.md + templates/ + references/conventions/（catalog）
+    └── valkyrja-spec/             # SKILL.md + templates/
 ```
 
 ---

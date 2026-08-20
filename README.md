@@ -2,7 +2,7 @@
 
 **English** | [简体中文](README.zh-CN.md)
 
-A pair of Claude Code skills that turn loose requirement discussions into traceable AI-written code.
+A trio of Claude Code skills that turn loose requirement discussions into traceable AI-written code — three governance layers: product contracts (PRD), technical contracts (architecture), and verifiable delivery (OpenSpec).
 
 The core claim: **AI participates in the whole loop — from gathering requirements to writing code — but every step stays auditable, and product semantics never get quietly rewritten.**
 
@@ -29,8 +29,10 @@ Loose discussion (human + AI, many rounds)
       ▼
 Released PRD  ──────────────────── the product API: the only thing downstream may consume
       │
-      │  valkyrja-spec
-      ▼
+      │            tech discussion ── valkyrja-arch ──→ docs/architecture/
+      │                        (ADEC decisions · adopted conventions · shared contracts)
+      │  valkyrja-spec                     │ consumed by design.md (依据: ADEC-*)
+      ▼                                    ▼
 Requirement Baseline (per-requirement rulings on how it lands)
       │
       ▼
@@ -54,12 +56,13 @@ Any requirement can be traced backward to *why it exists*, and any released requ
 
 ---
 
-## The two skills
+## The three skills
 
 | Skill | Responsibility | Status |
 |---|---|---|
-| **valkyrja-prd** | Discuss / decide / import / synthesize / release a PRD | Proven end-to-end on a real project |
-| **valkyrja-spec** | Consume a Released PRD, drive the OpenSpec development loop | Release candidate — **not yet run end-to-end** |
+| **valkyrja-prd** | Discuss / decide / import / synthesize / release a PRD (the WHAT) | Proven end-to-end on a real project |
+| **valkyrja-arch** | Technical decisions (ADEC) / adopted conventions / shared interface contracts (the foundation of HOW) | First real adopt / decide / contract / publish cycle completed |
+| **valkyrja-spec** | Consume the Released PRD plus the technical foundation, drive the OpenSpec loop | Verified on a real project through the full pre-apply chain (baseline → rebaseline interlock) |
 
 ### valkyrja-prd
 
@@ -79,6 +82,12 @@ docs/product/initiatives/<slug>/
     ├── current.md         # regenerable draft
     └── releases/vX.Y.md   # frozen on release; the only downstream-consumable API
 ```
+
+### valkyrja-arch
+
+The technical-contract layer, structurally identical to valkyrja-prd (discuss → decide) but deciding engineering matters. Seven actions: `discuss`, `decide`, `adopt`, `contract`, `status`, `check`, `publish`. The boundary test is **acceptance observability**: anything acceptance-testable belongs to the product side; engineering-internal constraints are ruled here as ADECs. Output lands in `docs/architecture/` (decisions / adopted convention copies / versioned shared contracts / a common-object inventory / a rule-candidate backlog).
+
+Ships a **convention catalog** under `skills/valkyrja-arch/references/conventions/`, organized on two axes (concern × stack), every entry carrying provenance and license fields. `adopt` drops a self-contained copy into the project and mints an ADEC recording the deltas. Entries are driven by gaps real projects actually hit; regression-backed rules take priority.
 
 ### valkyrja-spec
 
@@ -107,6 +116,7 @@ Two entry points, namespaced for cohesion:
 
 ```
 /valkyrja:prd    <anything, in natural language>
+/valkyrja:arch   <anything, in natural language>
 /valkyrja:spec   <anything, in natural language>
 ```
 
@@ -188,20 +198,14 @@ These run through both skills and explain every tradeoff in the design:
 
 ```
 valkyrja-forge/
-├── README.md / README.zh-CN.md
-├── commands/
-│   └── valkyrja/                  # slash-command namespace → /valkyrja:*
-│       ├── prd.md
-│       └── spec.md
-├── scripts/
-│   └── install-skills.sh          # installs skills + commands
+├── README.md / README.zh-CN.md / NOTICE.md
+├── commands/valkyrja/             # slash-command namespace → /valkyrja:{prd,arch,spec}
+├── docs/design/                   # finalized design records (valkyrja-arch D1–D10 rulings)
+├── scripts/install-skills.sh      # installs skills + commands
 └── skills/
-    ├── valkyrja-prd/
-    │   ├── SKILL.md
-    │   └── templates/             # decision / discussion / prd / status
-    └── valkyrja-spec/
-        ├── SKILL.md
-        └── templates/             # baseline / spec-delta / config-injection
+    ├── valkyrja-prd/              # SKILL.md + templates/
+    ├── valkyrja-arch/             # SKILL.md + templates/ + references/conventions/ (catalog)
+    └── valkyrja-spec/             # SKILL.md + templates/
 ```
 
 ---

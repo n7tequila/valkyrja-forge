@@ -126,3 +126,7 @@ openspec instructions specs --change <任一change> --json
 - proposal.md 增加自定义 `## Requirement Authority` 节不影响 `validate --strict`
 - `openspec list --changes --json` 返回 `{"changes":[...], "root":{...}}`——
   解析时须取 `changes` 键，直接迭代顶层会把 `"changes"`/`"root"` 当成 change 名
+- `rules` 注入**只出现在带 `--change` 的 instructions 输出**中；不带 `--change`
+  时静默不含任何 rules——**无 change 的仓里验证注入必须先
+  `openspec new change` 造一次性探针 change**，验证后删除其目录，
+  否则「探针为空」与「注入失效」不可区分（零对象 ≠ 零发现）

@@ -48,10 +48,17 @@ BR（业务规则）、SEC（安全）、NFR（非功能）与 REQ 同为正式�
 | `included` | 基线中裁决为纳入（直通/拆分）的 FRID |
 | `deferred` | 基线中裁决为延期的 FRID（仍需实现） |
 | `non-software` | 基线中裁决为非软件交付的 FRID（不需 spec 覆盖） |
+| `external` | 基线中裁决为**由本仓之外的系统交付**的 FRID（本仓不 spec，但欠账仍在） |
 | `conflicted` | 基线中裁决为冲突、待上游收敛的 FRID（不得被任何 change 覆盖） |
 
-五种处置与四个裁决集合的对应：直通与拆分 → `included`；延期 → `deferred`；
-非软件 → `non-software`；冲突 → `conflicted`。**每条 active FRID 恰好落入一个集合。**
+六种处置与五个裁决集合的对应：直通与拆分 → `included`；延期 → `deferred`；
+非软件 → `non-software`；外部 → `external`；冲突 → `conflicted`。
+**每条 active FRID 恰好落入一个集合。**
+
+**`external` 与 `non-software` 必须分开，理由与 deferred/non-software 同构**：
+`non-software` 是「永久不需要任何 spec」，`external` 是「需要 spec，但那份 spec 属于
+另一个 openspec 实例」。混为一谈会让跨系统欠账被永久免责——本仓看不见它，
+别处也没人记得它欠着。`external` 项必须在 status 中持续单列，并记录**由哪个系统承担**。
 
 `active` 与 `deprecated` 在同一 release 内互斥且共同构成该 release 的 FRID 全集。
 **赋予「这条需求可以退出系统」权威的是 PRD 本身把它标为 DEPRECATED，而不是 rebaseline**——
@@ -105,7 +112,7 @@ change，其 `Covered-FRIDs` 即这些 deprecated FRID。故一个 change 的 `C
 
 然后读取基线、基线 `prd_release` 指向的 release（只读机读区与 Open Questions）、
 `openspec list --changes --json` 并逐个 `openspec status --change <name> --json`（现算），
-用 3–5 句复述：基线版本、纳入/延期/非软件/冲突分布、planned change 进度、
+用 3–5 句复述：基线版本、纳入/延期/非软件/外部/冲突分布、planned change 进度、
 计划外 change、阻塞项。
 
 ## 产物与目录
@@ -259,7 +266,7 @@ RENAMED    addressed = 主 spec 中 FROM 所指 Requirement 的 Sources
 
 | 特权动作 | 回显必须包含 |
 |---|---|
-| baseline 定稿 | PRD 版本与路径；逐条处置分布；**延期/非软件/冲突项逐条列全**；新增待澄清项；将写入的文件路径 |
+| baseline 定稿 | PRD 版本与路径；逐条处置分布；**延期/非软件/外部/冲突项逐条列全**（外部项须含承担系统）；混合体 FRID 的非软件与外部行为点；新增待澄清项；将写入的文件路径 |
 | decompose 裁决 | planned change 列表（名称/capability/覆盖 FRID/顺序依赖）；未被任何 change 覆盖的 `included` FRID（**必须为空**）；与磁盘既有 change 的冲突 |
 | rebaseline 采纳 | 五态分类结果（NEW/UNCHANGED/CHANGED/DEPRECATED/DISAPPEARED）；**每条 CHANGED 的逐行 diff**；受影响的既有 change 清单；旧基线将被标 superseded |
 | **归档放行** | trace V1–V5 **逐条**结果；将合并进主 spec 的 delta 摘要；**是否触发 capability 退休删除**；change 将被移动到的归档路径 |
@@ -283,8 +290,21 @@ spec.md（工作树不可恢复，只能靠 git）**。回显必须逐条出示 
 拆分 ——— 含多个可独立验证的行为点    → 多条 Requirement，Sources 全写同一原 FRID
 延期 ——— 本轮不做，以后仍要实现      → deferred，status 须持续显示为「未实现」
 非软件 — 不由代码交付（如写入运营文档）→ non-software，不要求 spec 覆盖，但必须记理由
+外部 ——— 由本仓之外的系统交付        → external，须记明承担系统，status 持续单列
 冲突 ——— 与其他条目或主 spec 矛盾    → 记待澄清项，回流上游，不得自行择一
 ```
+
+**混合体 FRID 的处置规则**（真实 PRD 中很常见，勿简化）：一条 FRID 的多个行为点
+可能分属不同交付归属——部分本仓软件、部分非软件、部分外部系统。此时：
+
+- **行为点层级**标注交付归属（本仓软件 / 非软件 / 外部系统），与 capability 并列；
+- **FRID 层级**仍只取一个处置，判据是：**只要存在至少一个本仓软件行为点，
+  即判为 `included`（拆分）**；一个都没有时，按其余行为点的主导归属判
+  `non-software` 或 `external`。
+- 判为 `included` 的混合体，其非软件/外部行为点**必须在基线中逐点记明交付方式**——
+  否则那部分会随 FRID 一起被算作「已覆盖」而静默消失。
+
+如此每条 FRID 仍恰好落入一个集合，集合代数不破，而混合交付的事实不丢。
 
 **延期与非软件必须分开，不得合并为「排除」**：二者在覆盖对账中的语义相反——
 `non-software` 是「已解释完毕、永久不需要 spec」，`deferred` 是「仍欠一份实现」。
@@ -388,10 +408,11 @@ propose 完成
 - V2.4 无重复 FRID
 
 **V3 基线对账**（计划 vs 现状）
-- V3.1 `active(当前release)` ⊆（`included` ∪ `deferred` ∪ `non-software` ∪ `conflicted`）
+- V3.1 `active(当前release)` ⊆
+  （`included` ∪ `deferred` ∪ `non-software` ∪ `external` ∪ `conflicted`）
   → 差集＝漏裁决，ERROR
-- V3.2 `included` / `deferred` / `non-software` / `conflicted` 四个集合两两互斥
-  （每条 FRID 在基线中恰好一个处置）→ 否则 ERROR
+- V3.2 `included` / `deferred` / `non-software` / `external` / `conflicted` 五个集合
+  两两互斥（每条 FRID 在基线中恰好一个处置）→ 否则 ERROR
 - V3.3 基线引用的每个 FRID 在 PRD 中真实存在 → 幽灵 ID，ERROR
 - V3.4 每个 `included` FRID 至少被一个 planned change 覆盖 → ERROR
 - V3.5 磁盘 change 与计划对账，输出三态：已建 / 未建 / **计划外**
@@ -438,22 +459,25 @@ propose 完成
               − main_spec_coverage      （主 spec Sources 并集）
               − open_change_coverage    （未归档 change 的 addressed 并集）
               − non_software
+              − external
               − deferred
               − conflicted
   ```
 
-  **不得写成「active ⊆ 三项之并，差集即缺口」**——`deferred` 与 `conflicted` 都是
-  `active` 的子集且都不在覆盖侧，那样算出的差集必然混入它们，把「已裁决延期」
-  和「待上游收敛」误报成「漏做」。报告须分列六块，只有最后一块是 ERROR：
+  **不得写成「active ⊆ 若干项之并，差集即缺口」**——`deferred`、`external`、
+  `conflicted` 都是 `active` 的子集且都不在覆盖侧，那样算出的差集必然混入它们，
+  把「已裁决延期」「由外部系统承担」「待上游收敛」误报成「漏做」。
+  报告须分列七块，只有最后一块是 ERROR：
 
   ```
-  Active FRIDs   42
-  ├ Implemented  28   已归档进主 spec
+  Active FRIDs   44
+  ├ Implemented  25   已归档进主 spec
   ├ Open changes  7   未归档 change 覆盖中
-  ├ Non-software  2   非软件交付
-  ├ Deferred      3   已裁决延期，仍欠实现
-  ├ Conflicted    1   待上游收敛
-  └ Unaccounted   1   ← 真实缺口，ERROR
+  ├ Non-software  6   非软件交付（永久无需 spec）
+  ├ External      3   外部系统承担（本仓不 spec，欠账仍在）
+  ├ Deferred      1   已裁决延期，仍欠实现
+  ├ Conflicted    2   待上游收敛
+  └ Unaccounted   0   ← 真实缺口，ERROR
   ```
 
 **双向可达小结**：正向（PRD → spec，防漏做）＝ V3.4 + V4.6 + V6.2；
@@ -474,13 +498,14 @@ trace（pre-archive）放行后，**优先委托 CLI**：`openspec archive <chan
 
 ### status（只读）
 
-现场扫描计算，不信任任何缓存。核心产出是 **V6.2 的六块分账**
-（Implemented / Open changes / Non-software / Deferred / Conflicted / Unaccounted），
+现场扫描计算，不信任任何缓存。核心产出是 **V6.2 的七块分账**
+（Implemented / Open changes / Non-software / External / Deferred / Conflicted / Unaccounted），
 外加：基线版本与状态、每个 planned change 的已建/未建与 artifact 进度
 （`openspec status --change`）、**计划外 change 清单**、待澄清项。
 
-`Deferred` 与 `Conflicted` **必须始终单独显示，不得因已裁决而隐藏或并入已覆盖**——
-它们是「已解释但仍欠账」，与 `Non-software` 的「已解释且永久无需 spec」性质不同。
+`Deferred`、`External`、`Conflicted` **必须始终单独显示，不得因已裁决而隐藏或并入已覆盖**——
+它们都是「已解释但仍欠账」，与 `Non-software` 的「已解释且永久无需 spec」性质不同。
+`External` 还须一并显示承担系统，否则跨系统欠账会在两边同时消失。
 基线与扫描结果冲突时以扫描为准，并提示基线中的「计划」是否需要经 decompose 更新。
 
 ### check（只读，无放行语义）

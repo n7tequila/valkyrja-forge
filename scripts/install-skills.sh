@@ -128,12 +128,20 @@ done
 [[ -z "$TARGET_MODE" ]] && TARGET_MODE="project"
 
 if [[ "$TARGET_MODE" == "system" ]]; then
-  SKILLS_DEST_DIR="${HOME}/.claude/skills"
-  COMMANDS_DEST_DIR="${HOME}/.claude/commands/${COMMAND_NS}"
+  CLAUDE_ROOT="${HOME}/.claude"
 else
-  SKILLS_DEST_DIR="${PROJECT_ROOT}/.claude/skills"
-  COMMANDS_DEST_DIR="${PROJECT_ROOT}/.claude/commands/${COMMAND_NS}"
+  CLAUDE_ROOT="${PROJECT_ROOT}/.claude"
 fi
+
+SKILLS_DEST_DIR="${CLAUDE_ROOT}/skills"
+COMMANDS_DEST_DIR="${CLAUDE_ROOT}/commands/${COMMAND_NS}"
+
+# 命令备份必须放在 commands/ 树之外。
+# Claude Code 把 commands/ 下**每一层子目录都当命名空间递归扫描**，
+# 所以 commands/<NS>/.backup/prd-<时间戳>.md 会被注册成一个幽灵命令
+# /<NS>:.backup:prd-<时间戳>，且每次 --force 都新增两个、不断累积。
+# （技能侧无此问题：技能加载器要求 <目录>/SKILL.md，.backup/ 本身没有，故不被识别。）
+COMMANDS_BACKUP_DIR="${CLAUDE_ROOT}/.valkyrja-backup/commands"
 
 # ---------- --list 模式 ----------
 
@@ -286,6 +294,23 @@ cmd_skipped=0
 if [[ ${#REQUESTED_SKILLS[@]} -eq 0 && -d "$COMMANDS_SRC_DIR" ]]; then
   c_step "斜杠命令：/${COMMAND_NS}:*（${COMMANDS_DEST_DIR}）"
 
+  # 迁移：早期版本把命令备份错误地放在 commands/<NS>/.backup/ 下，
+  # 被 Claude Code 当作嵌套命名空间注册成幽灵命令 /<NS>:.backup:<名>-<时间戳>。
+  # 这里把它整体移出扫描树（移动而非删除，备份内容不丢失）。
+  legacy_cmd_backup="${COMMANDS_DEST_DIR}/.backup"
+  if [[ -d "$legacy_cmd_backup" ]]; then
+    if [[ $DRY_RUN -eq 1 ]]; then
+      c_warn "[dry-run] 将迁移旧命令备份 ${legacy_cmd_backup} → ${COMMANDS_BACKUP_DIR}（消除幽灵命令）"
+    else
+      mkdir -p "$COMMANDS_BACKUP_DIR"
+      for old_bak in "$legacy_cmd_backup"/*; do
+        [[ -e "$old_bak" ]] && mv "$old_bak" "${COMMANDS_BACKUP_DIR}/"
+      done
+      rmdir "$legacy_cmd_backup" 2>/dev/null || true
+      c_warn "已迁移旧命令备份至 ${COMMANDS_BACKUP_DIR}，并消除其产生的幽灵命令"
+    fi
+  fi
+
   [[ $DRY_RUN -eq 0 ]] && mkdir -p "$COMMANDS_DEST_DIR"
 
   for src_cmd in "$COMMANDS_SRC_DIR"/*.md; do
@@ -300,9 +325,8 @@ if [[ ${#REQUESTED_SKILLS[@]} -eq 0 && -d "$COMMANDS_SRC_DIR" ]]; then
     fi
 
     if [[ -f "$dest_cmd" && $NO_BACKUP -eq 0 && $DRY_RUN -eq 0 ]]; then
-      cmd_backup="${COMMANDS_DEST_DIR}/.backup"
-      mkdir -p "$cmd_backup"
-      cp "$dest_cmd" "${cmd_backup}/${cmd_name}-$(date +%Y%m%d%H%M%S).md"
+      mkdir -p "$COMMANDS_BACKUP_DIR"
+      cp "$dest_cmd" "${COMMANDS_BACKUP_DIR}/${cmd_name}-$(date +%Y%m%d%H%M%S).md"
     fi
 
     if [[ $DRY_RUN -eq 1 ]]; then

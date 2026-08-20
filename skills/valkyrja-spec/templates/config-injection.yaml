@@ -64,11 +64,17 @@ rules:
       每个 "### Requirement:" 标题的下一行必须是
       "Sources: <FRID>[, <FRID>...]"，单行逗号分隔。
     - |-
-      Sources 中的 ID 只能取自本 change proposal 的 Covered-FRIDs，
-      且类型只能是 REQ / BR / SEC / NFR，不得直接引用 RN / DEC / TM。
+      Sources 中的 ID 类型只能是 REQ / BR / SEC / NFR，
+      不得直接引用 RN / DEC / TM。
     - |-
-      MODIFIED 时必须保留主 spec 中已有的全部 Sources ID，只可追加不可删除；
-      已被上游标记 DEPRECATED 的历史 ID 同样保留，那是追溯凭证。
+      ADDED 的 Requirement：Sources 中所有 ID 必须取自本 change 的 Covered-FRIDs。
+    - |-
+      MODIFIED 的 Requirement：主 spec 中已有的 Sources ID 必须完整保留、
+      不得删除，即使其中某些 ID 已被上游标记 DEPRECATED —— 那是历史追溯凭证，
+      不受 Covered-FRIDs 约束。
+    - |-
+      MODIFIED 中本次新增的 Sources ID（即主 spec 原本没有的那些）：
+      必须取自本 change 的 Covered-FRIDs。
     - |-
       Scenario 的 WHEN/THEN 只描述可观察行为，不得出现具体技术名词
       （库、框架、存储引擎、协议实现等）。技术选型写入 design.md。

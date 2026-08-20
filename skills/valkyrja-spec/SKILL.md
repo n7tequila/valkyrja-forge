@@ -191,6 +191,11 @@ Sources: <FRID>[, <FRID>...]
 并发新 release，再 rebaseline。反之，已 DEPRECATED 的需求必须能被移除——
 否则老需求永远删不掉。
 
+**RENAMED 与 REMOVED 语义相反，判定不得共用**：RENAMED 在 OpenSpec 中是
+"Name changes only"——只改 Requirement 标题，行为与身份都不变，因此
+**不要求其 FRID 已 DEPRECATED**（要求了就等于禁止一切 active 需求的标题重构）。
+它触达的 FRID 只需 ∈ `historical`；覆盖关系照常由 `addressed()` 与 V4.5/V4.6 把关。
+
 ## 契约三：addressed(change)——一个 change 究竟处理了哪些 FRID
 
 **不得用「delta 的 Sources 并集」代表一个 change 处理了什么。** 该并集在三种场景下
@@ -404,11 +409,18 @@ propose 完成
   - ADDED 的全部 Sources ∈ `active` ∩ `included` → 否则 ERROR
   - MODIFIED 沿袭的旧 ID ∈ `historical` 即可（允许 DEPRECATED）→ 否则 ERROR
   - MODIFIED 本次新增的 ID ∈ `active` ∩ `included` → 否则 ERROR
-- V4.4 REMOVED / RENAMED 的 FROM 所触达的 FRID（从主 spec 同名 Requirement 的
+- V4.4a **REMOVED**：被移除 Requirement 所触达的 FRID（从主 spec 同名 Requirement 的
   Sources 反查）⊆ `deprecated(当前release)` → 否则 ERROR（不得移除仍 active 的需求）
+- V4.4b **RENAMED**：FROM 所指 Requirement 触达的 FRID ⊆ `historical` 即可，
+  **不要求 ∈ `deprecated`**。RENAMED 在 OpenSpec 中的语义是 "Name changes only"——
+  改标题是保持身份的 spec 重构，不是需求退役。若沿用 REMOVED 的 deprecated 门槛，
+  **任何 active 需求的纯标题重命名都会被误判为 ERROR**，等于禁掉这个合法操作。
+  覆盖关系仍由 V4.5 / V4.6 经 `addressed()` 把关。
 - V4.5 `addressed(change)` ⊆ `Covered-FRIDs` → 超出部分 WARNING（范围蔓延，需人裁决）
 - V4.6 `Covered-FRIDs` ⊆ `addressed(change)` → 缺失部分 ERROR（漏做）
-  （V4.5 + V4.6 合起来即 `addressed(change) == Covered-FRIDs`；
+  （**在没有经批准的 V4.5 例外时**，V4.5 + V4.6 等价于
+  `addressed(change) == Covered-FRIDs`；若某条 WARNING 经人裁决放行，
+  则合法状态为 `addressed ⊇ Covered`，该放行须记入基线的例外记录。
   **必须用契约三的 `addressed()`，不得退化为 Sources 并集**——后者会让
   MODIFIED 的历史 ID 永久误报、且让 REMOVED / RENAMED 型 change 永远无法放行）
 - V4.7 `.openspec.yaml` 含 `skip_specs: true` → ERROR，除非基线「例外记录」中已有裁决

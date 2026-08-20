@@ -78,8 +78,13 @@ The system SHALL <更新后的完整行为描述>。
 
 ## RENAMED Requirements
 
-<!-- 同 REMOVED：本块不写 Sources 行。
-     addressed() 从主 spec 中 FROM 所指 Requirement 的 Sources 反查。 -->
+<!-- 与 REMOVED 相同的一点：本块不写 Sources 行，
+     addressed() 从主 spec 中 FROM 所指 Requirement 的 Sources 反查。
+
+     但语义与 REMOVED 相反，判定标准也不同（V4.4b）：
+     RENAMED 是 "Name changes only" —— 只改标题，行为与身份都不变，
+     **不是需求退役**。因此它触达的 FRID 只需在 PRD 历史中合法存在，
+     不要求已 DEPRECATED —— 否则任何 active 需求的标题重构都会被误判为 ERROR。 -->
 
 - FROM: `### Requirement: <旧名称>`
 - TO: `### Requirement: <新名称>`

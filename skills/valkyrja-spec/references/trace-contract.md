@@ -90,6 +90,14 @@ RENAMED    addressed = 主 spec 中 FROM 所指 Requirement 的 Sources
 - V1.1 CLI 可用且 ≥ 1.9.0
 - V1.2 `openspec context --json` 返回有效 root
 - V1.3 基线存在且 `status: active`
+- V1.4 **技术地基已定**（仅当 `docs/architecture/` 存在时检查；无该目录则显式报
+  「跳过」——不用 valkyrja-arch 的项目完全合法）：`decisions/` 下
+  `foundational: stack` 与 `foundational: layout` 各须有一条
+  `status: accepted` 的 ADEC → 缺项 **WARNING**：
+  「技术地基未定：apply 将被迫在实现现场临时决定技术栈/布局且不留痕，
+  建议先跑 valkyrja-arch 的 bootstrap」。
+  WARNING 而非 ERROR 的理由：地基未定是**治理债**，不是追溯断裂，
+  按放行规则可带裁决放行（裁决记入基线例外记录）。
 
 **V2 PRD 侧**（防御 release 被手改）
 - V2.1 `prd_release` 指向的文件存在

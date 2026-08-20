@@ -370,7 +370,7 @@ propose 完成
 
 | 组 | 管什么 | 关键项 |
 |---|---|---|
-| V1 | 前提 | CLI ≥1.9.0、有效 root、基线 active |
+| V1 | 前提 | CLI ≥1.9.0、有效 root、基线 active、**技术地基已定（V1.4，WARNING 级）** |
 | V2 | PRD 侧 | 防 release 被手改：blocking Q=0、Sources 合法、无重复 FRID |
 | V3 | 基线对账 | 五集合互斥且全覆盖、无幽灵 ID、included 全被 planned change 覆盖、计划外 change |
 | V4 | delta 侧 | Authority 三重自洽（含 **rebaseline↔trace 联锁**）、Sources 分场景判定、`addressed == Covered`、skip_specs 例外、依据引用完整性 |

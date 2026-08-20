@@ -3,6 +3,8 @@ id: ADEC-<DOMAIN>-<NNN>
 date: <YYYY-MM-DD>
 status: accepted          # accepted | superseded
 superseded-by:            # 被推翻时填新 ADEC id，本文件不删除
+foundational:             # 仅奠基性 ADEC 填：stack | layout；其余留空或删除本行。
+                          # supersede 奠基 ADEC 时新 ADEC 必须继承此标记
 ---
 
 # ADEC-<DOMAIN>-<NNN> <决策标题一句话>

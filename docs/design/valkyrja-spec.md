@@ -177,6 +177,7 @@ verify 缺失没有任何替代——闭环会缺「代码 ↔ artifacts」一�
 | 评审 3 | addressed 的三个反例；RENAMED 误用 deprecated 门槛 | 契约三、V4.4a/b 拆分 |
 | **真实运行** | external 处置缺失；混合体 FRID；FRID 跨 change 的部分完成盲区 | 第六处置、行为点级交付归属、decompose 划分纪律 |
 | **首个 change 评审** | 精度稀释（阈值/字面值被软化）；拆分确认退化为信任 | 精度保真规则、拆分回显保底 |
+| **首次 apply** | 技术栈/仓库布局在实现现场被临时决定且不留痕——arch 缺入口流程，spec 缺执法点 | V1.4（WARNING 级）：arch 工作区存在但缺 `foundational: stack/layout` ADEC 时告警；配套 valkyrja-arch 的 bootstrap 动作与奠基标记 |
 
 最后两行是这份记录里最值钱的部分：
 

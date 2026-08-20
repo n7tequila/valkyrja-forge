@@ -55,6 +55,25 @@ for f in bl_files:
 if bl: ok('V1.3', f'active 基线 {os.path.basename(bl)}')
 else: err('V1.3', '无 status: active 的基线'); sys.exit(1)
 
+# V1.4 技术地基（奠基性 ADEC）——WARNING 级：治理债，不是追溯断裂。
+# 仅当 arch 工作区存在时检查；无目录时显式报「跳过」而非沉默（零对象≠零发现）。
+arch_dir = os.path.join(R, 'docs/architecture')
+if os.path.isdir(arch_dir):
+    foundational = {'stack': False, 'layout': False}
+    for p in glob.glob(os.path.join(arch_dir, 'decisions', 'ADEC-*.md')):
+        b = open(p, encoding='utf-8').read()
+        st = re.search(r'^status:[ \t]*(\S+)', b, re.M)
+        fo = re.search(r'^foundational:[ \t]*(stack|layout)\b', b, re.M)
+        if st and st.group(1) == 'accepted' and fo:
+            foundational[fo.group(1)] = True
+    lacking = sorted(k for k, v in foundational.items() if not v)
+    if lacking:
+        warn('V1.4', f'技术地基未定（缺奠基 ADEC: {lacking}）——建议先跑 valkyrja-arch bootstrap')
+    else:
+        ok('V1.4', '奠基性 ADEC 齐备（stack + layout）')
+else:
+    ok('V1.4', '无 arch 工作区，跳过（不用 valkyrja-arch 的项目合法）')
+
 # ---------- 解析基线 ----------
 prd_rel = re.search(r'^prd_release:\s*(\S+)', BT, re.M).group(1)
 PRD = os.path.join(R, prd_rel)

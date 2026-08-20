@@ -31,24 +31,24 @@
   的同构应用。ID 形如 `ADEC-DEMO_KIOSK-001`，自证其系统级身份。
   试点仓库的架构 DOMAIN 定名 **`DEMO_KIOSK`**（用户裁决，2026-08-20 铸造即冻结；
   裁决过程中曾出现「不复用」与「定名 DEMO」的矛盾，经确认取 DEMO_KIOSK）。
-- **D5 第一波 catalog 清单（已批准，约 20 条）**：经评审 内部项目-project 规范体系
-  （内部项目-spec/docs + 内部项目-code/backend/docs + frontend/docs，全部用户自有、
+- **D5 第一波 catalog 清单（已批准，约 20 条）**：经评审 内部项目规范体系
+  （其 spec 仓与前后端代码仓的规范文档，全部用户自有、
   回归驱动、含 ArchUnit 固化先例）后大幅修订——自有/自撰约 17 条，ECC 摘编缩至 2 条。
-  - 通用 10：api-envelope（api-design + 内部项目 api-standard 合并）、幂等标识、
-    错误分类（内部项目 异常四层泛化）、共享契约格式、命名、测试分层、日志上下文（MDC）、
-    鉴权（JWT/401-403/单飞刷新，内部项目 前后端两侧）、审计写入（不可篡改表 +
+  - 通用 10：api-envelope（api-design + 内部项目 API 规范合并）、幂等标识、
+    错误分类（内部项目异常四层泛化）、共享契约格式、命名、测试分层、日志上下文（MDC）、
+    鉴权（JWT/401-403/单飞刷新，内部项目前后端两侧）、审计写入（不可篡改表 +
     AFTER_COMMIT 三层防御）、注释（自撰）
   - 数据库：`conv-db-relational-postgres` 实体（db-standard.md 泛化）；
     NoSQL 文档/KV/时序仅 stub，待真实项目拉动
   - web-vanilla 3：离线优先、本地存储、埋点契约
-  - java-spring 3：java-ddd（用户 skill + 内部项目 十条规则合并）、spring-layering、
+  - java-spring 3：java-ddd（用户 skill + 内部项目十条规则合并）、spring-layering、
     spring-testing（新增）
-  - typescript 3：ts-vue-element（内部项目 自有，新增）、frontend-api-layer、
+  - typescript 3：ts-vue-element（内部项目自有，新增）、frontend-api-layer、
     ts-react-patterns（ECC 摘编）
-  - **第四体裁「清单 inventory」**（内部项目-common-catalog 模式：防 AI 重复生成的
+  - **第四体裁「清单 inventory」**（内部项目 common-catalog 模式：防 AI 重复生成的
     公共对象目录）与 **standards-backlog 机制**（候选规则带触发条件，触发后 graduate）
     吸收进 valkyrja-arch skill 本体，不作为 catalog 条目。
-  - 内部项目 派生条目入公开仓前**必须去业务化**（剥离案件/公证/业务错误码等领域细节，
+  - 内部项目派生条目入公开仓前**必须去业务化**（剥离案件/公证/业务错误码等领域细节，
     只留模式），且发布前经用户检查（见 D6 的发布门禁）。
   - 执行顺序：自有 + 自撰先行，ECC 摘编两条后置。
 - **D6 许可证纪律（四条 + 一边界）**：
@@ -59,9 +59,13 @@
   `NOTICE.md` 集中保留第三方版权声明（已核实 ECC LICENSE 为 MIT，
   Copyright (c) 2026 Affaan Mustafa）；
   (4) 发布门禁：catalog 条目推公开仓前经人工检查（特权握手），检查单三项——
-  业务细节已剥离 / 四字段齐全且 redistributable / 摘编版权声明未丢。
-  边界：内部项目 泛化条目同受检查单第 1 项约束，**模式出仓、领域不出仓**；
+  业务细节已剥离（**含客户名与内部项目名**）/ 四字段齐全且 redistributable /
+  摘编版权声明未丢。
+  边界：内部项目泛化条目同受检查单第 1 项约束，**模式出仓、领域不出仓**；
   带强业务指纹的模式宁可降级 local-only 也不硬泛化。
+  （修订 2026-08-20：第 1 项补「内部项目名」——某自有项目名曾散布于 13 条
+  frontmatter 与本文档并已推送，因其不是「客户名」而未被字面检查触发。
+  又一例检查单字面通过、意图落空；脱敏后公开仓统一以「内部项目」指代。）
 - **D7 adopt 产物 = 自包含副本 + 指纹 + 本地优先**：
   副本落 `docs/architecture/conventions/`，frontmatter 记 `adopted-from`
   （catalog id + 日期版本）与 `adopted-by`（ADEC id）。四条规则：
@@ -70,7 +74,7 @@
   (3) **不自动同步**——catalog 更新不推送，`check` 发现版本落后只提示不报错，
   升级走新 ADEC 重新 adopt；
   (4) catalog 条目以日期为版本（无兼容性语义，不用 semver）。
-  依据：执行模型要求规范随仓库分发（纯引用出局）；内部项目 本地副本优先的实战先例。
+  依据：执行模型要求规范随仓库分发（纯引用出局）；内部项目本地副本优先的实战先例。
 - **D8 trace 新增 V4.8：design.md 依据标注的引用完整性**：
   扫描 `依据: DEC-*` / `依据: ADEC-*`，被引决策必须真实存在——幽灵引用 ERROR；
   被引决策已 superseded → WARNING。三个不做：不查「该标注而未标注」（机器判不出
@@ -93,10 +97,33 @@
 - **D10 第三个 skill 正式确认 + 命名**：加 `valkyrja-arch`，命令 `/valkyrja:arch`。
   本项推翻了 valkyrja-spec RC 评审时「暂不加第三个 skill」的建议，理由是前提已变：
   当时反对的是纸面推演式的投机扩张；现在是证据驱动——真实端到端产出的 design.md
-  钉着三个具体空缺，且 内部项目 已独立演化出其雏形（standards-backlog graduate 机制）。
+  钉着三个具体空缺，且内部项目已独立演化出其雏形（standards-backlog graduate 机制）。
   评审建议隐含的条件「等真实需要出现再扩」恰好被满足。
   命令沿用薄转接模式：纯委托、零路由逻辑，重申 decide / adopt / contract / publish
   四个特权动作的握手不因斜杠入口放宽。
+- **D11 bootstrap 入口流程 + 奠基性决策（2026-08-20，首次 apply 暴露）**：
+  首次真实 apply 中，技术栈（Vue/TS/Vite）与仓库布局在实现现场被临时决定且不留痕
+  ——skill 只能回答「把这个记下来」，回答不了「我该定什么」，偏离了
+  「帮助用户做技术讨论与决策」的初衷（用户裁决：应有与 prd 同构的询问过程）。
+  产出四件套：
+  (1) **bootstrap 动作**（探测既有事实 → 读产品约束 → 四节清点 → 逐节裁决落盘），
+  与 prd bootstrap 同构但多出「建议与候选」节——给技术建议属本层职责，
+  建议必须给推导（产品约束先收敛候选集，AI 在剩余偏好空间内不做选择）；
+  多点裁决**默认逐点推进按依赖序**，整批须用户显式要求（真实运行反馈：
+  平铺全部选项造成选择过载，且掩盖决策点之间的依赖关系）；
+  重跑幂等且只增（保号、不重置既有文件——ID 是身份，重编号让仓内引用
+  静默指向错误决策）。
+  (2) **奠基性决策**概念：技术栈 / 仓库布局 / 按栈采纳约定，变更成本与普通 ADEC
+  根本不同（有代码即重写），必须在首个 apply 前完成；技术栈是决策簇须成组裁决；
+  布局分两层（surface→目录映射显式裁决，surface 内部随栈惯例）。
+  (3) **`foundational: stack | layout` 机读标记**（frontmatter）：
+  「奠基项齐备」的唯一机读判据，check 与 V1.4 共用，不做语义猜测；
+  supersede 时新 ADEC 必须继承标记。格式契约先于工具——没有标记，
+  齐备性检查只能靠猜。
+  (4) **spec 侧 V1.4（WARNING 级）**：arch 工作区存在但缺奠基 ADEC 时告警。
+  WARNING 而非 ERROR：不用 arch 的项目合法（无目录则显式报跳过），
+  地基未定是治理债不是追溯断裂。实测：对首次 apply 后的试点项目跑 V1.4，
+  一次命中真实缺口（缺 stack + layout）——这正是当初缺席的那道提醒。
 
 ## 1. 问题（有真实证据，不是推测）
 

@@ -82,32 +82,17 @@ change，其 `Covered-FRIDs` 即这些 deprecated FRID。故一个 change 的 `C
    在 `.claude/` 下生成对应的 workflow skills 与 `/opsx:*` 命令
    （数量随 profile 而变，不要向用户断言固定数量）。
 3. **官方 sync workflow**：`.claude/skills/openspec-sync-specs/` 是否存在。
-   缺失时**不阻塞**（见「归档路径的选择」）。补救方式**取决于 profile，必须先判断**：
-
-   ```
-   openspec config get workflows
-        │
-        ├── 含 sync，但 skill 文件缺失
-        │      → 安装产物过期。项目内跑 `openspec update`（只动本项目，无需改全局）
-        │
-        └── 不含 sync（如 profile=custom 且排除了它）
-               → `openspec update` 是空操作，跑了也不会装上。
-                 唯一出口是改 profile：`openspec config profile core`
-                 **这修改全局 ~/.config/openspec/config.json，影响本机所有项目**，
-                 属特权动作，必须经人确认，不得代跑。
-   ```
-
-   若同时提示 CLI 有新版本，先建议升级 CLI 再 `openspec update`——新版本可能带来新 workflow。
+   缺失**不阻塞**——归档走 CLI 有确定性替代（见「归档路径的选择」）。
 4. **官方 verify workflow**：`.claude/skills/openspec-verify-change/` 是否存在。
-   **verify 不在官方 `core` profile 内**（core ＝ propose / explore / apply / update /
-   sync / archive），因此一个刚 `openspec init` 的标准项目**大概率没有它**。
-   缺失时按与 sync 相同的条件分支处理（先 `openspec config get workflows` 判断是
-   产物过期还是 profile 未启用）。
+   **verify 不在官方 `core` profile 内**，刚 init 的项目大概率没有。
+   **缺失比 sync 严重**：本技能的 trace 只管 PRD ↔ spec，不做「代码 ↔ artifacts」，
+   缺了它闭环少一段且**无任何替代**——必须显式告知后果，不可一句「可补装」带过。
 
-   > **verify 缺失比 sync 缺失严重**：sync 缺失已由「归档走 CLI」绕过，有确定性替代；
-   > 而 verify 承担状态机中「实现代码 ↔ change artifacts」这一环，**本技能不做这件事**
-   > （trace 只管 PRD ↔ spec），缺了它就没有任何替代方案，闭环会缺一段。
-   > 因此缺失时必须显式告知用户这一后果，而不是一句「可补装」带过。
+   > 3、4 两项的补救**取决于 profile，必须先 `openspec config get workflows` 判断**
+   > 是「产物过期」还是「profile 未启用」——手段完全不同，且后者要改全局配置
+   > （特权动作）。完整条件分支见
+   > [references/openspec-compatibility.md](references/openspec-compatibility.md)。
+
 5. **基线**：`docs/product/baselines/` 下该 DOMAIN 的最新基线是否存在且 `status: active`。
 
 然后读取基线、基线 `prd_release` 指向的 release（只读机读区与 Open Questions）、
@@ -166,81 +151,34 @@ spec delta 的 Sources（实际）
 
 ## 契约二：Sources 行（spec delta 与主 spec 内，机读）
 
-每个 `### Requirement:` 标题的**下一行**必须是：
+每个 `### Requirement:` 标题的**下一行**必须是 `Sources: <FRID>[, <FRID>...]`
+（单行逗号分隔）。ID 类型只能是 FRID，**不得直接引 RN/DEC/TM**——那会绕过
+`prd/releases/` 这一唯一 API。
 
-```
-Sources: <FRID>[, <FRID>...]
-```
+三条关键判定，**任何一条简化都会让 trace 失效**：
 
-- 正则：`^Sources:\s*((REQ|BR|SEC|NFR)-[A-Z][A-Z0-9]*(_[A-Z][A-Z0-9]*)*-\d{3})(\s*,\s*(REQ|BR|SEC|NFR)-[A-Z][A-Z0-9]*(_[A-Z][A-Z0-9]*)*-\d{3})*\s*$`
-- 单行逗号分隔，与 PRD 的多行 `- ID` 列表**刻意不同**：该行位于 Requirement 正文区内，
-  OpenSpec 会把它连同正文一并归属该 Requirement，多行 bullet 易与需求内容混淆。
-- ID 类型只能是 FRID。**不得直接引 RN/DEC/TM**——那会绕过 `prd/releases/` 这一唯一 API。
+- **历史 provenance ≠ 当前 authority**：ADDED 的 Sources 必须全部
+  ∈ `active` ∩ `included`；MODIFIED **沿袭的旧 ID** 允许已 DEPRECATED
+  （只需 ∈ `historical`）且不得删除；MODIFIED **本次新增的 ID** 才要求
+  ∈ `active` ∩ `included`。不区分二者，需求退役后该 Requirement 怎么写都过不了 trace。
+- **REMOVED** 触达的 FRID 必须 ⊆ `deprecated`（否则等于下游单方面丢弃 active 需求）。
+- **RENAMED 与 REMOVED 语义相反**，判定不得共用——它只改标题不退役需求，
+  沿用 deprecated 门槛会禁掉一切 active 需求的标题重构。
 
-**历史 provenance 与当前 authority 的区分（关键，勿简化）**：
+## 契约三：addressed(change)
 
-| 场景 | 规则 |
-|---|---|
-| ADDED Requirement | 全部 Sources 必须 ∈ `active(当前release)` ∩ `included` |
-| MODIFIED Requirement — 沿袭的旧 ID | **允许**已 DEPRECATED 的 FRID 留存，只需 ∈ `historical`；不得删除 |
-| MODIFIED Requirement — 本次新增的 ID | 必须 ∈ `active(当前release)` ∩ `included` |
+**不得用「delta 的 Sources 并集」代表一个 change 处理了什么**——该并集会让
+MODIFIED 的历史 ID 永久误报为范围蔓延，并让 REMOVED / RENAMED 型 change
+（块内无 Sources 行，并集为 ∅）**永远无法放行**。
 
-「本次新增的 ID」机器可判：`新增集 = delta 的 Sources − 主 spec 中同名 Requirement 的 Sources`。
-两侧都在盘上，现算即可，无需记录。
+`addressed(change)` 按 delta 操作分别计算：ADDED 取 delta Sources；
+MODIFIED 取 `delta_sources − (main_sources − Covered-FRIDs)`；
+REMOVED / RENAMED 从主 spec 同名（或 FROM 所指）Requirement 的 Sources **反查**。
+全部输入在盘上，现算不落盘。
 
-> 为什么必须区分：需求 DEPRECATED 后，若仍要求全部 Sources ∈ active，
-> 则「保留历史 ID」与「Sources 必须活跃」两条规则直接对撞，该 Requirement
-> 无论怎么写都过不了 trace。区分二者是唯一自洽解。
-
-**REMOVED 的判定**：被移除 Requirement 所引用的 FRID（从**主 spec 中同名 Requirement
-的 Sources 行**反查，REMOVED 块本身不带 Sources）必须 ⊆ `deprecated(当前release)`。
-移除一个仍 `active` 的 FRID 的全部 spec 引用 → ERROR，正确出口是上游标 DEPRECATED
-并发新 release，再 rebaseline。反之，已 DEPRECATED 的需求必须能被移除——
-否则老需求永远删不掉。
-
-**RENAMED 与 REMOVED 语义相反，判定不得共用**：RENAMED 在 OpenSpec 中是
-"Name changes only"——只改 Requirement 标题，行为与身份都不变，因此
-**不要求其 FRID 已 DEPRECATED**（要求了就等于禁止一切 active 需求的标题重构）。
-它触达的 FRID 只需 ∈ `historical`；覆盖关系照常由 `addressed()` 与 V4.5/V4.6 把关。
-
-## 契约三：addressed(change)——一个 change 究竟处理了哪些 FRID
-
-**不得用「delta 的 Sources 并集」代表一个 change 处理了什么。** 该并集在三种场景下
-与事实不符，会同时制造假警报与假放行：
-
-| 场景 | 用 Sources 并集的后果 |
-|---|---|
-| MODIFIED 保留了历史 provenance ID | 历史 ID 被误判为范围蔓延，**永久假警报** |
-| REMOVED（块内无 Sources 行） | 并集为 ∅，`Covered ⊆ ∅` 恒假，**正常删除型 change 永远无法放行** |
-| RENAMED（块内无 Sources 行） | 同上 |
-
-因此定义 **`addressed(change)`＝该 change 实际触达的正式需求集合**，按 delta 操作分别计算：
-
-```
-ADDED      addressed = delta 该 Requirement 的 Sources
-
-MODIFIED   historical_exempt = main_sources − Covered-FRIDs
-           addressed         = delta_sources − historical_exempt
-           （main_sources = 主 spec 中同名 Requirement 的 Sources）
-
-REMOVED    addressed = 主 spec 中被移除 Requirement 的 Sources
-
-RENAMED    addressed = 主 spec 中 FROM 所指 Requirement 的 Sources
-```
-
-`addressed(change)` 为各 delta 块结果的并集。全部输入都在盘上（主 spec + delta），
-现算即可，不落盘。
-
-验算 MODIFIED 那条公式：主 spec `Sources: OLD`，OLD 已 DEPRECATED，本次为 NEW 而改，
-`Covered-FRIDs = {NEW}`，delta 按契约二必须写 `Sources: OLD, NEW`。
-则 `historical_exempt = {OLD} − {NEW} = {OLD}`，`addressed = {OLD,NEW} − {OLD} = {NEW}`
-——与 Covered 相等，不再误报。而若该 change 真的越权引入了计划外的 X，
-`historical_exempt` 不含 X（X 不在 main_sources 中），X 会留在 addressed 里被 V4.5 抓到。
-
-已实测确认（v1.9.0）：Sources 行不触发 `openspec validate --strict` 任何 issue；
-`openspec archive` 合并时会随 ADDED / MODIFIED 一并带进主 spec；
-在 `openspec show <spec> --type spec --json` 中呈现为 `requirements[].text` 的首行，
-可直接机读提取。
+> 契约二、契约三的完整规则、正则、算法验算与 V1–V6 检查清单见
+> **[references/trace-contract.md](references/trace-contract.md)**——
+> 执行 trace / check 或判定某条 delta 是否合规时读它。
 
 ## 意图路由
 
@@ -427,102 +365,26 @@ propose 完成
    → post-archive verification (V6)
 ```
 
-**V1 前提**
-- V1.1 CLI 可用且 ≥ 1.9.0
-- V1.2 `openspec context --json` 返回有效 root
-- V1.3 基线存在且 `status: active`
+**六组检查**（完整清单见
+[references/trace-contract.md](references/trace-contract.md)，执行时必读）：
 
-**V2 PRD 侧**（防御 release 被手改）
-- V2.1 `prd_release` 指向的文件存在
-- V2.2 PRD 内 `[blocking]` 且 `Status: open` 的问题数 = 0 → 否则 ERROR
-- V2.3 每个需求块含 `Sources:` 且至少一个 RN/DEC
-- V2.4 无重复 FRID
+| 组 | 管什么 | 关键项 |
+|---|---|---|
+| V1 | 前提 | CLI ≥1.9.0、有效 root、基线 active |
+| V2 | PRD 侧 | 防 release 被手改：blocking Q=0、Sources 合法、无重复 FRID |
+| V3 | 基线对账 | 五集合互斥且全覆盖、无幽灵 ID、included 全被 planned change 覆盖、计划外 change |
+| V4 | delta 侧 | Authority 三重自洽（含 **rebaseline↔trace 联锁**）、Sources 分场景判定、`addressed == Covered`、skip_specs 例外、依据引用完整性 |
+| V5 | 委托原生 | `openspec validate --strict` 退出 0、required artifacts 齐备 |
+| V6 | 归档后 | 主 spec 保留 Sources、`unaccounted` 七块分账 |
 
-**V3 基线对账**（计划 vs 现状）
-- V3.1 `active(当前release)` ⊆
-  （`included` ∪ `deferred` ∪ `non-software` ∪ `external` ∪ `conflicted`）
-  → 差集＝漏裁决，ERROR
-- V3.2 `included` / `deferred` / `non-software` / `external` / `conflicted` 五个集合
-  两两互斥（每条 FRID 在基线中恰好一个处置）→ 否则 ERROR
-- V3.3 基线引用的每个 FRID 在 PRD 中真实存在 → 幽灵 ID，ERROR
-- V3.4 每个 `included` FRID 至少被一个 planned change 覆盖 → ERROR
-- V3.5 磁盘 change 与计划对账，输出三态：已建 / 未建 / **计划外**
-
-**V4 delta 侧**（逐 change）
-- V4.0 proposal.md 含合法 `## Requirement Authority` 块，且**三重自洽**：
-  (a) `Baseline:` 指向该 DOMAIN **当前 active** 的基线 → 指向 superseded 基线则 ERROR
-  （**这是 rebaseline 与 trace 的联锁**：rebaseline 后所有既有 change 仍声明旧基线，
-  会在此被逐个拦下，更新 Authority 块并重新对账后才能放行——需求变更不会静默穿过）；
-  (b) `PRD-Release:` 等于该基线 frontmatter 的 `prd_release` → 否则 ERROR；
-  (c) `Covered-FRIDs` **等于**该基线为本 change 计划的集合 → 不等则 ERROR（声明与计划漂移）
-- V4.1 每个 `### Requirement:` 有且仅有一个 `Sources:` 行 → ERROR
-- V4.2 Sources 中 ID 类型只能是 FRID → ERROR（防绕过 release）
-- V4.3 **分场景判定**（见「契约二」）：
-  - ADDED 的全部 Sources ∈ `active` ∩ `included` → 否则 ERROR
-  - MODIFIED 沿袭的旧 ID ∈ `historical` 即可（允许 DEPRECATED）→ 否则 ERROR
-  - MODIFIED 本次新增的 ID ∈ `active` ∩ `included` → 否则 ERROR
-- V4.4a **REMOVED**：被移除 Requirement 所触达的 FRID（从主 spec 同名 Requirement 的
-  Sources 反查）⊆ `deprecated(当前release)` → 否则 ERROR（不得移除仍 active 的需求）
-- V4.4b **RENAMED**：FROM 所指 Requirement 触达的 FRID ⊆ `historical` 即可，
-  **不要求 ∈ `deprecated`**。RENAMED 在 OpenSpec 中的语义是 "Name changes only"——
-  改标题是保持身份的 spec 重构，不是需求退役。若沿用 REMOVED 的 deprecated 门槛，
-  **任何 active 需求的纯标题重命名都会被误判为 ERROR**，等于禁掉这个合法操作。
-  覆盖关系仍由 V4.5 / V4.6 经 `addressed()` 把关。
-- V4.5 `addressed(change)` ⊆ `Covered-FRIDs` → 超出部分 WARNING（范围蔓延，需人裁决）
-- V4.6 `Covered-FRIDs` ⊆ `addressed(change)` → 缺失部分 ERROR（漏做）
-  （**在没有经批准的 V4.5 例外时**，V4.5 + V4.6 等价于
-  `addressed(change) == Covered-FRIDs`；若某条 WARNING 经人裁决放行，
-  则合法状态为 `addressed ⊇ Covered`，该放行须记入基线的例外记录。
-  **必须用契约三的 `addressed()`，不得退化为 Sources 并集**——后者会让
-  MODIFIED 的历史 ID 永久误报、且让 REMOVED / RENAMED 型 change 永远无法放行）
-- V4.7 `.openspec.yaml` 含 `skip_specs: true` → ERROR，除非基线「例外记录」中已有裁决
-- V4.8 **design.md 依据标注的引用完整性**：扫描 `依据: DEC-*` / `依据: ADEC-*`，
-  被引决策必须真实存在（DEC → initiative 的 `decisions/`；ADEC →
-  `docs/architecture/decisions/`）→ 幽灵引用 ERROR；被引决策已 superseded → WARNING。
-  三个不做：不查「该标注而未标注」（机器判不出一句话是否约束，留给 config 注入）；
-  不查 DEC 范围覆盖（语义判断，维持人工）；无架构工作区不特殊豁免（引了不存在的
-  ADEC 本来就是幽灵引用）。定性：**引用完整性**检查（与 Sources 同族，防 AI 编造
-  权威），不是技术正确性检查——后者属 linter/架构测试/CI，本技能不越界。
-
-**V5 委托原生**
-- V5.1 `openspec validate <change> --type change --strict --json` 退出码 0
-- V5.2 `openspec status --change <name> --json` 中 required artifacts 无缺失
-
-**V6 post-archive verification**（**归档后**执行，不属于放行判定）
-- V6.1 主 spec 每个 Requirement 保留 `Sources:` → 缺失 WARNING
-- V6.2 计算 `unaccounted`，**仅它是 ERROR**：
-
-  ```
-  unaccounted = active
-              − main_spec_coverage      （主 spec Sources 并集）
-              − open_change_coverage    （未归档 change 的 addressed 并集）
-              − non_software
-              − external
-              − deferred
-              − conflicted
-  ```
-
-  **不得写成「active ⊆ 若干项之并，差集即缺口」**——`deferred`、`external`、
-  `conflicted` 都是 `active` 的子集且都不在覆盖侧，那样算出的差集必然混入它们，
-  把「已裁决延期」「由外部系统承担」「待上游收敛」误报成「漏做」。
-  报告须分列七块，只有最后一块是 ERROR：
-
-  ```
-  Active FRIDs   44
-  ├ Implemented  25   已归档进主 spec
-  ├ Open changes  7   未归档 change 覆盖中
-  ├ Non-software  6   非软件交付（永久无需 spec）
-  ├ External      3   外部系统承担（本仓不 spec，欠账仍在）
-  ├ Deferred      1   已裁决延期，仍欠实现
-  ├ Conflicted    2   待上游收敛
-  └ Unaccounted   0   ← 真实缺口，ERROR
-  ```
-
-**双向可达小结**：正向（PRD → spec，防漏做）＝ V3.4 + V4.6 + V6.2；
-反向（spec → PRD，防越权造需求）＝ V4.0 + V4.2 + V4.3 + V4.5。
+**双向可达**：正向（防漏做）＝ V3.4 + V4.6 + V6.2；
+反向（防越权造需求）＝ V4.0 + V4.2 + V4.3 + V4.5。
 
 **放行规则**：任一 ERROR 未清除则不得放行（apply 与归档同此标准）。
 WARNING 可带裁决放行，裁决记入回显与基线的例外记录。
+
+**确定性实现**：V1–V5 与 V4.8 已实现为 `tools/trace.py`，退出码 0/1 可作 CI 门禁；
+语义判断（拆分完整性、DEC 范围覆盖）不在脚本内，仍由人核对。
 
 ### 归档路径的选择
 
@@ -530,9 +392,9 @@ trace（pre-archive）放行后，**优先委托 CLI**：`openspec archive <chan
 （回显后经人确认执行），随后跑 V6。
 
 理由：CLI 自带 validate → 合并 delta → 必要时 capability 退休 → 移动 change
-→ 失败时回滚的完整实现，**不依赖 `openspec-sync-specs` skill 是否安装**；
-且官方 archive *skill* 的设计原则是「警告不阻塞」，与本技能的门禁语义相悖。
-若用户偏好走官方 skill 路径，须先确认 sync workflow 已安装，否则合并链断裂。
+→ 失败回滚的完整实现，**不依赖 sync skill 是否安装**；且官方 archive *skill*
+的原则是「警告不阻塞」，与本技能的门禁语义相悖。
+详见 [references/openspec-compatibility.md](references/openspec-compatibility.md)。
 
 ### status（只读）
 
@@ -619,40 +481,24 @@ apply 或归档。**不得批量代改 Authority 块**：逐个更新迫使人�
 
 ## 与官方 skill 的分工与冲突缓释
 
-**抑制 propose 重新追问已决事项**：baseline 首次定稿时（经握手）写入
-`openspec/config.yaml` 的 `context` 与 `rules`（模板见 `templates/config-injection.yaml`）。
-**config 只写与具体 PRD 无关的通用治理协议**——绝不写死某个 PRD 或基线路径，
-否则多 DOMAIN 仓库中后写的绑定会覆盖先写的，造成串域（具体绑定见「契约一」）。
-因此该注入通常**只需写一次**，后续 initiative 复用同一份协议。
+**config.yaml 注入**：baseline 首次定稿时（经握手）写入 `context` 与 `rules`，
+抑制 propose 重新追问 PRD 已定事项。三条硬约束：
+①**只写与具体 PRD 无关的通用协议**（写死具体 PRD 会在多 DOMAIN 仓库造成串域）；
+②**写入后必须实跑 `openspec instructions specs --change <任一> --json` 验证注入生效**
+——解析失败时 CLI 只打一行 warning 便静默忽略整个文件，表面看不出异常；
+③必须向用户说明**这是 prompt 级建议不是强制**，真正的保证来自 trace 机检。
 
-写入后**必须实跑一次 `openspec instructions specs --change <任一change> --json` 验证
-`context` 与 `rules` 确已出现在返回中**——config.yaml 解析失败时 CLI 只打一行 warning
-便**静默忽略整个文件**，注入全部失效而表面无异常（多行 rule 条目未用 `|-` 块标量书写时，
-正文中的冒号会被 YAML 误判为隐式键，这是已踩过的坑）。
+**三个冲突面**：explore 侧门可绕过本技能建 change（不禁止，但列为**计划外 change**，
+一律不得通过归档门禁）；`skip_specs: true` 是验证逃生口（trace 一律 ERROR，
+除非基线例外记录已有裁决）；官方 archive「警告不阻塞」。
 
-**但必须同时向用户说明其效力边界**：这是 **prompt 级建议，不是强制**——官方 skill
-明确规定 `context`/`rules` 与内置指令冲突时以内置指令为准。
-注入只降低摩擦，**真正的保证来自 trace 的机检**。
+**已知治理缺口（诚实写明）**：用户直接调 `/opsx:apply`、`/opsx:archive` 或 CLI 时
+本技能**无法拦截**，也**无法事后证明**某次归档曾放行过（trace 只读、不写 receipt）。
+只能保证「经由本技能执行的 apply 与归档一定先跑过 trace」。
+**不得在任何场合作出超出此范围的承诺。**
 
-**explore 侧门**：官方 explore skill 可不经本技能直接 `openspec new change`。
-这是合法的探索出口，本技能不禁止，但 `status` 与 `trace` 必须把磁盘上存在却不在基线
-计划中的 change 列为**计划外 change**，要求人裁决：纳入基线（补记裁决）/
-保持探索态（不得归档）/ 删除。**计划外 change 一律不得通过归档门禁。**
-
-**`skip_specs` 逃生口**：`.openspec.yaml` 的 `skip_specs: true` 会让
-`openspec validate` 接受零 delta 的 change。本技能视其为**需人工裁决的例外**：
-trace 一律 ERROR，除非基线「例外记录」中已有对该 change 的显式裁决与理由。
-理由：零 delta 意味着该 change 不携带任何可追溯需求，会在覆盖对账中制造静默缺口。
-
-**已知治理缺口（诚实写明）**：若用户直接调用 `/opsx:apply`、`/opsx:archive` 或
-`openspec archive`，本技能**无法拦截**——官方 archive skill 的原则是「警告不阻塞」，
-且它不会执行本技能的门禁。本技能只能保证：**经由本技能执行的 apply 与归档，
-一定先跑过 trace**。绕过路径只能靠约定与未来的 CI 兜底。
-**不得在任何场合承诺本技能能拦截绕过路径，也不得声称能事后证明某次归档曾放行过。**
-
-**validate 前移**（纯增益、零冲突）：官方 skill 从不调用 `openspec validate`，
-delta 正确性直到归档阶段才由合并逻辑检查。本技能在 trace 中显式调用，
-把校验前移到 apply 之前。
+> 完整理由、条件分支与实测确认的行为见
+> [references/openspec-compatibility.md](references/openspec-compatibility.md)。
 
 ## 与 valkyrja-arch 的接口（技术地基的消费约定）
 
@@ -677,7 +523,17 @@ delta 正确性直到归档阶段才由合并逻辑检查。本技能在 trace �
 - 发现 release 本身不自洽（blocking Q 未清、Sources 断链、ID 重复、
   FRID 未标 DEPRECATED 即消失）时：**不修复、不绕过**，报告并请用户回上游处理。
 
-## 模板
+## 参考文件与模板
+
+**references/（按需加载，不随 SKILL.md 进入上下文）**
+
+- [trace-contract.md](references/trace-contract.md) — 契约二/三完整规则 +
+  V1–V6 检查清单。**执行 trace / check 时必读**
+- [openspec-compatibility.md](references/openspec-compatibility.md) —
+  环境前提条件分支、归档路径、config 注入、官方 skill 冲突缓释。
+  **前提检测异常、准备归档、写 config 时读**
+
+**templates/**
 
 - [baseline.md](templates/baseline.md) — 基线文件结构
 - [spec-delta.md](templates/spec-delta.md) — 带 `Sources:` 行的 delta 范例（可照抄）

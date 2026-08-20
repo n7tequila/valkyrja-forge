@@ -191,7 +191,23 @@ verify 缺失没有任何替代——闭环会缺「代码 ↔ artifacts」一�
 最终由独立外部评审接住。教训：**两层人工确认如果审的是同一份派生物，
 就不构成冗余——审核者必须看到源头，不是摘要。**
 
-## 9. 未验证区域（诚实清单）
+## 9. 文件结构：progressive disclosure
+
+SKILL.md 曾达 685 行（超出 Claude Code 对 SKILL.md 的 ~500 行建议值，
+且全文每次调用都进上下文）。按**「何时需要」而非「内容归类」**切分：
+
+| 文件 | 内容 | 何时加载 |
+|---|---|---|
+| `SKILL.md`（540 行） | 宪法、术语与集合、启动仪式、三契约摘要、意图路由、握手、各动作流程、对外接口 | 每次调用 |
+| `references/trace-contract.md`（190 行） | 契约二/三完整规则与算法、V1–V6 检查清单 | 执行 trace / check 时 |
+| `references/openspec-compatibility.md`（128 行） | 环境前提条件分支、归档路径、config 注入、官方 skill 冲突缓释、实测行为清单 | 前提检测异常 / 归档 / 写 config 时 |
+
+切分原则：**摘要留在 SKILL.md，判定细节进 reference**——路由与握手阶段
+需要知道「有这条规则」，只有真正执行判定时才需要「规则的完整形式」。
+每个 reference 头部写明「何时读本文件」，并带**三载体同步提醒**
+（SKILL.md / reference / `tools/trace.py` 同源，改一处必须改三处）。
+
+## 10. 未验证区域（诚实清单）
 
 真实运行覆盖了 baseline → decompose → propose → trace → rebaseline 联锁。
 以下分支尚未在真实数据上跑过：

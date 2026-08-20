@@ -94,6 +94,6 @@ operations:
   archive:
     guidance:
       - |-
-        归档前应已通过 openspec-development 的 trace（pre-archive）放行。
+        归档前应已通过 valkyrja-spec 的 trace（pre-archive）放行。
       - |-
         若触发 capability 退休删除，须单独高亮并给出 git 恢复命令。

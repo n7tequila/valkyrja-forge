@@ -28,11 +28,11 @@
 ```
 松散讨论（人 + AI 多轮对话）
       │
-      │  prd-workshop
+      │  valkyrja-prd
       ▼
 Released PRD  ──────────────────── 产品 API：下游唯一可消费的契约
       │
-      │  openspec-development
+      │  valkyrja-spec
       ▼
 Requirement Baseline（需求基线：逐条裁决如何落地）
       │
@@ -61,10 +61,10 @@ RN / DEC  →  PRD 的 REQ/BR/SEC/NFR  →  OpenSpec Requirement 的 Sources:  �
 
 | 技能 | 职责 | 状态 |
 |---|---|---|
-| **prd-workshop** | 讨论 / 决策 / 导入 / 合成 / 发布 PRD | 已在真实项目跑通完整流程 |
-| **openspec-development** | 消费 Released PRD，驱动 OpenSpec 开发闭环 | Release Candidate，**尚未端到端验证** |
+| **valkyrja-prd** | 讨论 / 决策 / 导入 / 合成 / 发布 PRD | 已在真实项目跑通完整流程 |
+| **valkyrja-spec** | 消费 Released PRD，驱动 OpenSpec 开发闭环 | Release Candidate，**尚未端到端验证** |
 
-### prd-workshop
+### valkyrja-prd
 
 把松散讨论治理为可追溯的产品状态。八个动作：`discuss`、`decide`、`import`、
 `bootstrap`、`status`、`synthesize`、`release`、`check`。
@@ -85,7 +85,7 @@ docs/product/initiatives/<slug>/
     └── releases/vX.Y.md   # 发布即冻结，下游唯一可消费的产品 API
 ```
 
-### openspec-development
+### valkyrja-spec
 
 治理编排层——标准的 propose / apply / archive 委托给官方 OpenSpec 技能与 CLI，
 本技能只做它们不做也不该做的事。六个动作：
@@ -153,7 +153,7 @@ scripts/install-skills.sh --project --force
 
 # 只装指定技能（此模式下不装斜杠命令，
 # 避免命令指向一个并未安装的技能）
-scripts/install-skills.sh --project prd-workshop
+scripts/install-skills.sh --project valkyrja-prd
 
 # 预览与查看
 scripts/install-skills.sh --project --dry-run
@@ -165,9 +165,9 @@ scripts/install-skills.sh --project --list
 
 ### 依赖
 
-`prd-workshop` 无外部依赖。
+`valkyrja-prd` 无外部依赖。
 
-`openspec-development` 需要 [OpenSpec](https://github.com/Fission-AI/OpenSpec) CLI ≥ 1.9.0：
+`valkyrja-spec` 需要 [OpenSpec](https://github.com/Fission-AI/OpenSpec) CLI ≥ 1.9.0：
 
 ```bash
 npm install -g @fission-ai/openspec
@@ -209,10 +209,10 @@ valkyrja-forge/
 ├── scripts/
 │   └── install-skills.sh          # 同时安装技能与命令
 └── skills/
-    ├── prd-workshop/
+    ├── valkyrja-prd/
     │   ├── SKILL.md
     │   └── templates/             # decision / discussion / prd / status
-    └── openspec-development/
+    └── valkyrja-spec/
         ├── SKILL.md
         └── templates/             # baseline / spec-delta / config-injection
 ```
@@ -221,8 +221,8 @@ valkyrja-forge/
 
 ## 现状与下一步
 
-- `prd-workshop` 已用真实项目验证，产出的 PRD 质量可直接进入下游开发。
-- `openspec-development` 的协议已经过多轮评审与修订，格式契约均已对 OpenSpec v1.9.0
+- `valkyrja-prd` 已用真实项目验证，产出的 PRD 质量可直接进入下游开发。
+- `valkyrja-spec` 的协议已经过多轮评审与修订，格式契约均已对 OpenSpec v1.9.0
   实测验证（`Sources:` 行不触发 validate、能随合并进入主 spec、可机读提取）。
   **但整条流水线尚未做过一次真实的端到端运行。**
 

@@ -122,7 +122,7 @@ capabilities：<capability-path>
 
 ## 待上游澄清项
 
-<!-- 本技能不铸造任何 ID（含 Q）。回流上游后由 prd-workshop 铸 Q-* 并纳入下一版 PRD。 -->
+<!-- 本技能不铸造任何 ID（含 Q）。回流上游后由 valkyrja-prd 铸 Q-* 并纳入下一版 PRD。 -->
 
 - 缺口：<描述：哪条需求的什么信息缺失，导致无法写出可验收 Scenario>
   影响：<阻塞哪个 change 的哪个环节>

@@ -5,7 +5,7 @@ argument-hint: [想做什么，自然语言即可；留空则先复述当前状�
 
 # /valkyrja:prd
 
-`prd-workshop` 技能的斜杠入口。
+`valkyrja-prd` 技能的斜杠入口。
 
 ## Arguments
 
@@ -13,7 +13,7 @@ argument-hint: [想做什么，自然语言即可；留空则先复述当前状�
 
 ## Delegation
 
-用 Skill 工具调用 **`prd-workshop`** 技能，把上述 Arguments 作为用户意图交给它处理。
+用 Skill 工具调用 **`valkyrja-prd`** 技能，把上述 Arguments 作为用户意图交给它处理。
 
 - **不要在本文件里判断该走哪个动作。** 动作路由由 SKILL.md 的意图路由表决定，
   那里是唯一的路由权威——本命令只负责把请求转进去。

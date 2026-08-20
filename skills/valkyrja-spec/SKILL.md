@@ -1,9 +1,9 @@
 ---
-name: openspec-development
+name: valkyrja-spec
 description: OpenSpec 开发治理层——把已发布 PRD 转为 requirement baseline，裁决 change 划分，校验 PRD↔spec 双向追溯，并为归档把关。当用户要基于已发布 PRD 开始开发、建立需求基线、拆分 OpenSpec change、检查需求覆盖与追溯、开始实现某个 change、或准备归档某个 change 时，必须使用本技能。即使用户只是随口说"PRD 定稿了可以开工了"、"这版需求拆成几个 change"、"看看哪些需求还没做"、"开始开发这个 change"、"这个 change 能归档吗"、"实现有没有跑偏需求"，只要上下文涉及 openspec/ 工作区或 Released PRD 的下游消费，都应触发本技能。
 ---
 
-# OpenSpec Development（开发治理层）
+# Valkyrja Spec（OpenSpec 开发治理层）
 
 本技能把**已发布 PRD** 转为可追溯的 OpenSpec 开发流。
 它是一个**治理编排层**：标准的 propose / apply / archive 由官方 OpenSpec skill 与 CLI 承担，
@@ -14,7 +14,7 @@ description: OpenSpec 开发治理层——把已发布 PRD 转为 requirement b
 1. **唯一输入是 `prd/releases/vX.Y.md`。** `prd/current.md` 与五类源目录是上游内部实现，
    一律不读；只可沿 PRD 中需求块的 `Sources:` 显式回溯被列出的那些文件。
 2. **本技能不铸造任何 ID，包括 Q。** FRID（见下）与 Q 的编号空间均属上游。
-   缺口记为**无编号的「待上游澄清项」**，回流上游由 prd-workshop 铸 Q。
+   缺口记为**无编号的「待上游澄清项」**，回流上游由 valkyrja-prd 铸 Q。
    （上游 Q 编号靠扫描 initiative 内 DISC/PRD/STATUS.md 取最大号 +1，
    基线文件不在其扫描范围内——下游铸 Q 会导致上游**静默撞号**。）
 3. **只提取、解释、标记冲突，不新增需求。** 发现缺失或矛盾时提问，不静默补充。
@@ -121,7 +121,7 @@ openspec/                                      # CLI 拥有，本技能只读或
 
 基线落点的理由（**不要改回去**）：不放 `openspec/`——那是 CLI 拥有的 vendor 目录，
 未来版本可能对未知子目录赋予含义或在 `doctor`/`validate` 中报警；
-不放 `initiatives/<slug>/`——该树由 prd-workshop 拥有，其 check 会把外来文件判为不合契约，
+不放 `initiatives/<slug>/`——该树由 valkyrja-prd 拥有，其 check 会把外来文件判为不合契约，
 且基线是**下游解释**，不属于上游需求工作区。
 
 **不得征用 `.openspec.yaml` 的 `initiative:` 字段**承载 initiative 关联——
@@ -248,7 +248,7 @@ RENAMED    addressed = 主 spec 中 FROM 所指 Requirement 的 Sources
 
 ## 特权动作握手
 
-沿用与 prd-workshop 一致的结构：识别意图后**不直接落盘** → 完整回显将要发生的事 →
+沿用与 valkyrja-prd 一致的结构：识别意图后**不直接落盘** → 完整回显将要发生的事 →
 等用户明确回复"确认"（或同义表达）后才写。
 语气含疑问或犹豫（"感觉可以归档了？"）→ 视为倾向，回复"可记录为倾向，尚未执行"。
 
@@ -579,7 +579,7 @@ trace 一律 ERROR，除非基线「例外记录」中已有对该 change 的显
 delta 正确性直到归档阶段才由合并逻辑检查。本技能在 trace 中显式调用，
 把校验前移到 apply 之前。
 
-## 上游接口（对 prd-workshop 的消费约定）
+## 上游接口（对 valkyrja-prd 的消费约定）
 
 - 消费的唯一 API 是 `docs/product/initiatives/<slug>/prd/releases/vX.Y.md`。
 - 回溯只允许沿需求块 `Sources:` 列出的 ID 读取**被列出的那些文件**；

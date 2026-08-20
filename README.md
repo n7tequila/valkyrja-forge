@@ -25,11 +25,11 @@ This workflow solves the first with the **filesystem**, the second with **privil
 ```
 Loose discussion (human + AI, many rounds)
       │
-      │  prd-workshop
+      │  valkyrja-prd
       ▼
 Released PRD  ──────────────────── the product API: the only thing downstream may consume
       │
-      │  openspec-development
+      │  valkyrja-spec
       ▼
 Requirement Baseline (per-requirement rulings on how it lands)
       │
@@ -58,10 +58,10 @@ Any requirement can be traced backward to *why it exists*, and any released requ
 
 | Skill | Responsibility | Status |
 |---|---|---|
-| **prd-workshop** | Discuss / decide / import / synthesize / release a PRD | Proven end-to-end on a real project |
-| **openspec-development** | Consume a Released PRD, drive the OpenSpec development loop | Release candidate — **not yet run end-to-end** |
+| **valkyrja-prd** | Discuss / decide / import / synthesize / release a PRD | Proven end-to-end on a real project |
+| **valkyrja-spec** | Consume a Released PRD, drive the OpenSpec development loop | Release candidate — **not yet run end-to-end** |
 
-### prd-workshop
+### valkyrja-prd
 
 Governs loose discussion into traceable product state. Eight actions: `discuss`, `decide`, `import`, `bootstrap`, `status`, `synthesize`, `release`, `check`. You never type an action name — the skill routes on what you say. `decide` and `release` are privileged and require explicit human confirmation.
 
@@ -80,7 +80,7 @@ docs/product/initiatives/<slug>/
     └── releases/vX.Y.md   # frozen on release; the only downstream-consumable API
 ```
 
-### openspec-development
+### valkyrja-spec
 
 A governance layer. Standard propose / apply / archive are delegated to the official OpenSpec skills and CLI; this skill only does what they don't and shouldn't. Six actions:
 
@@ -147,7 +147,7 @@ scripts/install-skills.sh --project --force
 
 # Install one skill only (slash commands are skipped in this mode,
 # so a command can never point at a skill that isn't installed)
-scripts/install-skills.sh --project prd-workshop
+scripts/install-skills.sh --project valkyrja-prd
 
 # Preview and inspect
 scripts/install-skills.sh --project --dry-run
@@ -158,9 +158,9 @@ Before installing, each skill is validated: `SKILL.md` must exist and its frontm
 
 ### Requirements
 
-`prd-workshop` has no external dependencies.
+`valkyrja-prd` has no external dependencies.
 
-`openspec-development` needs the [OpenSpec](https://github.com/Fission-AI/OpenSpec) CLI ≥ 1.9.0:
+`valkyrja-spec` needs the [OpenSpec](https://github.com/Fission-AI/OpenSpec) CLI ≥ 1.9.0:
 
 ```bash
 npm install -g @fission-ai/openspec
@@ -196,10 +196,10 @@ valkyrja-forge/
 ├── scripts/
 │   └── install-skills.sh          # installs skills + commands
 └── skills/
-    ├── prd-workshop/
+    ├── valkyrja-prd/
     │   ├── SKILL.md
     │   └── templates/             # decision / discussion / prd / status
-    └── openspec-development/
+    └── valkyrja-spec/
         ├── SKILL.md
         └── templates/             # baseline / spec-delta / config-injection
 ```
@@ -208,8 +208,8 @@ valkyrja-forge/
 
 ## Status and next steps
 
-- `prd-workshop` has been validated on a real project; the PRD it produced was good enough to feed straight into development.
-- `openspec-development` has been through several rounds of review and revision, and its format contracts are all empirically verified against OpenSpec v1.9.0 (the `Sources:` line does not trip `validate`, survives the merge into the main spec, and is machine-extractable). **The full pipeline has not yet had a single real end-to-end run.**
+- `valkyrja-prd` has been validated on a real project; the PRD it produced was good enough to feed straight into development.
+- `valkyrja-spec` has been through several rounds of review and revision, and its format contracts are all empirically verified against OpenSpec v1.9.0 (the `Sources:` line does not trip `validate`, survives the merge into the main spec, and is machine-extractable). **The full pipeline has not yet had a single real end-to-end run.**
 
 Planned:
 

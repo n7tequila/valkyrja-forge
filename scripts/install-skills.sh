@@ -34,7 +34,7 @@
 # 示例:
 #   scripts/install-skills.sh --project                # 装全部到当前项目
 #   scripts/install-skills.sh --system --force           # 装全部到系统级，覆盖旧版本
-#   scripts/install-skills.sh --project prd-workshop     # 只装指定 skill 到当前项目
+#   scripts/install-skills.sh --project valkyrja-prd     # 只装指定 skill 到当前项目
 #   scripts/install-skills.sh --system --list             # 查看系统级已装了哪些 skill
 #   scripts/install-skills.sh --project --dry-run --force # 预览覆盖安装会做什么
 

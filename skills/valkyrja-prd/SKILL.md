@@ -1,12 +1,12 @@
 ---
-name: prd-workshop
+name: valkyrja-prd
 description: 产品需求工作坊——支持跨会话的需求讨论、决策沉淀、外部文档导入与 PRD 合成发布。当用户想讨论产品需求、整理需求思路、记录或确认产品决策、导入需求文档/会议纪要/客户材料、把一批存量历史文档批量初始化进需求工作区、询问需求进展状态、生成或更新或发布 PRD 时，必须使用本技能。即使用户只是随口说"我们聊聊 XX 功能"、"这个就这么定了"、"看看还有什么没讨论的"、"整理一版需求文档"，只要上下文涉及 product/initiatives/ 工作区或产品需求演进，都应触发本技能。
 ---
 
-# PRD Workshop（产品需求工作坊）
+# Valkyrja PRD（产品需求工作坊）
 
 本技能把松散的需求讨论治理为可追溯的产品状态，并合成标准 PRD。
-它是一个**状态机 + 五个动作**，操作对象是文件系统中的 initiative 工作区。
+它是一个**状态机 + 八个动作**，操作对象是文件系统中的 initiative 工作区。
 
 ## 第一原则（宪法，8 条，优先于本文件其他一切内容）
 
@@ -272,7 +272,7 @@ TM 永远不直接产生 REQ（宪法 6）。
 
 Lint 通过或裁决后，经握手：将 `prd/current.md` 复制为 `prd/releases/vX.Y.md`（版本号由用户定，
 不与 round 绑定）；release 文件头部写入版本、日期、round；round 计数 +1；
-更新 STATUS.md；最后提醒用户：**下游 openspec-development 现在可以基于
+更新 STATUS.md；最后提醒用户：**下游 valkyrja-spec 现在可以基于
 `prd/releases/vX.Y.md` 做 baseline / rebaseline**。
 
 ## STATUS.md 规则
@@ -290,7 +290,7 @@ STATUS.md 是全系统**唯一被豁免的派生缓存**，仅为加速 Resume �
 
 模板见 `templates/status.md`。
 
-## 下游接口（对 openspec-development 的承诺）
+## 下游接口（对 valkyrja-spec 的承诺）
 
 - 本 initiative 对下游的**唯一 API 是 `prd/releases/vX.Y.md`**。
 - `prd/current.md` 与五类源目录是内部实现，下游禁止直接消费；

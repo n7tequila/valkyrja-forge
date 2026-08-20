@@ -1,0 +1,99 @@
+# 写入产品仓库 openspec/config.yaml 的片段（baseline 首次定稿时经握手写入）。
+#
+# ⚠ 只写与具体 PRD 无关的通用治理协议。
+#   绝不把某个 PRD 路径、基线路径或 DOMAIN 写进本文件 ——
+#   openspec/config.yaml 是整个 OpenSpec root 的项目级配置，
+#   一个仓库可能同时存在多个 DOMAIN 的 PRD（OWSC_DEMO / OWSC_ADMIN / …）。
+#   写死具体 PRD 会让后建 change 的绑定覆盖先建的，造成串域：
+#   DEMO 的 change 后续 apply 时会读到 ADMIN 才是需求权威。
+#   具体绑定由每个 change 自己的 proposal.md 中的
+#   "## Requirement Authority" 块承载（见 SKILL.md 契约一）。
+#   因此本片段通常只需写入一次，后续 initiative 复用同一份协议。
+#
+# 效力边界 —— 必须向用户说明，不可含糊：
+#   context 与 rules 是 prompt 级建议，不是强制。官方 skill 明确规定：
+#   与内置指令、用户显式选择或 CLI 控制值冲突时，以后者为准。
+#   本注入只降低摩擦，真正的保证来自 trace 动作的机检。
+#
+# 约束：
+#   - context 上限 50KB，超出会被警告并整体忽略
+#   - rules 的键只能是 schema 中真实存在的 artifact id
+#     （spec-driven: proposal / specs / design / tasks），无效键会被警告
+#   - operations 只接受 apply 与 archive 两个键，没有 propose 钩子
+#   - 保留文件中已有的 schema 键与用户既有内容，只增补以下字段
+#
+# YAML 格式硬要求（已实测踩坑，务必遵守）：
+#   每个 rule 条目一律用 "- |-" 块标量书写，正文另起一行缩进。
+#   不要写成裸的多行普通标量 —— 正文中的 "Sources:" 等冒号会被 YAML
+#   误判为隐式键，导致整个 config.yaml 解析失败并被**静默忽略**
+#   （CLI 只打一行 warning，context 与 rules 全部不生效，表面看不出异常）。
+#   写入后必须实跑 `openspec instructions specs --change <任一change> --json`
+#   确认 context 与 rules 确已出现在返回中。
+
+schema: spec-driven
+
+context: |
+  本项目采用 Released PRD 作为产品需求的唯一权威来源。
+
+  每个 OpenSpec change 必须在 proposal.md 中声明自己的
+  "## Requirement Authority" 块，包含三行：
+    PRD-Release:   该 change 依据的已发布 PRD 路径
+    Baseline:      对应的需求基线路径
+    Covered-FRIDs: 本 change 覆盖的正式需求 ID（REQ / BR / SEC / NFR）
+
+  该块是本 change 的需求边界。不得从其他 PRD、其他 initiative
+  或上游 discovery 文档（requirements / discussions / tech-memos）扩展需求。
+
+  PRD 与基线中已记录的范围、验收标准与已决事项，不得在 propose 阶段重新追问。
+  如确有冲突或缺口，记为待澄清项并停下询问人类，
+  不得自行补充需求，也不得静默收窄范围。
+
+rules:
+  proposal:
+    - |-
+      proposal 必须包含 "## Requirement Authority" 一节，
+      含 PRD-Release、Baseline、Covered-FRIDs 三行，键名与格式照抄交接单。
+    - |-
+      Capabilities 一节必须与需求基线中本 change 的 capability 划分一致，
+      不得在此另行决策 capability 的拆分或归属。
+    - |-
+      不得引入 Covered-FRIDs 之外的需求。
+
+  specs:
+    - |-
+      每个 "### Requirement:" 标题的下一行必须是
+      "Sources: <FRID>[, <FRID>...]"，单行逗号分隔。
+    - |-
+      Sources 中的 ID 只能取自本 change proposal 的 Covered-FRIDs，
+      且类型只能是 REQ / BR / SEC / NFR，不得直接引用 RN / DEC / TM。
+    - |-
+      MODIFIED 时必须保留主 spec 中已有的全部 Sources ID，只可追加不可删除；
+      已被上游标记 DEPRECATED 的历史 ID 同样保留，那是追溯凭证。
+    - |-
+      Scenario 的 WHEN/THEN 只描述可观察行为，不得出现具体技术名词
+      （库、框架、存储引擎、协议实现等）。技术选型写入 design.md。
+    - |-
+      发现 Covered-FRIDs 未覆盖的缺口时停下询问，不得自行扩展范围。
+
+  design:
+    - |-
+      采纳自 PRD 的强制实现约束必须标注其决策依据，
+      格式：依据: DEC-<DOMAIN>-NNN。
+    - |-
+      无 DEC 背书的技术表述只能作为候选方案，
+      须注明「无决策背书，不构成约束」。
+
+# 可选：执行端的建议（同样是建议，archive 查询失败时会被静默跳过，
+# 因此绝不能把治理门禁建在这里 —— 门禁由本技能的 trace 动作把关）
+operations:
+  apply:
+    guidance:
+      - |-
+        实现范围以本 change 的 spec 为准；发现需要超出 spec 的工作时，
+        出示增量并暂停，不要静默收窄或延后已规定的行为。
+  archive:
+    guidance:
+      - |-
+        归档前应已通过 openspec-development 的 trace（pre-archive）放行。
+      - |-
+        若触发 capability 退休删除，须单独高亮并给出 git 恢复命令。

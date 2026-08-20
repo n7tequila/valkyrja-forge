@@ -112,6 +112,9 @@ docs/architecture/
 - **契约版本**：每份契约 frontmatter 含 `contract / version / date`，version 为
   递增整数，变更追加 Changelog 节说明破坏性；消费方（design.md）引用格式为
   `契约名@版本`（如 `content-package@2`）。
+- **契约权威标记**：接口权威在外部系统（本仓只能记录自己的理解）时，
+  frontmatter 另标 `authority: external`——版本号语义变为「我方理解的第 N 版」，
+  对方变更只能被动发现。无此标记默认权威在本仓。
 - **采纳副本指纹**：`conventions/` 下每份文件 frontmatter 含
   `adopted-from`（catalog 条目 id + 日期版本）与 `adopted-by`（ADEC id）。
   正文是就地修改后的连贯项目版；**改了什么、为什么改，记在 ADEC 里**，
@@ -294,6 +297,11 @@ catalog 更新**不自动同步**；`check` 发现 `adopted-from` 版本落后�
 定义或修订共享接口契约。新契约按 `templates/contract.md`；修订时：
 版本号 +1、Changelog 记破坏性、回显消费方影响。契约描述**接口形状与语义**
 （字段、格式、版本兼容规则），不写实现——实现属各 change 的 design/代码。
+
+**`authority: external` 类契约**（接口权威在外部系统，如对方的 CMS/收单后台）：
+修订动因只能是「我方理解变化」或「对方实际行为变化」，不是我方裁决；
+握手回显不列对对方的破坏性影响（我方无权裁决对方），改列**本仓内消费方**
+需要跟进的适配点；不得对其做「我方可演进契约」式的版本规划。
 
 ### status（只读）
 现场扫描计算：有效 ADEC / superseded 链、契约清单与各自版本、已采纳约定

@@ -3,6 +3,9 @@ contract: <kebab-case 契约名>      # 消费方引用格式：<契约名>@<ver
 version: 1                         # 递增整数，每次修订 +1
 date: <YYYY-MM-DD>
 adec: ADEC-<DOMAIN>-<NNN>          # 定义/最近一次修订本契约的决策
+authority:                         # 权威在外部系统时填 external（版本号=我方理解的
+                                   # 第 N 版，修订动因只能是理解或对方行为变化）；
+                                   # 权威在本仓则删除本行
 ---
 
 # 契约：<名称>

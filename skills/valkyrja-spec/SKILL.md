@@ -476,6 +476,13 @@ propose 完成
   **必须用契约三的 `addressed()`，不得退化为 Sources 并集**——后者会让
   MODIFIED 的历史 ID 永久误报、且让 REMOVED / RENAMED 型 change 永远无法放行）
 - V4.7 `.openspec.yaml` 含 `skip_specs: true` → ERROR，除非基线「例外记录」中已有裁决
+- V4.8 **design.md 依据标注的引用完整性**：扫描 `依据: DEC-*` / `依据: ADEC-*`，
+  被引决策必须真实存在（DEC → initiative 的 `decisions/`；ADEC →
+  `docs/architecture/decisions/`）→ 幽灵引用 ERROR；被引决策已 superseded → WARNING。
+  三个不做：不查「该标注而未标注」（机器判不出一句话是否约束，留给 config 注入）；
+  不查 DEC 范围覆盖（语义判断，维持人工）；无架构工作区不特殊豁免（引了不存在的
+  ADEC 本来就是幽灵引用）。定性：**引用完整性**检查（与 Sources 同族，防 AI 编造
+  权威），不是技术正确性检查——后者属 linter/架构测试/CI，本技能不越界。
 
 **V5 委托原生**
 - V5.1 `openspec validate <change> --type change --strict --json` 退出码 0
@@ -646,6 +653,17 @@ trace 一律 ERROR，除非基线「例外记录」中已有对该 change 的显
 **validate 前移**（纯增益、零冲突）：官方 skill 从不调用 `openspec validate`，
 delta 正确性直到归档阶段才由合并逻辑检查。本技能在 trace 中显式调用，
 把校验前移到 apply 之前。
+
+## 与 valkyrja-arch 的接口（技术地基的消费约定）
+
+- design.md 的依据标注三态：`依据: DEC-*`（产品决策强制）、`依据: ADEC-*`
+  （技术决策强制）、无依据（候选方案，须注明「无决策背书，不构成约束」）。
+  V4.8 校验其引用完整性。
+- 共享接口契约引用格式 `契约名@版本`（如 `content-package@1`），
+  契约本体在 `docs/architecture/contracts/`。
+- `docs/architecture/` 归 valkyrja-arch 治理，本技能**只读不写**；
+  发现工程内部决策缺位（design.md 被迫现编约定）时，提示用户走
+  valkyrja-arch 补地基，不代铸 ADEC。
 
 ## 上游接口（对 valkyrja-prd 的消费约定）
 

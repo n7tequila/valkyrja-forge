@@ -13,6 +13,13 @@
 文件命名：`conv-<主题>[-<stack>].md`，通用条目省略 stack 段
 （如 `conv-idempotency.md`、`conv-db-relational-postgres.md`）。
 
+**多源**：本目录是**内置源**。私有源放 `~/.claude/valkyrja/catalog/<源名>/`
+（每个子目录一个源，条目格式同构；私有 catalog 仓 clone/软链到此，
+不受 skill 升级覆盖）。私有源是 `local-only` 条目全文的家——公开仓只放 stub，
+全文在私有源，许可允许时可 adopt 入私有项目仓（`license-unknown` 仍不得
+adopt 入任何仓）。私有源副本的指纹带源标识：
+`adopted-from: <条目id>@<版本> (source: <源名>)`；无 source 段即内置源。
+
 **分层条目**：框架级通用条目与具体库的绑定增量分开成两条
 （如 `conv-ts-vue` 通用层 + `conv-ts-vue-element` 的 Element Plus 增量）。
 绑定条目 frontmatter 以 `requires: <基础条目 id>` 声明依赖，

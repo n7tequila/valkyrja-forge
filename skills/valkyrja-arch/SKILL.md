@@ -285,9 +285,10 @@ Sources 链规则），**但权威不传递**——引用 DEC 不等于本决策
 从 catalog 选用约定的完整管线（不得跳步）：
 
 ```
-读 catalog 条目 → 核对许可证 status（license-unknown 不得采纳入仓）
+读 catalog 条目（内置或私有源，多源规则见 catalog 节）
+→ 核对许可证 status（license-unknown 不得采纳入仓；local-only 只可入私有项目仓）
 → 提议项目化修改（增/删/改，逐条）→ 握手 → 落盘 conventions/（自包含副本
-+ 指纹 frontmatter）→ 铸 ADEC 记录采纳理由与全部偏离
++ 指纹 frontmatter，私有源带 source 标识）→ 铸 ADEC 记录采纳理由与全部偏离
 ```
 
 catalog 更新**不自动同步**；`check` 发现 `adopted-from` 版本落后只提示。
@@ -311,7 +312,9 @@ catalog 更新**不自动同步**；`check` 发现 `adopted-from` 版本落后�
 ### check（只读）
 对照本 SKILL.md 契约体检：ID 正则与编号连续性；ADEC frontmatter 完备性与
 superseded 链完整性（指向的 ID 真实存在）；契约版本与 Changelog 一致性；
-采纳副本指纹完备性；`adopted-from` 版本落后（**仅提示**）；
+采纳副本指纹完备性；`adopted-from` 版本落后（**仅提示**；带 `(source: …)`
+指纹的按源名在 `~/.claude/valkyrja/catalog/` 解析，源不可达**显式报
+「跳过（源不可达）」**，不得静默通过）；
 契约消费方引用落后版本（**仅提示**，升级是消费方 change 的决定）；
 inventory 条目所指实现的存在性（记录了路径的条目）；
 **奠基性决策齐备性**——`foundational: stack` 与 `foundational: layout`
@@ -344,6 +347,18 @@ inventory 条目所指实现的存在性（记录了路径的条目）；
 位于本技能 `references/conventions/`，**按需加载，不随 SKILL.md 进入上下文**。
 条目按 concern × stack 两轴组织，frontmatter 契约与许可证纪律见
 [references/conventions/README.md](references/conventions/README.md)。
+
+**多源（D12 切片一）**：除内置 catalog 外，`~/.claude/valkyrja/catalog/<源名>/`
+的每个子目录是一个**私有源**——条目格式与内置完全同构，把私有 catalog 仓
+clone 或软链到该处即可（该位置不受 skill 升级覆盖）。adopt 亦接受显式源路径。
+
+- **指纹带源**：私有源副本写 `adopted-from: <条目id>@<版本> (source: <源名>)`；
+  无 `(source: …)` 即内置 catalog——既有指纹向后兼容，不需迁移。
+- check 按源名解析比对版本；**源不可达显式报「跳过（源不可达）」**，
+  不得静默通过（D12 问题③的降级语义随本切片生效）。
+- 许可证纪律在多源下的精化：`license-unknown` 仍**不得 adopt 入任何仓**；
+  `local-only` 的准确含义是**不得公开分发**（公开仓只放 stub）——其全文
+  住私有源，在许可允许下（如自有内容）**可 adopt 入私有项目仓**。
 核心纪律（宪法 8 + D6）：
 - 出处四字段（source / license / modified / status）**收集时**标注，缺一不入库；
 - `license-unknown` / `local-only` 条目公开仓只放 stub，且**不得被 adopt 入仓**；

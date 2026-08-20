@@ -13,6 +13,12 @@
 文件命名：`conv-<主题>[-<stack>].md`，通用条目省略 stack 段
 （如 `conv-idempotency.md`、`conv-db-relational-postgres.md`）。
 
+**分层条目**：框架级通用条目与具体库的绑定增量分开成两条
+（如 `conv-ts-vue` 通用层 + `conv-ts-vue-element` 的 Element Plus 增量）。
+绑定条目 frontmatter 以 `requires: <基础条目 id>` 声明依赖，
+**采纳绑定条目前须先采纳其基础层**；不用该库的项目只采通用层，
+不必带着删改负担采一条混合条目。
+
 ## 条目 frontmatter（缺一不得入库）
 
 ```yaml
@@ -36,7 +42,8 @@ status: <redistributable | local-only | license-unknown>
 3. 第三方摘编（如 MIT 来源）：frontmatter 记全出处 + 仓库根 `NOTICE.md`
    集中保留原始版权声明。
 4. **发布门禁**：条目推公开仓前经人工检查（特权握手），检查单——
-   ①业务细节已剥离（无客户名/领域错误码/内部路径）；②四字段齐全且
+   ①业务细节已剥离（无客户名/**内部项目名**/领域错误码/内部路径；
+   自有来源统一以「内部项目」指代，不因项目属自有而豁免）；②四字段齐全且
    `redistributable`；③摘编条目原始版权声明未丢。
 
 ## 待编条目（等真实缺口驱动，勿提前写）

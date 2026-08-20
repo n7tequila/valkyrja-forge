@@ -3,7 +3,7 @@ id: conv-java-ddd
 concern: 架构风格
 stack: java-spring
 version: 2026-08-20
-source: 自有（作者 java-domain-driven-design skill 提供方法论；十条强规则提炼自 内部项目 评审回归）
+source: 自有（作者 java-domain-driven-design skill 提供方法论；十条强规则提炼自内部项目评审回归）
 license: 自有
 modified: 提炼泛化
 status: redistributable

@@ -3,7 +3,7 @@ id: conv-audit-writes
 concern: 横切
 stack: common
 version: 2026-08-20
-source: 自撰（不可篡改表 + 时序 + 测试三件套的组合提炼自 内部项目 审计子系统实战）
+source: 自撰（不可篡改表 + 时序 + 测试三件套的组合提炼自内部项目审计子系统实战）
 license: 自有
 modified: 提炼泛化
 status: redistributable

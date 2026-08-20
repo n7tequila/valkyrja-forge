@@ -3,7 +3,7 @@ id: conv-auth-tokens
 concern: 横切
 stack: common
 version: 2026-08-20
-source: 自撰（服务端约束提炼自 内部项目 后端规范；前端生命周期见 conv-frontend-api-layer）
+source: 自撰（服务端约束提炼自内部项目后端规范；前端生命周期见 conv-frontend-api-layer）
 license: 自有
 modified: 提炼泛化
 status: redistributable

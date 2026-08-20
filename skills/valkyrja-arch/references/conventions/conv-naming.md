@@ -3,7 +3,7 @@ id: conv-naming
 concern: 横切
 stack: common
 version: 2026-08-20
-source: 自撰（综合作者既有全局规则与 内部项目 各层命名约定）
+source: 自撰（综合作者既有全局规则与内部项目各层命名约定）
 license: 自有
 modified: 否
 status: redistributable

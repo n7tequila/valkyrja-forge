@@ -3,7 +3,7 @@ id: conv-spring-testing
 concern: 横切
 stack: java-spring
 version: 2026-08-20
-source: 自有（内部项目 测试要求泛化，每条对应一类假阳性/假绿事故）
+source: 自有（内部项目测试要求泛化，每条对应一类假阳性/假绿事故）
 license: 自有
 modified: 提炼泛化
 status: redistributable

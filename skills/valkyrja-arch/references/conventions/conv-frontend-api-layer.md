@@ -3,7 +3,7 @@ id: conv-frontend-api-layer
 concern: 接口契约
 stack: typescript
 version: 2026-08-20
-source: 自有（内部项目 前端 API 层规范泛化；单飞刷新与分页泛型均为真实缺陷驱动）
+source: 自有（内部项目前端 API 层规范泛化；单飞刷新与分页泛型均为真实缺陷驱动）
 license: 自有
 modified: 提炼泛化
 status: redistributable

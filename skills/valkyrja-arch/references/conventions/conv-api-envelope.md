@@ -3,7 +3,7 @@ id: conv-api-envelope
 concern: 接口契约
 stack: common
 version: 2026-08-20
-source: 自有（作者 api-design skill + 内部项目 api-standard/api-code-standard 合并提炼）
+source: 自有（作者 api-design skill 与内部项目 API 规范合并提炼）
 license: 自有
 modified: 提炼泛化
 status: redistributable

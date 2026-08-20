@@ -3,7 +3,7 @@ id: conv-spring-layering
 concern: 架构风格
 stack: java-spring
 version: 2026-08-20
-source: 自有（内部项目 后端编码规范泛化，多条为线上/评审事故驱动）
+source: 自有（内部项目后端编码规范泛化，多条为线上/评审事故驱动）
 license: 自有
 modified: 提炼泛化
 status: redistributable

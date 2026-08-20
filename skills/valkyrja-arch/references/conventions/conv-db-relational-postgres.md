@@ -3,7 +3,7 @@ id: conv-db-relational-postgres
 concern: 数据
 stack: postgres
 version: 2026-08-20
-source: 自有（内部项目 db-standard 泛化，多条规则由真实生产/测试事故驱动）
+source: 自有（内部项目db-standard 泛化，多条规则由真实生产/测试事故驱动）
 license: 自有
 modified: 提炼泛化
 status: redistributable

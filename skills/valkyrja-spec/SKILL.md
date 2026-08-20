@@ -349,6 +349,17 @@ change 覆盖（V4.3 拦截）。
 
 基于基线提出 change 划分方案，产出**交接单**——**不自动批量建 change**。
 
+**划分纪律：一条 FRID 的全部行为点应落在同一个 change 内。**
+覆盖对账（V6.2）的粒度是 FRID，不是行为点——**一条 FRID 只要在主 spec 中出现过一次
+就被计为 Implemented**。因此若把一条 FRID 的行为点拆到两个 change，先归档的那个
+会让它立刻显示为「已覆盖」，而另一半其实还没做，形成静默的部分完成。
+跨 capability 不是问题（一个 change 可含多个 capability 的 delta），
+把同一条 FRID 拆到多个 change 才是。
+
+确需跨 change 时（如两半工作量悬殊、或分属不同团队排期）：必须在基线的
+Change 划分中**显式标注该 FRID 为跨 change**，并知悉 V6.2 会在部分完成时高估其覆盖；
+此时应在 status 报告中人工补充说明，不得依赖机检发现。
+
 官方 propose 每次只建一个 change，且产出 artifacts 后必须停下等待新的用户回合
 （planning boundary）。本技能**不试图绕过**这一约束——它与「人保留决策权」同向。
 因此 N 路拆分＝N 个回合，交接单落盘保证会话中断不丢失。

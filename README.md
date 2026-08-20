@@ -1,176 +1,200 @@
 # Valkyrja Forge
 
-把「松散的需求讨论」变成「可追溯的 AI 编码」的一套 Claude Code 技能。
+**English** | [简体中文](README.zh-CN.md)
 
-核心主张：**AI 全程参与需求整理与代码实现，但每一步都可追溯、可审计，且不被 AI 悄悄篡改语义。**
+A pair of Claude Code skills that turn loose requirement discussions into traceable AI-written code.
 
----
-
-## 为什么需要它
-
-直接让 AI 读一份需求文档然后开始写代码，会遇到三个反复出现的问题：
-
-1. **对话不是记忆。** 会话一断，上一轮讨论出的结论全部消失，下次从头再来。
-2. **AI 会静默补全。** 需求里没写清楚的地方，AI 倾向于自行假设一个合理答案继续往下写，
-   而不是停下来问——于是产品语义在无人察觉时被改写。
-3. **做完了不知道做全没有。** 功能跑通了，但当初那条安全需求、那条性能指标有没有落地，
-   没有任何机制能回答。
-
-这套工作流用**文件系统**解决第一个问题，用**特权动作握手**解决第二个，
-用**双向追溯链**解决第三个。
+The core claim: **AI participates in the whole loop — from gathering requirements to writing code — but every step stays auditable, and product semantics never get quietly rewritten.**
 
 ---
 
-## 流水线
+## Why this exists
+
+Handing an AI a requirements document and telling it to start coding runs into the same three problems every time:
+
+1. **Conversation is not memory.** End the session and every conclusion you reached evaporates. Next time you start over.
+2. **AI silently fills the gaps.** Where a requirement is vague, the model tends to assume a plausible answer and keep going rather than stopping to ask — so product semantics get rewritten without anyone noticing.
+3. **"Done" doesn't mean complete.** The feature works, but whether that one security requirement or performance target actually landed is a question nothing can answer.
+
+This workflow solves the first with the **filesystem**, the second with **privileged-action handshakes**, and the third with a **bidirectional traceability chain**.
+
+---
+
+## The pipeline
 
 ```
-松散讨论（人 + AI 多轮对话）
+Loose discussion (human + AI, many rounds)
       │
       │  prd-workshop
       ▼
-Released PRD  ──────────────────────── 产品 API（下游唯一可消费的契约）
+Released PRD  ──────────────────── the product API: the only thing downstream may consume
       │
       │  openspec-development
       ▼
-Requirement Baseline（需求基线：逐条裁决如何落地）
+Requirement Baseline (per-requirement rulings on how it lands)
       │
       ▼
-Change 划分 ──→ OpenSpec change（proposal / specs / design / tasks）
+Change decomposition ──→ OpenSpec change (proposal / specs / design / tasks)
       │
-      │  官方 OpenSpec：apply → verify
+      │  official OpenSpec: apply → verify
       ▼
-trace（PRD ↔ spec 追溯校验）→ archive
+trace (PRD ↔ spec reconciliation) → archive
       │
       ▼
-openspec/specs/（系统当前行为的真相源）
+openspec/specs/  (source of truth for what the system does today)
 ```
 
-追溯链是贯穿始终的那根线：
+The traceability chain is the thread running through all of it:
 
 ```
-RN / DEC  →  PRD 的 REQ/BR/SEC/NFR  →  OpenSpec Requirement 的 Sources:  →  主 spec  →  代码
+RN / DEC  →  PRD's REQ/BR/SEC/NFR  →  OpenSpec Requirement's Sources:  →  main spec  →  code
 ```
 
-任何一条需求，都能反查「它为什么存在」；任何一条已发布需求，
-都能正查「它落地了没有」。
+Any requirement can be traced backward to *why it exists*, and any released requirement forward to *whether it shipped*.
 
 ---
 
-## 两个技能
+## The two skills
 
-| 技能 | 职责 | 状态 |
+| Skill | Responsibility | Status |
 |---|---|---|
-| **prd-workshop** | 讨论 / 决策 / 导入 / 合成 / 发布 PRD | 已在真实项目跑通完整流程 |
-| **openspec-development** | 消费 Released PRD，驱动 OpenSpec 开发闭环 | Release Candidate，**尚未端到端验证** |
+| **prd-workshop** | Discuss / decide / import / synthesize / release a PRD | Proven end-to-end on a real project |
+| **openspec-development** | Consume a Released PRD, drive the OpenSpec development loop | Release candidate — **not yet run end-to-end** |
 
 ### prd-workshop
 
-把松散讨论治理为可追溯的产品状态。七个动作：`discuss`、`decide`、`import`、
-`bootstrap`、`status`、`synthesize`、`release`、`check`。
-不需要输入动作名，按话语自动路由；`decide` 与 `release` 是特权动作，必须人类显式确认。
+Governs loose discussion into traceable product state. Eight actions: `discuss`, `decide`, `import`, `bootstrap`, `status`, `synthesize`, `release`, `check`. You never type an action name — the skill routes on what you say. `decide` and `release` are privileged and require explicit human confirmation.
 
-工作区结构：
+Workspace layout:
 
 ```
 docs/product/initiatives/<slug>/
-├── STATUS.md              # 唯一的派生缓存，其余状态一律现算
-├── requirements/          # RN-*   规范化需求条目
-├── discussions/           # DISC-* 讨论话题，按话题建档、追加式
-├── decisions/             # DEC-*  决策，一决策一文件
-├── tech-memos/            # TM-*   技术讨论（不产生需求，只被 DEC 引用）
-├── others/originals/      # 外部原始文件，只读不改
+├── STATUS.md              # the only derived cache; everything else is recomputed
+├── requirements/          # RN-*   normalized requirement notes
+├── discussions/           # DISC-* one file per topic, append-only
+├── decisions/             # DEC-*  one file per decision
+├── tech-memos/            # TM-*   technical notes (never create requirements)
+├── others/originals/      # external source files, read-only
 └── prd/
-    ├── current.md         # 可反复重新生成的草稿
-    └── releases/vX.Y.md   # 发布即冻结，下游唯一可消费的产品 API
+    ├── current.md         # regenerable draft
+    └── releases/vX.Y.md   # frozen on release; the only downstream-consumable API
 ```
 
 ### openspec-development
 
-治理编排层——标准的 propose / apply / archive 委托给官方 OpenSpec 技能与 CLI，
-本技能只做它们不做也不该做的事。六个动作：
+A governance layer. Standard propose / apply / archive are delegated to the official OpenSpec skills and CLI; this skill only does what they don't and shouldn't. Six actions:
 
-| 动作 | 职责 |
+| Action | Responsibility |
 |---|---|
-| `baseline` | 解析 release，逐条裁决处置（直通/拆分/延期/非软件/冲突） |
-| `decompose` | 裁决 change 划分，产出交接单 |
-| `trace` | PRD ↔ spec 双向追溯校验，**有放行语义**（apply 前与归档前强制） |
-| `status` | 现算覆盖分账 |
-| `check` | 全工作区契约体检 |
-| `rebaseline` | 新 release 的增量基线（digest 比对，五态分类） |
+| `baseline` | Parse a release, rule on each requirement (direct / split / deferred / non-software / conflicted) |
+| `decompose` | Decide the change breakdown, emit a handover sheet |
+| `trace` | Bidirectional PRD ↔ spec reconciliation, **gates releases** (mandatory before apply and before archive) |
+| `status` | Recomputed coverage ledger |
+| `check` | Whole-workspace contract audit |
+| `rebaseline` | Incremental baseline for a new release (digest comparison, five-state classification) |
 
-产物落在 `docs/product/baselines/<DOMAIN>-vX.Y.md`。
+Output lands in `docs/product/baselines/<DOMAIN>-vX.Y.md`.
 
-> 注意 `trace` 与官方 `verify` 是两种不同的一致性：
-> `trace` 管「PRD ↔ spec」，官方 `verify` 管「实现代码 ↔ change artifacts」，互补不互替。
+> `trace` and the official `verify` check two different kinds of consistency:
+> `trace` covers **PRD ↔ spec**, official `verify` covers **implementation code ↔ change artifacts**.
+> They complement each other; neither substitutes for the other.
 
 ---
 
-## 安装
+## Slash commands
 
-技能通过脚本安装到**目标产品仓库**（本仓库只是技能源码仓）：
+Two entry points, namespaced for cohesion:
+
+```
+/valkyrja:prd    <anything, in natural language>
+/valkyrja:spec   <anything, in natural language>
+```
+
+They are deliberately thin — pure delegation with no routing logic of their own, so the intent-routing table inside each `SKILL.md` stays the single source of truth. Examples:
+
+```
+/valkyrja:prd   let's talk about pausing the recording
+   → routes to discuss
+
+/valkyrja:prd   ok, that's decided
+   → routes to decide (privileged, requires handshake)
+
+/valkyrja:spec  can this change be archived?
+   → routes to trace
+```
+
+> **Slash commands are Claude Code-specific.** They are a convenience layer, not the mechanism.
+> The skills route on natural language by design, so on any other harness you can drop the commands
+> entirely, place the `skills/` directories where that tool expects them, and everything still works —
+> you just say "build the baseline" instead of `/valkyrja:spec build the baseline`.
+> `SKILL.md` itself is plain Markdown with YAML frontmatter, a format many harnesses now consume.
+
+---
+
+## Installation
+
+Skills install into your **target product repository** — this repo is only the source.
 
 ```bash
-# 装到当前项目（.claude/skills/，随仓库共享）
+# Install into the current project (.claude/, shared via the repo)
 scripts/install-skills.sh --project
 
-# 装到本机全局（~/.claude/skills/，对所有项目生效）
+# Install machine-wide (~/.claude/, applies to every project)
 scripts/install-skills.sh --system
 
-# 覆盖升级（自动备份旧版本到 .backup/）
+# Upgrade in place (old version is backed up to .backup/ automatically)
 scripts/install-skills.sh --project --force
 
-# 只装指定技能
+# Install one skill only (slash commands are skipped in this mode,
+# so a command can never point at a skill that isn't installed)
 scripts/install-skills.sh --project prd-workshop
 
-# 预览与查看
+# Preview and inspect
 scripts/install-skills.sh --project --dry-run
 scripts/install-skills.sh --project --list
 ```
 
-安装前会校验每个技能的 `SKILL.md` 存在且 frontmatter 含 `name` 与 `description`，
-不合格的跳过并报错，不影响其余技能。
+Before installing, each skill is validated: `SKILL.md` must exist and its frontmatter must carry `name` and `description`. Anything failing that is skipped with an error, without affecting the rest.
 
-### 依赖
+### Requirements
 
-`prd-workshop` 无外部依赖。
+`prd-workshop` has no external dependencies.
 
-`openspec-development` 需要 [OpenSpec](https://github.com/Fission-AI/OpenSpec) CLI ≥ 1.9.0：
+`openspec-development` needs the [OpenSpec](https://github.com/Fission-AI/OpenSpec) CLI ≥ 1.9.0:
 
 ```bash
 npm install -g @fission-ai/openspec
-openspec init --tools claude    # 在目标产品仓库执行
+openspec init --tools claude    # run inside the target product repo
 ```
 
-`openspec init` 会按当前 profile 生成官方 workflow 技能。注意官方 `core` profile
-**不含 `verify`**，而完整闭环需要它——技能的启动检测会提示这一点。
+`openspec init` generates the official workflow skills according to your current profile. Note the official `core` profile **does not include `verify`** — and the full loop needs it. The skill's preflight check will tell you.
 
 ---
 
-## 设计原则
+## Design principles
 
-贯穿两个技能，也是理解全部设计取舍的钥匙：
+These run through both skills and explain every tradeoff in the design:
 
-1. **文件系统是记忆，对话不是。** 任何未落盘的结论，下个会话视为不存在。
-2. **人保留决策权，AI 只做提取和建议。** 产品决策与发布是特权动作，
-   必须人类显式确认；AI 语气含疑问即视为倾向，不予执行。
-3. **能推导的数据不存。** 哈希、统计、覆盖率、状态一律现算，避免记录漂移。
-   唯一豁免是 `STATUS.md`，且它只存最小状态、不存任何统计字段。
-4. **ID 一旦铸造永不重编号。** 结构为 `TYPE-DOMAIN-NUMBER`；DOMAIN 是永久命名空间，
-   一经使用即冻结、跨项目全局唯一、禁止版本型命名。
-5. **WHAT 和 HOW 分离。** 需求文档只描述可观察行为；实现方案属于下游 design 层。
-   技术名词不得出现在验收场景里——否则任何重构都会破坏 spec。
-6. **格式契约先于工具。** 机器要解析的格式先手工验证，再写工具去解析它，
-   而不是反过来为不存在的文档设计 parser。
+1. **The filesystem is memory; conversation is not.** Any conclusion not written to disk does not exist next session.
+2. **Humans keep decision authority; AI only extracts and proposes.** Product decisions and releases are privileged actions requiring explicit confirmation. A hesitant phrasing counts as a leaning, not a decision.
+3. **Never store what can be derived.** Hashes, counts, coverage, status are all recomputed, so records can't drift. The single exemption is `STATUS.md`, which holds minimal state and no statistics.
+4. **IDs are never renumbered.** Structure is `TYPE-DOMAIN-NUMBER`. DOMAIN is a permanent namespace: frozen on first use, globally unique, and never version-flavored.
+5. **WHAT is separate from HOW.** Requirement documents describe observable behavior only; implementation belongs to the downstream design layer. Technology names must never appear in acceptance scenarios — otherwise any refactor breaks the spec.
+6. **Format contracts precede tooling.** Any format a machine will parse gets verified by hand first, then a parser is written against it — never the reverse.
 
 ---
 
-## 仓库结构
+## Repository layout
 
 ```
 valkyrja-forge/
-├── README.md
+├── README.md / README.zh-CN.md
+├── commands/
+│   └── valkyrja/                  # slash-command namespace → /valkyrja:*
+│       ├── prd.md
+│       └── spec.md
 ├── scripts/
-│   └── install-skills.sh          # 批量安装脚本
+│   └── install-skills.sh          # installs skills + commands
 └── skills/
     ├── prd-workshop/
     │   ├── SKILL.md
@@ -182,16 +206,21 @@ valkyrja-forge/
 
 ---
 
-## 现状与下一步
+## Status and next steps
 
-- `prd-workshop` 已用真实项目验证，产出的 PRD 质量可直接进入下游开发。
-- `openspec-development` 的协议已经过多轮评审与修订，格式契约均已对 OpenSpec v1.9.0
-  实测验证（`Sources:` 行不触发 validate、能随合并进入主 spec、可机读提取），
-  但**整条流水线尚未做过一次真实的端到端运行**。
+- `prd-workshop` has been validated on a real project; the PRD it produced was good enough to feed straight into development.
+- `openspec-development` has been through several rounds of review and revision, and its format contracts are all empirically verified against OpenSpec v1.9.0 (the `Sources:` line does not trip `validate`, survives the merge into the main spec, and is machine-extractable). **The full pipeline has not yet had a single real end-to-end run.**
 
-后续计划：
+Planned:
 
-- [ ] 用真实 PRD 跑通首次端到端：baseline → decompose → propose → trace → apply → verify → trace → archive
-- [ ] SKILL.md 拆分 reference 文件（progressive disclosure）
-- [ ] 把纯确定性检查（追溯校验、集合对账）下沉为脚本与 CI
-- [ ] CI 禁止修改已发布的 `prd/releases/**`
+- [ ] First end-to-end run against a real PRD: baseline → decompose → propose → trace → apply → verify → trace → archive
+- [ ] Split `SKILL.md` into reference files (progressive disclosure)
+- [ ] Push the purely deterministic checks (traceability, set reconciliation) down into scripts and CI
+- [ ] CI rule forbidding edits to already-released `prd/releases/**`
+- [ ] Multi-harness adapters generated from `skills/` as the single source
+
+---
+
+## License
+
+MIT

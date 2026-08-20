@@ -46,6 +46,10 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 SKILLS_SRC_DIR="${REPO_ROOT}/skills"
 
+# 斜杠命令命名空间：commands/<NS>/<名>.md 安装后即 /<NS>:<名>
+COMMAND_NS="valkyrja"
+COMMANDS_SRC_DIR="${REPO_ROOT}/commands/${COMMAND_NS}"
+
 TARGET_MODE=""            # project | system
 PROJECT_ROOT="$(pwd)"
 FORCE=0
@@ -125,8 +129,10 @@ done
 
 if [[ "$TARGET_MODE" == "system" ]]; then
   SKILLS_DEST_DIR="${HOME}/.claude/skills"
+  COMMANDS_DEST_DIR="${HOME}/.claude/commands/${COMMAND_NS}"
 else
   SKILLS_DEST_DIR="${PROJECT_ROOT}/.claude/skills"
+  COMMANDS_DEST_DIR="${PROJECT_ROOT}/.claude/commands/${COMMAND_NS}"
 fi
 
 # ---------- --list 模式 ----------
@@ -135,23 +141,38 @@ if [[ $LIST_MODE -eq 1 ]]; then
   c_step "已安装的 skill（${SKILLS_DEST_DIR}）"
   if [[ ! -d "$SKILLS_DEST_DIR" ]]; then
     c_info "目录不存在，尚未安装任何 skill。"
-    exit 0
+  else
+    found=0
+    for d in "$SKILLS_DEST_DIR"/*/; do
+      [[ -d "$d" ]] || continue
+      name="$(basename "$d")"
+      [[ "$name" == ".backup" ]] && continue
+      md="${d}SKILL.md"
+      if [[ -f "$md" ]]; then
+        desc="$(sed -n 's/^description:[[:space:]]*//p' "$md" | head -1)"
+        c_ok "${name}  —  ${desc:0:70}$( [[ ${#desc} -gt 70 ]] && echo '…' )"
+      else
+        c_warn "${name}（缺少 SKILL.md，非法安装）"
+      fi
+      found=1
+    done
+    [[ $found -eq 0 ]] && c_info "（空）"
   fi
-  found=0
-  for d in "$SKILLS_DEST_DIR"/*/; do
-    [[ -d "$d" ]] || continue
-    name="$(basename "$d")"
-    [[ "$name" == ".backup" ]] && continue
-    md="${d}SKILL.md"
-    if [[ -f "$md" ]]; then
-      desc="$(sed -n 's/^description:[[:space:]]*//p' "$md" | head -1)"
-      c_ok "${name}  —  ${desc:0:70}$( [[ ${#desc} -gt 70 ]] && echo '…' )"
-    else
-      c_warn "${name}（缺少 SKILL.md，非法安装）"
-    fi
-    found=1
-  done
-  [[ $found -eq 0 ]] && c_info "（空）"
+
+  c_step "已安装的斜杠命令（${COMMANDS_DEST_DIR}）"
+  if [[ ! -d "$COMMANDS_DEST_DIR" ]]; then
+    c_info "目录不存在，尚未安装任何命令。"
+  else
+    found=0
+    for f in "$COMMANDS_DEST_DIR"/*.md; do
+      [[ -f "$f" ]] || continue
+      name="$(basename "$f" .md)"
+      desc="$(sed -n 's/^description:[[:space:]]*//p' "$f" | head -1)"
+      c_ok "/${COMMAND_NS}:${name}  —  ${desc:0:60}$( [[ ${#desc} -gt 60 ]] && echo '…' )"
+      found=1
+    done
+    [[ $found -eq 0 ]] && c_info "（空）"
+  fi
   exit 0
 fi
 
@@ -254,6 +275,46 @@ for name in "${TO_INSTALL[@]}"; do
   fi
 done
 
-c_step "完成：安装/升级 ${installed}，跳过 ${skipped}，失败 ${failed}"
+# ---------- 安装斜杠命令 ----------
+#
+# 命令是技能的入口转接，随技能一起安装：commands/<NS>/<名>.md → /<NS>:<名>。
+# 只在「安装了全部 skill」时安装（指定单个 skill 时不装，避免命令指向未安装的技能）。
+
+cmd_installed=0
+cmd_skipped=0
+
+if [[ ${#REQUESTED_SKILLS[@]} -eq 0 && -d "$COMMANDS_SRC_DIR" ]]; then
+  c_step "斜杠命令：/${COMMAND_NS}:*（${COMMANDS_DEST_DIR}）"
+
+  [[ $DRY_RUN -eq 0 ]] && mkdir -p "$COMMANDS_DEST_DIR"
+
+  for src_cmd in "$COMMANDS_SRC_DIR"/*.md; do
+    [[ -f "$src_cmd" ]] || continue
+    cmd_name="$(basename "$src_cmd" .md)"
+    dest_cmd="${COMMANDS_DEST_DIR}/${cmd_name}.md"
+
+    if [[ -f "$dest_cmd" && $FORCE -eq 0 ]]; then
+      c_warn "/${COMMAND_NS}:${cmd_name}：已存在，跳过（加 --force 覆盖）"
+      cmd_skipped=$((cmd_skipped + 1))
+      continue
+    fi
+
+    if [[ -f "$dest_cmd" && $NO_BACKUP -eq 0 && $DRY_RUN -eq 0 ]]; then
+      cmd_backup="${COMMANDS_DEST_DIR}/.backup"
+      mkdir -p "$cmd_backup"
+      cp "$dest_cmd" "${cmd_backup}/${cmd_name}-$(date +%Y%m%d%H%M%S).md"
+    fi
+
+    if [[ $DRY_RUN -eq 1 ]]; then
+      c_info "[dry-run] 将安装 /${COMMAND_NS}:${cmd_name} → ${dest_cmd}"
+    else
+      cp "$src_cmd" "$dest_cmd"
+      c_ok "/${COMMAND_NS}:${cmd_name}：已安装"
+    fi
+    cmd_installed=$((cmd_installed + 1))
+  done
+fi
+
+c_step "完成：skill 安装/升级 ${installed}，跳过 ${skipped}，失败 ${failed}；命令 ${cmd_installed}，跳过 ${cmd_skipped}"
 [[ $failed -gt 0 ]] && exit 1
 exit 0

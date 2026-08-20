@@ -1,6 +1,7 @@
 # valkyrja-arch 技术契约层 · 设计定稿
 
-> 状态：**已定稿**——D1–D10 全部经用户裁决（2026-08-20），见「已裁决」节。
+> 状态：**已定稿**——D1–D11 全部经用户裁决（D1–D10：2026-08-20；
+> D11 由首次 apply 暴露的缺口驱动，同日追加），见「已裁决」节。
 > 起草依据来自 DEMO 首次端到端运行中 `add-lead-capture-flow` 的真实 design.md 产出。
 > 实施顺序按 D9：skill 本体 + 最小 catalog → 试点项目 架构工作区 → 回填 design.md → 恢复测试主线。
 
@@ -241,8 +242,8 @@ catalog 条目应以**选择 + 绑定 + 增量**为主（「本项目采纳 X，
 
 ### 定位
 
-技术侧的讨论与决策治理层，结构与 `valkyrja-prd` 同构：
-`discuss → decide → release`，只是决策对象从产品语义换成技术选型与契约。
+技术侧的讨论与决策治理层，结构与 `valkyrja-prd` 同构（discuss → decide 的
+治理形态），只是决策对象从产品语义换成技术选型与契约。
 它**不写实现代码，不写 spec，不替 design.md 做设计**——只产出被 design.md 消费的地基。
 
 ### 工作区
@@ -253,13 +254,16 @@ docs/architecture/
 ├── discussions/           # ADISC-* 技术讨论，按话题建档、追加式
 ├── decisions/             # ADEC-*  技术决策，一决策一文件
 ├── conventions/           # 已采纳约定的自包含副本（含出处）
-└── contracts/             # 共享接口契约，逐份版本化
+├── contracts/             # 共享接口契约，逐份版本化
+├── inventory.md           # 公共对象清单（防 AI 重复生成，D5 第四体裁）
+└── backlog.md             # 规则候选（带触发条件，触发后 graduate）
 ```
 
-### 动作集（草案）
+### 动作集（D11 后为八个）
 
 | 动作 | 性质 | 职责 |
 |---|---|---|
+| `bootstrap` | **特权**（落盘步骤） | 入口流程：探测既有事实 → 读产品约束 → 四节清点 → 逐点裁决 → 铸奠基 ADEC + 首采约定（D11） |
 | `discuss` | 普通 | 技术议题讨论，识别增量并 checkpoint |
 | `decide` | **特权** | 铸造 ADEC。技术选型、约定采纳、契约变更均由此固化 |
 | `adopt` | **特权** | 从 catalog 选用约定 → 写入 `conventions/` + 铸一条 ADEC 记录采纳理由与增量 |

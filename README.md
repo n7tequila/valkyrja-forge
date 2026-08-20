@@ -85,7 +85,7 @@ docs/product/initiatives/<slug>/
 
 ### valkyrja-arch
 
-The technical-contract layer, structurally identical to valkyrja-prd (discuss → decide) but deciding engineering matters. Seven actions: `discuss`, `decide`, `adopt`, `contract`, `status`, `check`, `publish`. The boundary test is **acceptance observability**: anything acceptance-testable belongs to the product side; engineering-internal constraints are ruled here as ADECs. Output lands in `docs/architecture/` (decisions / adopted convention copies / versioned shared contracts / a common-object inventory / a rule-candidate backlog).
+The technical-contract layer, structurally identical to valkyrja-prd (discuss → decide) but deciding engineering matters. Eight actions: `bootstrap`, `discuss`, `decide`, `adopt`, `contract`, `status`, `check`, `publish` — `bootstrap` is the entry flow that detects existing technical facts, reads product-side constraints, and drives the foundational decisions (tech stack, repo layout) **before the first apply**. The boundary test is **acceptance observability**: anything acceptance-testable belongs to the product side; engineering-internal constraints are ruled here as ADECs. Output lands in `docs/architecture/` (decisions / adopted convention copies / versioned shared contracts / a common-object inventory / a rule-candidate backlog).
 
 Ships a **convention catalog** under `skills/valkyrja-arch/references/conventions/`, organized on two axes (concern × stack), every entry carrying provenance and license fields. `adopt` drops a self-contained copy into the project and mints an ADEC recording the deltas. Entries are driven by gaps real projects actually hit; regression-backed rules take priority.
 

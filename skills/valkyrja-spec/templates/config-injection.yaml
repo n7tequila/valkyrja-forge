@@ -3,7 +3,7 @@
 # ⚠ 只写与具体 PRD 无关的通用治理协议。
 #   绝不把某个 PRD 路径、基线路径或 DOMAIN 写进本文件 ——
 #   openspec/config.yaml 是整个 OpenSpec root 的项目级配置，
-#   一个仓库可能同时存在多个 DOMAIN 的 PRD（OWSC_DEMO / OWSC_ADMIN / …）。
+#   一个仓库可能同时存在多个 DOMAIN 的 PRD（DEMO / DEMO_ADMIN / …）。
 #   写死具体 PRD 会让后建 change 的绑定覆盖先建的，造成串域：
 #   DEMO 的 change 后续 apply 时会读到 ADMIN 才是需求权威。
 #   具体绑定由每个 change 自己的 proposal.md 中的

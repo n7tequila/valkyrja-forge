@@ -38,7 +38,7 @@ docs/product/initiatives/<slug>/
 ```
 
 若用户提及的 initiative 目录不存在：先确认主题名与 DOMAIN 代号
-（如 MEETING、OWSC_DEMO、OWSC_H5，规则见"ID 与格式契约"），
+（如 MEETING、DEMO、PROJECT_MODULE，规则见"ID 与格式契约"），
 创建骨架目录与 STATUS.md，再进入正常流程。
 若在非规范路径发现既有工作区（如根目录下的 `product/initiatives/`）：照常使用，
 但提示用户可整体移动到规范路径——工作区内部引用均为 ID 或 initiative 相对路径，
@@ -47,11 +47,11 @@ docs/product/initiatives/<slug>/
 ## ID 与格式契约
 
 - ID 正则：`^(RN|DISC|DEC|TM|Q|REQ|BR|SEC|NFR)-[A-Z][A-Z0-9]*(_[A-Z][A-Z0-9]*)*-\d{3}$`，
-  如 `DEC-MEETING-008`、`RN-OWSC_DEMO-001`、`REQ-OWSC_H5-003`。
+  如 `DEC-MEETING-008`、`RN-DEMO-001`、`REQ-PROJECT_MODULE-003`。
 - DOMAIN 规则：每段以大写字母开头、可含大写字母与数字，段间以下划线分隔
   （如机构_子系统）；下划线不得出现在开头、结尾或连续出现。
   **连字符是 ID 的结构保留符，DOMAIN 内禁止使用**。
-  **禁止版本型 DOMAIN**（如 OWSC_V2）——版本由 PRD version 表达，
+  **禁止版本型 DOMAIN**（如 PROJECT_V2）——版本由 PRD version 表达，
   不进入稳定 ID namespace。DOMAIN 须**跨 initiative 全局唯一**——REQ ID 会流出
   initiative 进入下游 baseline/spec 引用，那里没有 initiative 上下文，
   重名即全局撞车。**DOMAIN 一旦用于铸造任意 ID 即永久冻结，不得重命名**——

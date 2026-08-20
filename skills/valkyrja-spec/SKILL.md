@@ -138,7 +138,7 @@ openspec/                                      # CLI 拥有，本技能只读或
 ## 契约一：Requirement Authority（proposal.md 内，机读）
 
 **PRD 绑定属于 change，不属于项目。** `openspec/config.yaml` 是整个 OpenSpec root 的
-项目级配置，一个仓库可能同时存在多个 DOMAIN 的 PRD（OWSC_DEMO / OWSC_ADMIN / …）；
+项目级配置，一个仓库可能同时存在多个 DOMAIN 的 PRD（DEMO / DEMO_ADMIN / …）；
 把具体 PRD 路径写进 config 会让后建的 change 覆盖先建的绑定，造成**串域**。
 因此每个 change 在自己的 `proposal.md` 中声明权威来源：
 
@@ -147,7 +147,7 @@ openspec/                                      # CLI 拥有，本技能只读或
 
 PRD-Release: docs/product/initiatives/<slug>/prd/releases/v<X.Y>.md
 Baseline: docs/product/baselines/<DOMAIN>-v<X.Y>.md
-Covered-FRIDs: REQ-OWSC_DEMO-006, SEC-OWSC_DEMO-003, NFR-OWSC_DEMO-001
+Covered-FRIDs: REQ-DEMO-006, SEC-DEMO-003, NFR-DEMO-001
 ```
 
 - 三个键名固定、区分大小写、各占一行，值为仓库相对路径或逗号分隔的 FRID 列表。
@@ -388,7 +388,7 @@ Change 划分中**显式标注该 FRID 为跨 change**，并知悉 V6.2 会在�
 
 ```
 [1/4] add-recording-pause    capabilities: recording, privacy    顺序: 1，无依赖
-      覆盖: REQ-OWSC_DEMO-006, SEC-OWSC_DEMO-003
+      覆盖: REQ-DEMO-006, SEC-DEMO-003
       ---8<--- 触发 /opsx:propose 时粘贴以下内容 ---8<---
       change 名称：add-recording-pause
       capability 路径：recording, privacy（一个 capability 一个 delta 文件）
@@ -396,9 +396,9 @@ Change 划分中**显式标注该 FRID 为跨 change**，并知悉 V6.2 会在�
 
       ## Requirement Authority
 
-      PRD-Release: docs/product/initiatives/owsc-demo/prd/releases/v1.0.md
-      Baseline: docs/product/baselines/OWSC_DEMO-v1.0.md
-      Covered-FRIDs: REQ-OWSC_DEMO-006, SEC-OWSC_DEMO-003
+      PRD-Release: docs/product/initiatives/demo/prd/releases/v1.0.md
+      Baseline: docs/product/baselines/DEMO-v1.0.md
+      Covered-FRIDs: REQ-DEMO-006, SEC-DEMO-003
 
       每个 "### Requirement:" 的下一行必须写 Sources: <对应 FRID>
       范围以上述 FRID 为准，不得扩展；发现缺口请停下提问，不要自行补充需求。

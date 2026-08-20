@@ -1,8 +1,8 @@
 # valkyrja-arch 技术契约层 · 设计定稿
 
 > 状态：**已定稿**——D1–D10 全部经用户裁决（2026-08-20），见「已裁决」节。
-> 起草依据来自 OWSC_DEMO 首次端到端运行中 `add-lead-capture-flow` 的真实 design.md 产出。
-> 实施顺序按 D9：skill 本体 + 最小 catalog → OWSC 架构工作区 → 回填 design.md → 恢复测试主线。
+> 起草依据来自 DEMO 首次端到端运行中 `add-lead-capture-flow` 的真实 design.md 产出。
+> 实施顺序按 D9：skill 本体 + 最小 catalog → 试点项目 架构工作区 → 回填 design.md → 恢复测试主线。
 
 ## 已裁决（2026-08-20）
 
@@ -22,15 +22,15 @@
   (3) ADEC 管辖事项日后变为产品可见时，上游正常铸 DEC/FRID，该 ADEC 标注让位；
   **冲突时产品侧永远优先**。
   实证检验：既有 DEC-015/016/017 均背书验收可观察的 FRID，位置正确**不迁移**；
-  OWSC 基线待澄清项第 3 条（SEC-003 存储技术）按此判据**改判为降级 ADEC**，
+  试点项目 基线待澄清项第 3 条（SEC-003 存储技术）按此判据**改判为降级 ADEC**，
   不回流上游——密文存储/明文不可见/密钥可轮换已是 spec 行为，存储选型验收不可测。
 - **D4 架构 DOMAIN = 独立的系统级 DOMAIN（选项 B）**：ADEC/ADISC 的 DOMAIN
   命名**系统/代码库**而非产品，进入同一全局 DOMAIN 注册表、遵守全部既有规则
   （全局唯一、永久冻结、禁版本型命名）。**即使仓库与产品 1:1 也不复用产品 DOMAIN**——
   冻结规则让错误永久化；这是 config.yaml 串域教训（仓库级事物不得绑定单一产品）
-  的同构应用。ID 形如 `ADEC-OWSC_KIOSK-001`，自证其系统级身份。
-  OWSC 仓库的架构 DOMAIN 定名 **`OWSC_KIOSK`**（用户裁决，2026-08-20 铸造即冻结；
-  裁决过程中曾出现「不复用」与「定名 OWSC_DEMO」的矛盾，经确认取 OWSC_KIOSK）。
+  的同构应用。ID 形如 `ADEC-DEMO_KIOSK-001`，自证其系统级身份。
+  试点仓库的架构 DOMAIN 定名 **`DEMO_KIOSK`**（用户裁决，2026-08-20 铸造即冻结；
+  裁决过程中曾出现「不复用」与「定名 DEMO」的矛盾，经确认取 DEMO_KIOSK）。
 - **D5 第一波 catalog 清单（已批准，约 20 条）**：经评审 内部项目-project 规范体系
   （内部项目-spec/docs + 内部项目-code/backend/docs + frontend/docs，全部用户自有、
   回归驱动、含 ArchUnit 固化先例）后大幅修订——自有/自撰约 17 条，ECC 摘编缩至 2 条。
@@ -78,10 +78,10 @@
   无架构工作区不特殊豁免（引了不存在的 ADEC 本来就是幽灵引用）。
   定性：这是**引用完整性**检查（与 Sources 同族，防 AI 编造权威），
   不是技术正确性检查，不违反「技术侧不造 checker」原则。
-- **D9 接回 OWSC 测试的顺序 = arch 先行、最小可用**：
-  (1) 建 valkyrja-arch skill 本体 + 仅 OWSC design.md 三空缺直接需要的 4 条 catalog
+- **D9 接回 试点项目 测试的顺序 = arch 先行、最小可用**：
+  (1) 建 valkyrja-arch skill 本体 + 仅 试点项目 design.md 三空缺直接需要的 4 条 catalog
   （幂等标识、错误分类、共享契约格式、本地存储），其余 16 条不阻塞后补；
-  (2) 初始化 OWSC `docs/architecture/`（DOMAIN=OWSC_KIOSK），经握手铸首批 ADEC
+  (2) 初始化 试点项目 `docs/architecture/`（DOMAIN=DEMO_KIOSK），经握手铸首批 ADEC
   （存储技术定案＝SEC-003 降级悬案、幂等采纳、错误采纳）+ 首份共享契约（内容包结构）；
   (3) 回填 add-lead-capture-flow 的 design.md，三个空缺段改为真实 `依据: ADEC-*`
   引用——同时是 V4.8 首次实战；
@@ -89,7 +89,7 @@
   rebaseline v1.1 → V4.0(a) 联锁。
   依据：剩余测试环节无法绕过 apply（未实现即归档＝让主 spec 说谎）；
   现在 apply 则三空缺各自现编、arch 建成后必返工。
-  此顺序让 OWSC 成为三层（prd/spec/arch）在同一真实项目上的依次首验。
+  此顺序让 试点项目 成为三层（prd/spec/arch）在同一真实项目上的依次首验。
 - **D10 第三个 skill 正式确认 + 命名**：加 `valkyrja-arch`，命令 `/valkyrja:arch`。
   本项推翻了 valkyrja-spec RC 评审时「暂不加第三个 skill」的建议，理由是前提已变：
   当时反对的是纸面推演式的投机扩张；现在是证据驱动——真实端到端产出的 design.md

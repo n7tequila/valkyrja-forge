@@ -202,6 +202,7 @@ valkyrja-forge/
 ├── commands/valkyrja/             # slash-command namespace → /valkyrja:{prd,arch,spec}
 ├── docs/design/                   # finalized design records (valkyrja-arch D1–D10 rulings)
 ├── scripts/install-skills.sh      # installs skills + commands
+├── tools/trace.py                 # deterministic trace checker; exit code doubles as a CI gate
 └── skills/
     ├── valkyrja-prd/              # SKILL.md + templates/
     ├── valkyrja-arch/             # SKILL.md + templates/ + references/conventions/ (catalog)

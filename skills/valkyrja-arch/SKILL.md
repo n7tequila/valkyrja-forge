@@ -101,7 +101,11 @@ docs/architecture/
   禁连字符。**即使仓库与产品 1:1 也不得复用产品 DOMAIN**——冻结规则让错误永久化；
   这是「仓库级事物不得绑定单一产品」教训的同构应用（一仓多产品时，
   架构决策不属于任何单一产品）。新铸架构 DOMAIN 前须向用户说明以上各点，名字由用户定。
-- 编号由本技能分配：扫描对应目录取最大号 +1；重复即报错停止写入。
+- 编号由本技能分配：**分配前全仓扫描该 DOMAIN 的全部 ID 引用**
+  （decisions/ 目录之外还包括 `openspec/config.yaml` 投影、各 change 的
+  design.md、源码注释），取「目录最大号」与「最大被引号」之大者 +1——
+  目录部分丢失时，仍被外部引用的编号**不得复用**（bootstrap 的空目录
+  前置扫描是本规则的特例）；发现重复即报错停止写入。
 - ADEC frontmatter 至少含 `id / date / status / superseded-by`
   （status: accepted | superseded）。
 - **奠基标记**：奠基性 ADEC 的 frontmatter 另含 `foundational: stack | layout`。
@@ -166,7 +170,7 @@ docs/architecture/
 | bootstrap | 探测到的既有技术事实逐条（含来源文件）、每条的处理提议（补铸 ADEC / 仅记录）、待定奠基项及候选、**产品侧约束如何排除了哪些候选**、将铸的全部 ADEC 编号、将 adopt 的 catalog 条目 |
 | decide | ADEC 编号、结论一句话、被否备选（禁止编造）、验收可观察性判定结果（为何不属产品侧）、引用的证据（TM/ADISC/实测） |
 | adopt | catalog 条目 id 与版本、许可证 status、将做的项目化修改逐条、将铸的 ADEC 编号、落盘路径 |
-| contract | 契约名与新版本号、字段级变更、**已知消费方及破坏性影响**、配套 ADEC |
+| contract | 契约名与新版本号、字段级变更、**已知消费方及破坏性影响**、配套 ADEC；`authority: external` 类**改列本仓内消费方适配点**（我方无权裁决对方，见 contract 协议 external 条款） |
 | publish | 将生成/修改的每个文件、对 openspec/config.yaml 的注入 diff、对 CI 的影响说明 |
 
 **contract 是本技能最重的特权**——契约有消费方，变更即破坏。回显必须列出
@@ -309,7 +313,7 @@ catalog 更新**不自动同步**；`check` 发现 `adopted-from` 版本落后�
 及其 adopted-from 版本、backlog 中触发条件已成立的项、
 **引用完整性摘要**（ADEC 互引、契约消费方引用的版本是否落后）。
 
-### check（只读）
+### check（体检；报告只读，自动修复项另经确认执行）
 对照本 SKILL.md 契约体检：ID 正则与编号连续性；ADEC frontmatter 完备性与
 superseded 链完整性（指向的 ID 真实存在）；契约版本与 Changelog 一致性；
 采纳副本指纹完备性；`adopted-from` 版本落后（**仅提示**；带 `(source: …)`

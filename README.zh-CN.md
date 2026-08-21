@@ -111,7 +111,7 @@ ADEC。产物落 `docs/architecture/`（决策 / 已采纳约定副本 / 版本�
 
 | 动作 | 职责 |
 |---|---|
-| `baseline` | 解析 release，逐条裁决处置（直通 / 拆分 / 延期 / 非软件 / 冲突） |
+| `baseline` | 解析 release，逐条裁决处置（直通 / 拆分 / 延期 / 非软件 / 外部 / 冲突） |
 | `decompose` | 裁决 change 划分，产出交接单 |
 | `trace` | PRD ↔ spec 双向追溯校验，**有放行语义**（apply 前与归档前强制） |
 | `status` | 现算覆盖分账 |

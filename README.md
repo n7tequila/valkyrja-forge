@@ -96,7 +96,7 @@ A governance layer. Standard propose / apply / archive are delegated to the offi
 
 | Action | Responsibility |
 |---|---|
-| `baseline` | Parse a release, rule on each requirement (direct / split / deferred / non-software / conflicted) |
+| `baseline` | Parse a release, rule on each requirement (direct / split / deferred / non-software / external / conflicted) |
 | `decompose` | Decide the change breakdown, emit a handover sheet |
 | `trace` | Bidirectional PRD ↔ spec reconciliation, **gates releases** (mandatory before apply and before archive) |
 | `status` | Recomputed coverage ledger |

@@ -1,12 +1,12 @@
 ---
 name: valkyrja-prd
-description: 产品需求工作坊——支持跨会话的需求讨论、决策沉淀、外部文档导入与 PRD 合成发布。当用户想讨论产品需求、整理需求思路、记录或确认产品决策、导入需求文档/会议纪要/客户材料、把一批存量历史文档批量初始化进需求工作区、询问需求进展状态、生成或更新或发布 PRD 时，必须使用本技能。即使用户只是随口说"我们聊聊 XX 功能"、"这个就这么定了"、"看看还有什么没讨论的"、"整理一版需求文档"，只要上下文涉及 product/initiatives/ 工作区或产品需求演进，都应触发本技能。
+description: 产品需求工作坊——支持跨会话的需求讨论、决策沉淀、外部文档导入与 PRD 合成发布。当用户想讨论产品需求、整理需求思路、记录或确认产品决策、导入需求文档/会议纪要/客户材料、把一批存量历史文档批量初始化进需求工作区、收编或评审系统原型（Figma导出/生成HTML/图稿）并背书为视觉基线、询问需求进展状态、生成或更新或发布 PRD 时，必须使用本技能。即使用户只是随口说"我们聊聊 XX 功能"、"这个就这么定了"、"看看还有什么没讨论的"、"整理一版需求文档"、"评审一下原型"、"背书为视觉基线"，只要上下文涉及 product/initiatives/ 工作区或产品需求演进，都应触发本技能。
 ---
 
 # Valkyrja PRD（产品需求工作坊）
 
 本技能把松散的需求讨论治理为可追溯的产品状态，并合成标准 PRD。
-它是一个**状态机 + 八个动作**，操作对象是文件系统中的 initiative 工作区。
+它是一个**状态机 + 九个动作**，操作对象是文件系统中的 initiative 工作区。
 
 ## 第一原则（宪法，8 条，优先于本文件其他一切内容）
 
@@ -341,8 +341,8 @@ STATUS.md 是全系统**唯一被豁免的派生缓存**，仅为加速 Resume �
 
 - [decision.md](templates/decision.md) — DEC 文件结构（铸造决策时使用）
 - [discussion.md](templates/discussion.md) — DISC 话题文件结构（新话题建档时使用）
-- [prd.md](templates/prd.md)
-- [prototype-manifest.md](templates/prototype-manifest.md) — 原型基线包清单 — PRD 标准结构（synthesize 时使用，含下游语法契约）
+- [prd.md](templates/prd.md) — PRD 标准结构（synthesize 时使用，含下游语法契约）
+- [prototype-manifest.md](templates/prototype-manifest.md) — 原型基线包清单
 - [status.md](templates/status.md) — STATUS.md 结构
 
 requirements/、tech-memos/、others/ 刻意不设内容模板（自由格式），但 frontmatter 要求：

@@ -209,7 +209,8 @@ if unplanned: err('V3.5', f'计划外 change（不得归档）: {sorted(unplanne
 # ---------- V4 delta 侧 ----------
 prop = os.path.join(CHDIR, 'proposal.md')
 PP = open(prop, encoding='utf-8').read() if os.path.isfile(prop) else ''
-ab = re.search(r'^## Requirement Authority\s*\n(.*?)(?=^## )', PP, re.M | re.S)
+# (?=^## |\Z)：块可以是文件最后一节——只要求"至下一个二级标题或文件末尾"
+ab = re.search(r'^## Requirement Authority\s*\n(.*?)(?=^## |\Z)', PP, re.M | re.S)
 if not ab:
     err('V4.0', 'proposal.md 缺 ## Requirement Authority 块')
     cov_declared = set()

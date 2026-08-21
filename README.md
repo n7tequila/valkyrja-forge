@@ -105,6 +105,8 @@ A governance layer. Standard propose / apply / archive are delegated to the offi
 
 Output lands in `docs/product/baselines/<DOMAIN>-vX.Y.md`.
 
+The three verbs (propose / apply / archive) run as a **shell**: gates first, confirmation in the middle, delegation to official OpenSpec last, automatic post-checks after — saying `next` walks the pipeline one step at a time without ever skipping a privileged confirmation.
+
 > `trace` and the official `verify` check two different kinds of consistency:
 > `trace` covers **PRD ↔ spec**, official `verify` covers **implementation code ↔ change artifacts**.
 > They complement each other; neither substitutes for the other.

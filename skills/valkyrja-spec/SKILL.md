@@ -136,7 +136,9 @@ Covered-FRIDs: REQ-DEMO-006, SEC-DEMO-003, NFR-DEMO-001
 ```
 
 - 三个键名固定、区分大小写、各占一行，值为仓库相对路径或逗号分隔的 FRID 列表。
-- 该块以 `## Requirement Authority` 二级标题定界，至下一个二级标题结束。
+- 该块以 `## Requirement Authority` 二级标题定界，至下一个二级标题**或文件末尾**
+  结束（块作为 proposal 最后一节完全合法——首个真实 propose 即如此，
+  曾被只认"下一个标题"的解析器误报缺块）。
 - 已实测确认：proposal.md 增加本自定义节不影响 `openspec validate --strict`。
 
 **三份清单的权威顺序**（避免各自漂移）：
@@ -188,10 +190,10 @@ REMOVED / RENAMED 从主 spec 同名（或 FROM 所指）Requirement 的 Sources
 |---|---|
 | "PRD 定稿了"、"可以开工了"、"建立基线" | baseline（特权，需确认） |
 | "拆成几个 change"、"怎么划分" | decompose（特权，需确认） |
-| "下一个 propose"、"给我 <change> 的交接段" | 交接段生成（decompose 只读伴生，现算不落盘） |
+| "propose <change>"、"下一个 propose"、"给我交接段" | **propose 壳**：V2.5 欠账门 → 交接段现算 → 经确认委托官方 propose → 产后自动 trace（pre-apply）。只要交接段、不委托时说一声即可 |
 | "next"、"下一个"、"继续" | **next 复合路由**（见表后说明）——现算流水线位置，推进一步 |
-| "开始开发这个 change"、"可以 apply 了"、"开始实现" | trace（pre-apply，V1–V5）→ 通过后委托官方 apply |
-| "能归档吗"、"检查这个 change"、"追溯对不对" | trace（pre-archive，V1–V5） |
+| "开始开发这个 change"、"可以 apply 了"、"开始实现" | **apply 壳**：查验（必要时现跑）pre-apply 放行 → 确认 → 委托官方 apply → 完成后提示官方 verify |
+| "能归档吗"、"检查这个 change"、"追溯对不对" | **归档壳**：trace（pre-archive）→ 确认回显 → 代跑 CLI → V6 |
 | "现在什么进度"、"哪些需求还没做" | status |
 | "检查工作区"、"体检"、"skill 更新了" | check |
 | "PRD 出新版了"、"v1.1 发布了" | rebaseline（特权，需确认） |
@@ -203,16 +205,23 @@ REMOVED / RENAMED 从主 spec 同名（或 FROM 所指）Requirement 的 Sources
 准备物**：
 
 ```
-无在途 change            → 按计划顺序生成下一个 change 的交接段（交用户贴 propose）
+无在途 change            → propose 壳（欠账门 → 交接段 → 经确认委托官方 propose → 自动 pre-apply）
 已 propose、未过 pre-apply → 跑 trace（pre-apply, V1–V5）
-pre-apply 已放行          → 提示进入官方 apply（本技能不代跑）
-apply 进行中/完成         → 提示官方 verify（若装了），然后跑 trace（pre-archive）
-pre-archive 通过          → 出示归档确认回显，**停在门前等确认**
+pre-apply 已放行          → apply 壳（确认后委托官方 apply）
+apply 进行中/完成         → 提示官方 verify（若装了），然后 trace（pre-archive）
+pre-archive 通过          → 归档确认回显，确认后代跑 CLI → V6
 ```
 
-**next 永不代行特权步骤**——它把你送到每道门前，从不替你过门：
-归档确认、基线修订、代跑 CLI 等一律照常回显等确认。多个 change 并行时
-先报告各自位置，请用户点名。
+**next 永不免去任何确认**——它把你送到每道门前，你确认后它代跑门后的
+委托，但门本身一道不少：委托官方 propose/apply、归档、基线修订等
+一律照常回显等确认。多个 change 并行时先报告各自位置，请用户点名。
+
+**三动词壳（sequencing）**：propose / apply / 归档一律以壳形态执行——
+**门禁在前、确认在中、委托在后、产后自动检查**。壳不改官方任何产物语义、
+不代写 proposal/design/代码，官方 skill 的中途提问与 planning boundary
+原样透传。诚实边界：`/opsx:*` 侧门依旧存在（explore 是合法用途，
+`openspec update` 也会重新生成官方命令），壳是**约定级收口**——
+把正道变成唯一顺手的路径，不是强制拦截；终审始终是 trace 机检与 CI。
 
 ## 特权动作确认
 
@@ -375,11 +384,10 @@ rebaseline 后过期（真实事故：承袭基线的预存段仍指旧版路径
 状态机：
 
 ```
-propose 完成
-   → trace (pre-apply, V1–V5) → 通过 → 委托官方 apply
-   → 官方 verify（实现 ↔ artifacts）
-   → trace (pre-archive, V1–V5) → 人工确认放行
-   → openspec archive
+propose 壳：欠账门 → 交接段现算 → 经确认委托官方 propose → 自动 trace (pre-apply)
+   → apply 壳：放行查验 → 确认 → 委托官方 apply
+   → 官方 verify（实现 ↔ artifacts，若已安装）
+   → 归档壳：trace (pre-archive) → 人工确认放行 → 代跑 openspec archive
    → post-archive verification (V6)
 ```
 

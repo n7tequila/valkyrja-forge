@@ -188,6 +188,7 @@ REMOVED / RENAMED 从主 spec 同名（或 FROM 所指）Requirement 的 Sources
 |---|---|
 | "PRD 定稿了"、"可以开工了"、"建立基线" | baseline（特权，需确认） |
 | "拆成几个 change"、"怎么划分" | decompose（特权，需确认） |
+| "下一个 propose"、"给我 <change> 的交接段" | 交接段生成（decompose 只读伴生，现算不落盘） |
 | "开始开发这个 change"、"可以 apply 了"、"开始实现" | trace（pre-apply，V1–V5）→ 通过后委托官方 apply |
 | "能归档吗"、"检查这个 change"、"追溯对不对" | trace（pre-archive，V1–V5） |
 | "现在什么进度"、"哪些需求还没做" | status |
@@ -322,26 +323,26 @@ Change 划分中**显式标注该 FRID 为跨 change**，并知悉 V6.2 会在�
 （planning boundary）。本技能**不试图绕过**这一约束——它与「人保留决策权」同向。
 因此 N 路拆分＝N 个回合，交接单落盘保证会话中断不丢失。
 
-交接单每条包含可直接粘贴给 `/opsx:propose` 的引导段：
+交接单**只存裁决字段**——名称、capabilities、覆盖 FRID、顺序与依赖、说明：
 
 ```
-[1/4] add-recording-pause    capabilities: recording, privacy    顺序: 1，无依赖
-      覆盖: REQ-DEMO-006, SEC-DEMO-003
-      ---8<--- 触发 /opsx:propose 时粘贴以下内容 ---8<---
-      change 名称：add-recording-pause
-      capability 路径：recording, privacy（一个 capability 一个 delta 文件）
-      请在 proposal.md 中写入以下 Requirement Authority 块（键名与格式照抄）：
-
-      ## Requirement Authority
-
-      PRD-Release: docs/product/initiatives/demo/prd/releases/v1.0.md
-      Baseline: docs/product/baselines/DEMO-v1.0.md
-      Covered-FRIDs: REQ-DEMO-006, SEC-DEMO-003
-
-      每个 "### Requirement:" 的下一行必须写 Sources: <对应 FRID>
-      范围以上述 FRID 为准，不得扩展；发现缺口请停下提问，不要自行补充需求。
-      ---8<-------------------------------------------
+[1/14] add-recording-pause   capabilities: recording, privacy
+       覆盖: REQ-DEMO-006, SEC-DEMO-003   顺序: 1（依赖：无）
+       说明：录制与隐私地基，后续 change 依赖
 ```
+
+**粘贴段不预存**——它的每个成分都是派生值（宪法 5）：预存路径会在
+rebaseline 后过期（真实事故：承袭基线的预存段仍指旧版路径，propose 前才拦获），
+预存提示永远缺 decompose 之后才出现的权威（如后铸的视觉基线 DEC）。
+
+**交接段现算生成（decompose 的只读伴生，不落盘）**：用户说「下一个 propose」
+或「propose <change>」时现场组装粘贴段——名称/capabilities/Covered-FRIDs
+取自基线计划条目；PRD-Release 与 Baseline 取自**当前 active 基线**；
+格式规则为常量（与 config 注入刻意双层冗余：注入是 prompt 级、官方 skill
+可能忽略，粘贴段是第二道，trace 机检是终审）；实现约束提示按**当下**治理
+状态现算（覆盖 FRID 相关的 DEC 背书/降级项、基线合并提示、涉 UI 时的
+视觉基线与 token 权威、跨 change 边界注意）。生成后交用户粘贴给
+`/opsx:propose`，本技能不代跑。
 
 「已建 / 未建」状态由 `status` 现算，**不写入基线**（宪法 5）。
 

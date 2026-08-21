@@ -104,6 +104,16 @@ RENAMED    addressed = 主 spec 中 FROM 所指 Requirement 的 Sources
 - V2.2 PRD 内 `[blocking]` 且 `Status: open` 的问题数 = 0 → 否则 ERROR
 - V2.3 每个需求块含 `Sources:` 且至少一个 RN/DEC
 - V2.4 无重复 FRID
+- V2.5 **发版欠账门限**：欠账 :=（现算）initiative 内 `round` 大于当前 release
+  `round` 的 DEC 集合（round 缺失时退化为 date 晚于 release date）。
+  欠账非空 **且** 本 change **未开工**（tasks.md 无任何已勾选项，现算）→ **ERROR**，
+  除非基线「例外记录」中有对本 change 的显式放行裁决（该行须同时含 change 名
+  与「欠账」字样）。在途 change（已有勾选）不受此限——需求正式变更时由
+  rebaseline 的 V4.0(a) 联锁逐个接手，两道闸接力。
+  报告必须显示欠账条数与扫描的 DEC 总数（零对象与零发现须可区分）。
+  理由：**决而未发的 DEC 对下游不可见**，新工作在已知过期的需求上启动是
+  静默返工之源；讨论（DISC）不触发门限——决定尚不存在，谈不上跑偏；
+  门限零语义判断（不依赖任何人工影响面标注，标注类方案的失效是静默的）。
 
 **V3 基线对账**（计划 vs 现状）
 - V3.1 `active(当前release)` ⊆

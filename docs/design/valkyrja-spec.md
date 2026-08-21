@@ -178,6 +178,7 @@ verify 缺失没有任何替代——闭环会缺「代码 ↔ artifacts」一�
 | **真实运行** | external 处置缺失；混合体 FRID；FRID 跨 change 的部分完成盲区 | 第六处置、行为点级交付归属、decompose 划分纪律 |
 | **首个 change 评审** | 精度稀释（阈值/字面值被软化）；拆分确认退化为信任 | 精度保真规则、拆分回显保底 |
 | **首次 apply** | 技术栈/仓库布局在实现现场被临时决定且不留痕——arch 缺入口流程，spec 缺执法点 | V1.4（WARNING 级）：arch 工作区存在但缺 `foundational: stack/layout` ADEC 时告警；配套 valkyrja-arch 的 bootstrap 动作与奠基标记 |
+| **原型评审引发的发版节流讨论** | 决而未发的 DEC 对下游不可见，新 change 会在已知过期的需求上启动；但逐条发版又致版本疲劳 | V2.5 发版欠账门限（用户设计）：欠账=round 晚于 release 的 DEC，非空则未开工 change ERROR（例外裁决出口，V4.7 同款）；在途 change 交 V4.0(a) 联锁接力。全面门限零语义判断，优于被否的「疑似影响面标注」方案——人工标注的失效是静默的。DISC 不触发门限：拍板（铸 DEC）才是欠账起点，防碎片化拍板 |
 
 最后两行是这份记录里最值钱的部分：
 

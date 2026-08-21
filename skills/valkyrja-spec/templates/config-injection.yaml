@@ -58,6 +58,9 @@ rules:
       不得在此另行决策 capability 的拆分或归属。
     - |-
       不得引入 Covered-FRIDs 之外的需求。
+    - |-
+      上游存在未发布的已决事项（发版欠账）时，新 change 开工会被 trace V2.5
+      拦下——先完成 PRD 发版（或取得基线例外裁决）再开工。
 
   specs:
     - |-

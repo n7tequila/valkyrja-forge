@@ -133,6 +133,36 @@ historical = set()
 for f in glob.glob(os.path.join(os.path.dirname(PRD), '*.md')):
     historical |= set(re.findall(rf'^##\s+({FRID})', open(f, encoding='utf-8').read(), re.M))
 
+# V2.5 发版欠账门限：决而未发的 DEC 对下游不可见；未开工 change 不得在
+# 已知过期的需求上启动。round 比较为主（无同日歧义），date 为退化路径。
+rel_round = re.search(r'^round:\s*(\d+)', PT, re.M)
+rel_date = re.search(r'^date:\s*(\S+)', PT, re.M)
+init_dir = os.path.dirname(os.path.dirname(os.path.dirname(PRD)))
+dec_files = sorted(glob.glob(os.path.join(init_dir, 'decisions', 'DEC-*.md')))
+debt = []
+for f in dec_files:
+    b = open(f, encoding='utf-8').read()
+    dr = re.search(r'^round:\s*(\d+)', b, re.M)
+    dd = re.search(r'^date:\s*(\S+)', b, re.M)
+    if rel_round and dr:
+        if int(dr.group(1)) > int(rel_round.group(1)):
+            debt.append(os.path.basename(f)[:-3])
+    elif rel_date and dd and dd.group(1) > rel_date.group(1):
+        debt.append(os.path.basename(f)[:-3])
+tasks_p = os.path.join(CHDIR, 'tasks.md')
+started = os.path.isfile(tasks_p) and bool(
+    re.search(r'^\s*[-*]\s*\[[xX]\]', open(tasks_p, encoding='utf-8').read(), re.M))
+if not debt:
+    ok('V2.5', f'发版欠账 0 条（扫描 {len(dec_files)} 条 DEC）')
+elif started:
+    ok('V2.5', f'欠账 {len(debt)} 条，但本 change 已开工——由 rebaseline V4.0(a) 联锁接手: {debt}')
+else:
+    exc = any(('欠账' in ln and CH in ln) for ln in S.get('例外记录', '').split('\n'))
+    if exc:
+        ok('V2.5', f'欠账 {len(debt)} 条，基线例外记录已裁决放行本 change')
+    else:
+        err('V2.5', f'发版欠账 {len(debt)} 条且本 change 未开工: {debt} —— 先发版，或取得基线例外裁决')
+
 # ---------- V3 基线对账 ----------
 allsets = {'included': included, 'deferred': deferred, 'non-software': nonsw,
            'external': external, 'conflicted': conflicted}

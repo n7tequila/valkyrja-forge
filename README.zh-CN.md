@@ -143,7 +143,7 @@ ADEC。产物落 `docs/architecture/`（决策 / 已采纳约定副本 / 版本�
    → 路由到 discuss
 
 /valkyrja:prd   这个就这么定了
-   → 路由到 decide（特权，需确认确认）
+   → 路由到 decide（特权，需确认）
 
 /valkyrja:spec  这个 change 能归档吗
    → 路由到 trace

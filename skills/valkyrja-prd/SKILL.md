@@ -64,6 +64,10 @@ docs/product/initiatives/<slug>/
   PRD（current 与 releases）及 STATUS.md 中已出现的 Q ID 后取最大号 +1。
 - REQ/BR/SEC/NFR 只在 synthesize 时于 PRD 内铸造；RN/DISC/DEC/TM/Q 在日常动作中铸造。
 - 每个源文档（RN/DISC/DEC/TM）头部带 YAML frontmatter，至少含 `id`、`round`、`date`。
+  DEC 另可带可选标记 `frid-impact: none`——声明本决策**不改动任何 FRID 语义**
+  （背书类/流程类决策），不计入下游发版欠账（V2.5 豁免），synthesize 亦不
+  产生 PRD 正文变更。该标记必须在 decide 确认回显中显式出示并说明理由——
+  被误标的需求变更会绕过欠账门限，这是标记唯一的信任边界。
 - PRD 内每条需求以二级标题定界：`## REQ-XXX-NNN`，区块内含 `Sources:` 节
   （每行一个 `- ID`，至少一个 RN 或 DEC）；
   Open Questions 节内每个问题以 `### Q-XXX-NNN [blocking|non-blocking] @owner` 起始。
@@ -104,7 +108,8 @@ docs/product/initiatives/<slug>/
 
 1. 识别到决策/发布意图后，**不直接落盘**。
 2. 完整回显将要发生的事：
-   - decide：DEC 编号、结论一句话、来源讨论、被否备选（如有，禁止编造）、将关闭的 Q（如有）。
+   - decide：DEC 编号、结论一句话、来源讨论、被否备选（如有，禁止编造）、将关闭的 Q（如有）；
+     带 `frid-impact: none` 标记时须显式出示标记并说明豁免理由。
    - release：版本号、相对上一 release 的 delta 摘要、blocking questions 检查结果。
 3. 等待用户明确回复"确认"（或同义表达）后才写文件。
 4. 语气含疑问或犹豫（"就按 B 吧？"、"感觉可以定了？"）→ 视为倾向，回复

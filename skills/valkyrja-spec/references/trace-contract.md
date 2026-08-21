@@ -105,7 +105,10 @@ RENAMED    addressed = 主 spec 中 FROM 所指 Requirement 的 Sources
 - V2.3 每个需求块含 `Sources:` 且至少一个 RN/DEC
 - V2.4 无重复 FRID
 - V2.5 **发版欠账门限**：欠账 :=（现算）initiative 内 `round` 大于当前 release
-  `round` 的 DEC 集合（round 缺失时退化为 date 晚于 release date）。
+  `round` 的 DEC 集合，**剔除带 `frid-impact: none` 标记者**——不改 FRID 语义的
+  背书类/流程类决策无可发内容，且此类决策必然在发版后铸造（如视觉基线背书），
+  不豁免会造成"背书即锁死 propose"的死锁（round 缺失时退化为 date 晚于
+  release date）。
   欠账非空 **且** 本 change **未开工**（tasks.md 无任何已勾选项，现算）→ **ERROR**，
   除非基线「例外记录」中有对本 change 的显式放行裁决（该行须同时含 change 名
   与「欠账」字样）。在途 change（已有勾选）不受此限——需求正式变更时由

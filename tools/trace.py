@@ -142,6 +142,9 @@ dec_files = sorted(glob.glob(os.path.join(init_dir, 'decisions', 'DEC-*.md')))
 debt = []
 for f in dec_files:
     b = open(f, encoding='utf-8').read()
+    # frid-impact: none = 不改 FRID 语义的背书类决策，无可发内容，豁免欠账
+    if re.search(r'^frid-impact:[ \t]*none', b, re.M):
+        continue
     dr = re.search(r'^round:\s*(\d+)', b, re.M)
     dd = re.search(r'^date:\s*(\S+)', b, re.M)
     if rel_round and dr:

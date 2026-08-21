@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """valkyrja-spec trace 检查器 —— V1..V5 + V4.8 的确定性实现。
 
-用法: tools/trace.py <产品仓库根> <change-name>
+用法: trace.py <产品仓库根> <change-name>
 退出码: 0 = 放行 / 1 = 有 ERROR 不得放行（可直接用作 CI 门禁）。
 
-定位：本脚本实现 skills/valkyrja-spec/SKILL.md 中 trace 动作的**确定性部分**。
+定位：本脚本实现 SKILL.md 中 trace 动作的**确定性部分**。
 语义判断（拆分完整性、DEC 范围覆盖）不在此，仍由人核对——
 假阳性的"通过"比不检更危险。
 
@@ -30,20 +30,28 @@ def sh(*a, cwd=None):
     r = subprocess.run(a, capture_output=True, text=True, cwd=cwd)
     return r.returncode, r.stdout, r.stderr
 
-R, CH = sys.argv[1], sys.argv[2]
+SKIP_CLI = '--skip-cli' in sys.argv[1:]
+ARGS = [a for a in sys.argv[1:] if a != '--skip-cli']
+R, CH = ARGS[0], ARGS[1]
 CHDIR = os.path.join(R, 'openspec/changes', CH)
 
 # ---------- V1 前提 ----------
-rc, out, _ = sh('openspec', '--version')
-ver = out.strip()
-ok('V1.1', f'CLI {ver}') if rc == 0 and tuple(map(int, ver.split('.')[:2])) >= (1, 9) \
-    else err('V1.1', f'CLI 不可用或版本过低: {ver}')
+if SKIP_CLI:
+    # 夹具/离线模式：显式跳过 CLI 依赖项（V1.1/V1.2/V5），只验集合代数层。
+    # 跳过必须显式入报告——零对象 ≠ 零发现。
+    ok('V1.1', '跳过（--skip-cli 夹具模式，未验 CLI）')
+    ok('V1.2', '跳过（--skip-cli）')
+else:
+    rc, out, _ = sh('openspec', '--version')
+    ver = out.strip()
+    ok('V1.1', f'CLI {ver}') if rc == 0 and tuple(map(int, ver.split('.')[:2])) >= (1, 9) \
+        else err('V1.1', f'CLI 不可用或版本过低: {ver}')
 
-rc, out, _ = sh('openspec', 'context', '--json', cwd=R)
-try:
-    root = json.loads(out)['root']['path']; ok('V1.2', f'root={os.path.basename(root)}')
-except Exception:
-    err('V1.2', 'openspec context 未返回有效 root'); root = None
+    rc, out, _ = sh('openspec', 'context', '--json', cwd=R)
+    try:
+        root = json.loads(out)['root']['path']; ok('V1.2', f'root={os.path.basename(root)}')
+    except Exception:
+        err('V1.2', 'openspec context 未返回有效 root'); root = None
 
 bl_files = sorted(glob.glob(os.path.join(R, 'docs/product/baselines/*.md')))
 bl = None
@@ -195,13 +203,16 @@ unc = included - covered
 ok('V3.4', f'{len(included)} 条 included 全部被 planned change 覆盖') if not unc \
     else err('V3.4', f'未被覆盖: {sorted(unc)}')
 
-rc, out, _ = sh('openspec', 'list', '--changes', '--json', cwd=R)
-try:
-    # 返回体形如 {"changes":[{"name":...}], "root":{...}} —— 必须取 changes 键，
-    # 直接迭代顶层会把 "changes"/"root" 当成 change 名。
-    disk = {c['name'] for c in json.loads(out)['changes']}
-except Exception:
+if SKIP_CLI:
     disk = set(os.listdir(os.path.join(R, 'openspec/changes'))) - {'archive'}
+else:
+    rc, out, _ = sh('openspec', 'list', '--changes', '--json', cwd=R)
+    try:
+        # 返回体形如 {"changes":[{"name":...}], "root":{...}} —— 必须取 changes 键，
+        # 直接迭代顶层会把 "changes"/"root" 当成 change 名。
+        disk = {c['name'] for c in json.loads(out)['changes']}
+    except Exception:
+        disk = set(os.listdir(os.path.join(R, 'openspec/changes'))) - {'archive'}
 built, unbuilt, unplanned = disk & set(plan), set(plan) - disk, disk - set(plan)
 ok('V3.5', f'已建 {len(built)} / 未建 {len(unbuilt)} / 计划外 {len(unplanned)}')
 if unplanned: err('V3.5', f'计划外 change（不得归档）: {sorted(unplanned)}')
@@ -233,35 +244,110 @@ else:
         if okk: ok('V4.0', 'Authority 块三重自洽')
 
 specs = sorted(glob.glob(os.path.join(CHDIR, 'specs', '**', '*.md'), recursive=True))
-addressed, nsrc, badtype, notactive = set(), 0, [], []
+
+def main_spec_sources(cap):
+    """主 spec 同名 Requirement → Sources 集合。主 spec 不存在返回 {}（首批 change 前的常态）。"""
+    p = os.path.join(R, 'openspec/specs', cap, 'spec.md')
+    if not os.path.isfile(p):
+        return {}
+    Lm = open(p, encoding='utf-8').read().split('\n')
+    d = {}
+    for i, ln in enumerate(Lm):
+        if ln.startswith('### Requirement:'):
+            nm = ln[len('### Requirement:'):].strip()
+            nx = Lm[i+1].strip() if i + 1 < len(Lm) else ''
+            d[nm] = set(re.findall(FRID, nx)) if SRC_RE.match(nx) else set()
+    return d
+
+# 契约二/三的全分支实现。addressed 严禁退化为 Sources 并集——
+# 那会让 MODIFIED 历史 ID 永久假警报、REMOVED/RENAMED 型 change 永远无法放行。
+addressed = set()
+n_req = 0            # ADDED/MODIFIED Requirement 计数（须带 Sources 行）
+badsrc = []          # V4.1/V4.2：Sources 行缺失或非法（仅 ADDED/MODIFIED 需要）
+v43 = []             # V4.3：ADDED 越界 / MODIFIED 删既有、沿袭出 historical、新增越界、无主 spec 对应
+v44a, v44b = [], []  # V4.4a REMOVED / V4.4b RENAMED
+noop_blocks = []     # 无操作小节头的散 Requirement（格式异常，按 ADDED 从严）
+ops_seen = set()
 for f in specs:
     L = open(f, encoding='utf-8').read().split('\n')
     cap = os.path.basename(os.path.dirname(f))
+    mains = main_spec_sources(cap)
     op = None
     for i, ln in enumerate(L):
-        if re.match(r'^##\s+(ADDED|MODIFIED|REMOVED|RENAMED)\s+Requirements', ln, re.I):
-            op = ln.split()[1].upper()
+        mo = re.match(r'^##\s+(ADDED|MODIFIED|REMOVED|RENAMED)\s+Requirements', ln, re.I)
+        if mo:
+            op = mo.group(1).upper(); ops_seen.add(op); continue
+        if op == 'RENAMED':
+            # OpenSpec RENAMED 形态：- FROM: `### Requirement: Old` / - TO: ...
+            fm = re.match(r'^-\s*FROM:\s*`?#*\s*Requirement:\s*(.+?)`?\s*$', ln)
+            if fm:
+                nm = fm.group(1).strip()
+                src = mains.get(nm)
+                if src is None:
+                    v44b.append(f'{cap}: FROM「{nm[:32]}」在主 spec 中不存在')
+                else:
+                    outh = src - historical
+                    if outh:
+                        v44b.append(f'{cap}:「{nm[:32]}」FRID ∉ historical: {sorted(outh)}')
+                    addressed |= src
+            continue
         if ln.startswith('### Requirement:'):
-            nsrc += 1
-            nxt = L[i+1].strip() if i+1 < len(L) else ''
-            if not SRC_RE.match(nxt):
-                badtype.append(f'{cap}: {ln[:38]}')
-            else:
-                ids = set(re.findall(FRID, nxt))
+            nm = ln[len('### Requirement:'):].strip()
+            nx = L[i+1].strip() if i + 1 < len(L) else ''
+            has = bool(SRC_RE.match(nx))
+            ids = set(re.findall(FRID, nx)) if has else set()
+            if op == 'REMOVED':
+                # REMOVED 块不带 Sources，从主 spec 同名 Requirement 反查（契约二）
+                src = mains.get(nm)
+                if src is None:
+                    v44a.append(f'{cap}:「{nm[:32]}」在主 spec 中不存在')
+                else:
+                    still = src - deprecated
+                    if still:
+                        v44a.append(f'{cap}:「{nm[:32]}」移除仍 active 的 FRID: {sorted(still)}')
+                    addressed |= src
+                continue
+            if op is None:
+                noop_blocks.append(f'{cap}: {nm[:32]}')
+            n_req += 1
+            if not has:
+                badsrc.append(f'{cap}: {nm[:36]}'); continue
+            if op == 'MODIFIED':
+                msrc = mains.get(nm)
+                if msrc is None:
+                    v43.append(f'{cap} MODIFIED「{nm[:30]}」主 spec 无同名 Requirement')
+                    addressed |= ids
+                else:
+                    dropped = msrc - ids
+                    if dropped:
+                        v43.append(f'{cap} MODIFIED「{nm[:30]}」删除了既有 Sources: {sorted(dropped)}')
+                    outh = (ids & msrc) - historical
+                    if outh:
+                        v43.append(f'{cap} MODIFIED「{nm[:30]}」沿袭 ID ∉ historical: {sorted(outh)}')
+                    badn = (ids - msrc) - (active & included)
+                    if badn:
+                        v43.append(f'{cap} MODIFIED「{nm[:30]}」新增 ID 越界: {sorted(badn)}')
+                    # 契约三：historical_exempt = main_sources − Covered-FRIDs
+                    addressed |= ids - (msrc - cov_declared)
+            else:  # ADDED（含无小节头的散块，从严按 ADDED 判）
+                bad = ids - (active & included)
+                if bad:
+                    v43.append(f'{cap} ADDED「{nm[:30]}」越界: {sorted(bad)}')
                 addressed |= ids
-                if op == 'ADDED':
-                    bad = ids - (active & included)
-                    if bad: notactive.append((cap, sorted(bad)))
-ok('V4.1', f'{nsrc} 条 Requirement 均有合法 Sources 行') if not badtype else err('V4.1', f'缺失/非法: {badtype}')
-ok('V4.2', 'Sources ID 类型全部合法（FRID）') if not badtype else err('V4.2', '见 V4.1')
-ok('V4.3', 'ADDED 的 Sources 全部 ∈ active ∩ included') if not notactive \
-    else err('V4.3', f'越界: {notactive}')
 
-if not glob.glob(os.path.join(CHDIR, 'specs', '**', '*.md'), recursive=True):
-    warn('V4.4', '无 delta，跳过 REMOVED/RENAMED 判定')
+if noop_blocks:
+    warn('V4.1', f'散 Requirement 无操作小节头（已按 ADDED 从严判定）: {noop_blocks}')
+ok('V4.1', f'{n_req} 条 ADDED/MODIFIED Requirement 均有合法 Sources 行') if not badsrc \
+    else err('V4.1', f'缺失/非法: {badsrc}')
+ok('V4.2', 'Sources ID 类型全部合法（FRID）') if not badsrc else err('V4.2', '见 V4.1')
+ok('V4.3', 'ADDED/MODIFIED 分场景判定全部通过') if not v43 else err('V4.3', f'{v43}')
+if not ({'REMOVED', 'RENAMED'} & ops_seen):
+    ok('V4.4', '本 change 无 REMOVED/RENAMED，判定不适用')
 else:
-    has_rm = any(re.search(r'^##\s+(REMOVED|RENAMED)\s+Requirements', open(f, encoding='utf-8').read(), re.M | re.I) for f in specs)
-    ok('V4.4', '本 change 无 REMOVED/RENAMED，判定不适用') if not has_rm else warn('V4.4', '含 REMOVED/RENAMED，需人工核对 deprecated/historical')
+    if 'REMOVED' in ops_seen:
+        ok('V4.4a', 'REMOVED 触达 FRID 全部 ⊆ deprecated') if not v44a else err('V4.4a', f'{v44a}')
+    if 'RENAMED' in ops_seen:
+        ok('V4.4b', 'RENAMED 触达 FRID 全部 ∈ historical') if not v44b else err('V4.4b', f'{v44b}')
 
 extra, missing = addressed - cov_declared, cov_declared - addressed
 ok('V4.5', 'addressed ⊆ Covered-FRIDs') if not extra else warn('V4.5', f'范围蔓延（需人裁决）: {sorted(extra)}')
@@ -298,23 +384,27 @@ if re.search(r'^skip_specs:\s*true', MT, re.M):
 else: ok('V4.7', '未使用 skip_specs')
 
 # ---------- V5 委托原生 ----------
-rc, out, _ = sh('openspec', 'validate', CH, '--type', 'change', '--strict', '--json', cwd=R)
-try:
-    it = json.loads(out)['items'][0]
-    ok('V5.1', 'openspec validate --strict 通过') if it['valid'] else err('V5.1', f"validate 失败: {it['issues']}")
-except Exception:
-    err('V5.1', 'validate 输出无法解析')
+if SKIP_CLI:
+    ok('V5.1', '跳过（--skip-cli 夹具模式，未跑 validate）')
+    ok('V5.2', '跳过（--skip-cli）')
+else:
+    rc, out, _ = sh('openspec', 'validate', CH, '--type', 'change', '--strict', '--json', cwd=R)
+    try:
+        it = json.loads(out)['items'][0]
+        ok('V5.1', 'openspec validate --strict 通过') if it['valid'] else err('V5.1', f"validate 失败: {it['issues']}")
+    except Exception:
+        err('V5.1', 'validate 输出无法解析')
 
-rc, out, _ = sh('openspec', 'status', '--change', CH, '--json', cwd=R)
-try:
-    d = json.loads(out)
-    need = d.get('applyRequires') or []
-    st = {a['id']: a['status'] for a in d.get('artifacts', [])}
-    miss2 = [a for a in st if st[a] not in ('done', 'skipped')]
-    ok('V5.2', f"required artifacts 齐备（applyRequires={need}）") if not miss2 \
-        else err('V5.2', f'未完成 artifact: {miss2}')
-except Exception:
-    err('V5.2', 'status 输出无法解析')
+    rc, out, _ = sh('openspec', 'status', '--change', CH, '--json', cwd=R)
+    try:
+        d = json.loads(out)
+        need = d.get('applyRequires') or []
+        st = {a['id']: a['status'] for a in d.get('artifacts', [])}
+        miss2 = [a for a in st if st[a] not in ('done', 'skipped')]
+        ok('V5.2', f"required artifacts 齐备（applyRequires={need}）") if not miss2 \
+            else err('V5.2', f'未完成 artifact: {miss2}')
+    except Exception:
+        err('V5.2', 'status 输出无法解析')
 
 # ---------- 报告 ----------
 print(f"\n{'='*62}\ntrace(pre-apply)  change = {CH}\n{'='*62}")

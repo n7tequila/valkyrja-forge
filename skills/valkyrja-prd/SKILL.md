@@ -221,13 +221,16 @@ import 提案、批量疑似 DEC 裁决等）：
    （截图基线钉在背书版本上），不由本层承担。
 
 跨层边界：向 openspec 注入视觉权威属 valkyrja-spec 的 config 特权——
-本动作只产出待注入内容与背书 DEC id，不越层代写。
+本动作只产出待注入内容与背书 DEC id，不越层代写；交接走 spec 的
+**「背书类权威通道」**（准入 = `frid-impact: none` 标记，不得携带需求语义）。
 
 ### status
 现场扫描目录计算（不信任任何缓存）：当前 round、PRD 版本、DEC 总数、
 open questions（blocking/non-blocking 分列）、活跃 DISC 话题、
 距离可 synthesize 的缺口（哪些争议无决策、哪些 blocking Q 无答案）、
-**发版欠账**（现算：`round` 大于最近 release round 的 DEC——决而未发。
+**发版欠账**（现算：`round` 大于最近 release round 的 DEC，
+**剔除带 `frid-impact: none` 标记者**——背书类无可发内容，与 V2.5 门限同判据，
+仪表盘与门禁不得给出相反结论。
 非空时下游 valkyrja-spec 的 V2.5 门限会阻止新 change 开工；出账靠发版。
 铸 DEC 即开始欠账——拍板是有代价的承诺动作，防碎片化拍板）。
 若发现 STATUS.md 与扫描结果不符，以扫描为准并更新 STATUS.md。

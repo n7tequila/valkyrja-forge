@@ -13,6 +13,8 @@ description: OpenSpec 开发治理层——把已发布 PRD 转为 requirement b
 
 1. **唯一输入是 `prd/releases/vX.Y.md`。** `prd/current.md` 与五类源目录是上游内部实现，
    一律不读；只可沿 PRD 中需求块的 `Sources:` 显式回溯被列出的那些文件。
+   （本条管的是**需求语义**；不承载需求的背书类权威另有显式通道，见宪法后
+   「背书类权威通道」。）
 2. **本技能不铸造任何 ID，包括 Q。** FRID（见下）与 Q 的编号空间均属上游。
    缺口记为**无编号的「待上游澄清项」**，回流上游由 valkyrja-prd 铸 Q。
    （上游 Q 编号靠扫描 initiative 内 DISC/PRD/STATUS.md 取最大号 +1，
@@ -26,6 +28,13 @@ description: OpenSpec 开发治理层——把已发布 PRD 转为 requirement b
 6. **特权动作只能由人类显式确认后执行。** AI 可以给出判断与建议，但无裁决权。
 7. **历史不删除。** 基线可 supersede，不覆盖；已发布需求不得被下游单方面丢弃。
 8. **委托优先于重造。** 官方 skill 与 CLI 已实现的机制一律委托，不自行实现。
+
+**背书类权威通道（宪法 1 的显式补充，不是漏洞）**：上游以 `frid-impact: none`
+铸造的背书类 DEC（如视觉基线）**不改动任何 FRID 语义、也不经 release 到达**——
+它们由 prd 的对应动作（如 prototype 第 3 步）**显式交接**给本技能，
+经 config 特权写入注入、并可作 design 的 `依据: DEC-*`（V4.8 照常核引用完整性）。
+准入条件就是标记本身：任何**承载需求语义**的内容不得走此通道，必须经
+release——宪法 1 不动摇。
 
 ## 术语：FRID（Formal Requirement ID）
 
@@ -205,12 +214,19 @@ REMOVED / RENAMED 从主 spec 同名（或 FROM 所指）Requirement 的 Sources
 准备物**：
 
 ```
-无在途 change            → propose 壳（欠账门 → 交接段 → 经确认委托官方 propose → 自动 pre-apply）
-已 propose、未过 pre-apply → 跑 trace（pre-apply, V1–V5）
-pre-apply 已放行          → apply 壳（确认后委托官方 apply）
-apply 进行中/完成         → 提示官方 verify（若装了），然后 trace（pre-archive）
-pre-archive 通过          → 归档确认回显，确认后代跑 CLI → V6
+无在途 change                     → propose 壳（欠账门 → 交接段 → 经确认委托官方
+                                    propose → 产后自动 pre-apply）
+已 propose、未开工（tasks 零勾选） → 现跑 trace（pre-apply）；通过则当场出示
+                                    apply 确认
+apply 进行中（tasks 部分勾选）     → 经确认续跑官方 apply
+apply 完成（tasks 全勾选）         → 提示官方 verify（若装了）→ 现跑 trace
+                                    （pre-archive）
+pre-archive 本次现跑通过           → 归档确认回显，确认后代跑 CLI → V6
 ```
+
+**全部状态由磁盘现算**（artifacts 存在性 + tasks 勾选比例 + 计划顺序）——
+不存在"上次已放行"这种可依赖的记忆：trace 只读、无 receipt，
+放行只在现跑的这一刻成立，所以每个门位都是**现跑再过**，不贵且不会说谎。
 
 **next 永不免去任何确认**——它把你送到每道门前，你确认后它代跑门后的
 委托，但门本身一道不少：委托官方 propose/apply、归档、基线修订等
@@ -367,8 +383,9 @@ rebaseline 后过期（真实事故：承袭基线的预存段仍指旧版路径
 格式规则为常量（与 config 注入刻意双层冗余：注入是 prompt 级、官方 skill
 可能忽略，粘贴段是第二道，trace 机检是终审）；实现约束提示按**当下**治理
 状态现算（覆盖 FRID 相关的 DEC 背书/降级项、基线合并提示、涉 UI 时的
-视觉基线与 token 权威、跨 change 边界注意）。生成后交用户粘贴给
-`/opsx:propose`，本技能不代跑。
+视觉基线与 token 权威、跨 change 边界注意）。生成后**默认走 propose 壳**：
+经确认委托官方 propose，产后自动 trace（pre-apply）；用户说明只要交接段
+自行去贴时，交付后即停、不代跑。
 
 「已建 / 未建」状态由 `status` 现算，**不写入基线**（宪法 5）。
 
@@ -409,7 +426,7 @@ propose 壳：欠账门 → 交接段现算 → 经确认委托官方 propose �
 **放行规则**：任一 ERROR 未清除则不得放行（apply 与归档同此标准）。
 WARNING 可带裁决放行，裁决记入回显与基线的例外记录。
 
-**确定性实现**：V1–V5 与 V4.8 已实现为 `tools/trace.py`，退出码 0/1 可作 CI 门禁；
+**确定性实现**：V1–V5 与 V4.8 已实现为本技能 `tools/trace.py`（随技能安装分发，产品仓可直接 `python3 ~/.claude/skills/valkyrja-spec/tools/trace.py . <change>` 或项目级安装路径），退出码 0/1 可作 CI 门禁；
 语义判断（拆分完整性、DEC 范围覆盖）不在脚本内，仍由人核对。
 
 ### 归档路径的选择
@@ -428,7 +445,8 @@ trace（pre-archive）放行后，**优先委托 CLI**：`openspec archive <chan
 （Implemented / Open changes / Non-software / External / Deferred / Conflicted / Unaccounted），
 外加：基线版本与状态、每个 planned change 的已建/未建与 artifact 进度
 （`openspec status --change`）、**计划外 change 清单**、待澄清项、
-**发版欠账**（现算：上游 `round` 大于当前 release round 的 DEC——决而未发；
+**发版欠账**（现算：上游 `round` 大于当前 release round 的 DEC，
+**剔除带 `frid-impact: none` 标记者**（与 V2.5 同判据，视图与门禁不得相反）；
 非空即触发 V2.5 门限，出账靠上游发版）。
 
 `Deferred`、`External`、`Conflicted` **必须始终单独显示，不得因已裁决而隐藏或并入已覆盖**——

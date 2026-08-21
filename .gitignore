@@ -8,3 +8,5 @@
 # 安装脚本的覆盖备份
 .backup/
 .omx/
+__pycache__/
+*.pyc

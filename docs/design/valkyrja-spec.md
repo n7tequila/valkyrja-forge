@@ -210,7 +210,7 @@ SKILL.md 曾达 685 行（超出 Claude Code 对 SKILL.md 的 ~500 行建议值�
 切分原则：**摘要留在 SKILL.md，判定细节进 reference**——路由与确认阶段
 需要知道「有这条规则」，只有真正执行判定时才需要「规则的完整形式」。
 每个 reference 头部写明「何时读本文件」，并带**三载体同步提醒**
-（SKILL.md / reference / `tools/trace.py` 同源，改一处必须改三处）。
+（SKILL.md / reference / 技能内 `tools/trace.py` 同源，改一处必须改三处）。
 
 ## 10. 未验证区域（诚实清单）
 

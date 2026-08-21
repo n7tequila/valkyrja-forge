@@ -203,13 +203,13 @@ These run through both skills and explain every tradeoff in the design:
 valkyrja-forge/
 ├── README.md / README.zh-CN.md / NOTICE.md
 ├── commands/valkyrja/             # slash-command namespace → /valkyrja:{prd,arch,spec}
-├── docs/design/                   # finalized design records (valkyrja-arch D1–D10 rulings)
+├── docs/design/                   # design records & evolution logs for all three skills (D-series ruling ledger)
 ├── scripts/install-skills.sh      # installs skills + commands
-├── tools/trace.py                 # deterministic trace checker; exit code doubles as a CI gate
 └── skills/
     ├── valkyrja-prd/              # SKILL.md + templates/
     ├── valkyrja-arch/             # SKILL.md + templates/ + references/conventions/ (catalog)
-    └── valkyrja-spec/             # SKILL.md + templates/
+    └── valkyrja-spec/             # SKILL.md + templates/ + references/
+                                   #   + tools/trace.py (deterministic trace, ships with the skill; CI-gate exit code)
 ```
 
 ---

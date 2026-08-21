@@ -227,13 +227,13 @@ openspec init --tools claude    # 在目标产品仓库内执行
 valkyrja-forge/
 ├── README.md / README.zh-CN.md / NOTICE.md
 ├── commands/valkyrja/             # 斜杠命令命名空间 → /valkyrja:{prd,arch,spec}
-├── docs/design/                   # 设计定稿（valkyrja-arch D1–D10 裁决记录）
+├── docs/design/                   # 三技能设计定稿与演进记录（含 D 系列裁决台账）
 ├── scripts/install-skills.sh      # 同时安装技能与命令
-├── tools/trace.py                 # trace 的确定性实现，退出码可作 CI 门禁
 └── skills/
     ├── valkyrja-prd/              # SKILL.md + templates/
     ├── valkyrja-arch/             # SKILL.md + templates/ + references/conventions/（catalog）
-    └── valkyrja-spec/             # SKILL.md + templates/
+    └── valkyrja-spec/             # SKILL.md + templates/ + references/
+                                   #   + tools/trace.py（确定性 trace，随技能安装分发，退出码可作 CI 门禁）
 ```
 
 ---

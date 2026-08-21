@@ -1,0 +1,3 @@
+目录冒充 .md 基线文件：glob 会匹配到它，open() 抛 IsADirectoryError——
+触发 trace.py 的未预期异常路径（excepthook → TOOL ERROR + 退出码 2）。
+不用非法字节做这个夹具：二进制垃圾会卡住各类扫描工具（实测卡过全局 pre-commit 钩子）。

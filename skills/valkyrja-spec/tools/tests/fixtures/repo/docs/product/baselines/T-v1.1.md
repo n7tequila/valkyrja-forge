@@ -38,7 +38,17 @@ date: 2026-01-02
 覆盖：REQ-T-003
 ### case-creep
 覆盖：REQ-T-001
+### case-creep-raw
+覆盖：REQ-T-001
 ### case-missing
 覆盖：REQ-T-001, REQ-T-002
+### case-nested
+覆盖：REQ-T-002
+### case-colon-full
+覆盖：REQ-T-001
+### case-v41-dup
+覆盖：REQ-T-001
 
 ## 例外记录
+
+- case-creep 范围蔓延（REQ-T-005）：夹具裁决放行

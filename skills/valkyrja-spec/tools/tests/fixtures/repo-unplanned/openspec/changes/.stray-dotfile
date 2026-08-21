@@ -1,0 +1,2 @@
+杂散点文件（模拟 .DS_Store，.DS_Store 本名会被仓库 .gitignore 排除故用此名）：
+不是目录、点开头——V3.5 的磁盘扫描不得把它当作 change。

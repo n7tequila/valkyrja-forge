@@ -20,6 +20,9 @@ date: <YYYY-MM-DD>
 
 <!-- 一条 FRID 一个三级标题。处置六选一：
      直通 | 拆分 | 延期 | 非软件 | 外部 | 冲突
+     登记位置（机读口径，勿混）：本节只写 直通/拆分/冲突 三种；
+     延期/外部/非软件 各自登记在下方对应专节（trace 以专节标题取集合，
+     在本节写「处置：延期」不会被机器识别，该 FRID 会被判为漏裁决）。
 
      混合体 FRID（行为点分属不同交付归属）：
      - 行为点层级标注「交付：本仓软件 / 非软件 / 外部系统」，与 capability 并列；
@@ -84,7 +87,7 @@ capability：<capability-path>
 
 ## 外部系统项（external）
 
-<!-- 是软件，但由本仓之外的系统交付（如后台 CMS、线索池、埋点服务端）。
+<!-- 是软件，但由本仓之外的系统交付（如后台 CMS、CRM/工单系统、埋点服务端）。
      与「非软件」必须分开：non-software 是永久不需要任何 spec，
      external 是需要 spec、但那份 spec 属于另一个 openspec 实例。
      混为一谈会让跨系统欠账在两边同时消失。
@@ -92,13 +95,13 @@ capability：<capability-path>
 
 ### <BR-DOMAIN-NNN>
 
-承担系统：<后台 CMS | 线索池 | 埋点服务端 | …>
+承担系统：<后台 CMS | CRM/工单系统 | 埋点服务端 | …>
 理由：<为什么不由本仓交付>
 裁决日：<YYYY-MM-DD>
 
 ## 非软件项（non-software）
 
-<!-- 不由代码交付的正式需求（如「指定线索跟进责任人并写入运营文档」）。
+<!-- 不由代码交付的正式需求（如「指定工单跟进责任人并写入运营文档」）。
      不要求 spec 覆盖，但必须记录交付方式与理由，否则无法回答
      「这条需求到底谁负责」。 -->
 
@@ -137,7 +140,10 @@ capabilities：<capability-path>
 
 ## 交接单
 
-<!-- 格式见 SKILL.md 的 decompose 节，须含可照抄的 Requirement Authority 块。
+<!-- 格式见 SKILL.md 的 decompose 节。只存裁决字段——名称、capabilities、
+     覆盖 FRID、顺序与依赖、说明；**粘贴段与 Requirement Authority 块不预存**，
+     由 propose 壳现算生成（宪法 5：预存路径会在 rebaseline 后过期，
+     真实事故：承袭基线的预存段仍指旧版路径）。
      「已建/未建」由 status 现算，不写入本文件。 -->
 
 ## 待上游澄清项
@@ -150,8 +156,16 @@ capabilities：<capability-path>
 
 ## 例外记录
 
-<!-- skip_specs 例外、计划外 change 纳入裁决、带 WARNING 放行等，逐条记理由与裁决日。 -->
+<!-- skip_specs 例外、欠账放行、范围蔓延放行、计划外探索备案等，
+     逐条记理由与裁决日。**机读判据**：trace 按「同一行含 change 名 + 类型关键词」
+     查验裁决（change 名边界匹配，前缀名不互蹭），四个类型关键词固定为：
+     欠账 / 蔓延 / skip_specs / 计划外——事项行必须同时含 change 名与对应关键词。
+     注意「计划外」是**探索备案**：只消 trace 对该 change 的重复提醒，
+     不放行它本身（计划外 change 一律不得通过门禁，唯一出口是 decompose 纳入计划）。 -->
 
 - 事项：<change-name> 设 skip_specs: true
   理由：<为什么该 change 确实不携带任何 spec 级行为变更>
+  裁决日：<YYYY-MM-DD>
+- 事项：<change-name> 范围蔓延（<FRID>）裁决放行
+  理由：<为什么超出 Covered-FRIDs 的触达是合理的>
   裁决日：<YYYY-MM-DD>

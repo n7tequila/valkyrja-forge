@@ -1,7 +1,8 @@
 # valkyrja-spec 开发治理层 · 设计记录
 
-> 状态：**已在真实项目验证至 apply 前全链**（baseline → decompose → propose →
-> trace → rebaseline 联锁）。本文档记录设计决策及其依据；每条规则都注明来源——
+> 状态：**已在真实项目完成首次端到端闭环**（baseline → decompose → propose →
+> trace → apply → verify → archive → V6 首跑 → rebaseline 联锁），并经全量
+> 复审修复一轮。本文档记录设计决策及其依据；每条规则都注明来源——
 > 是纸面推演、外部评审、还是真实运行踩出来的。
 
 ## 1. 定位：治理编排层，不是 OpenSpec 的替代品
@@ -104,7 +105,7 @@ FRID = REQ | BR | SEC | NFR
 `deferred` 是「仍欠一份实现」。合并会让延期项在覆盖对账中被当作已解释，长期静默遗忘。
 
 **external 是真实 PRD 逼出来的**：一条需求可能是软件、但属于本仓之外的系统
-（后台 CMS、线索池）。原五类无一能表达——判 `non-software` 会让跨系统欠账被永久免责，
+（后台 CMS、CRM）。原五类无一能表达——判 `non-software` 会让跨系统欠账被永久免责，
 判 `deferred` 又无法区分「本仓欠」与「别处在做」。
 
 **混合体 FRID**（同批发现）：一条需求的行为点可能分属不同交付归属。解法是
@@ -126,8 +127,9 @@ V4 delta 侧 / V5 委托官方 validate / V6 归档后。两个强制触发时�
 
 **V6.2 的减法写法**（评审第三轮）：不得写成「active ⊆ 若干项之并，差集即缺口」——
 `deferred`/`external`/`conflicted` 都是 active 子集且都不在覆盖侧，那样算出的差集
-必然混入它们，把「已裁决延期」误报成「漏做」。必须显式做减法并分列七块，
-只有 `unaccounted` 是 ERROR。
+必然混入它们，把「已裁决延期」误报成「漏做」。必须显式做减法并分列**八块**
+（首次真实 V6 增补第八块 Planned 未建——无此块时中途归档必报假 ERROR，
+实测 29 条），只有 `unaccounted` 是 ERROR。公式权威版本见 trace-contract.md V6.2。
 
 **V4.8 依据引用完整性**（arch 层设计时确立）：检查 design.md 的 `依据: DEC-*` /
 `依据: ADEC-*` 指向的决策真实存在。定性为**引用完整性**检查（与 Sources 同族，
@@ -185,6 +187,7 @@ verify 缺失没有任何替代——闭环会缺「代码 ↔ artifacts」一�
 | **第二轮全量外部复审** | 半迁移态：主协议升级后脚本/安装器/模板/入口/README 七类镜像面未跟上——安装不带门禁脚本、trace.py 只实现契约的 ADDED 分支、壳与"交用户粘贴"两套互斥文本并存、next 依赖不可持久化的"已放行"状态、local-only 新旧规则打架、欠账豁免没进 status、背书 DEC 无跨 skill 名分 | trace.py 迁入 skill 自包含（安装即带）+ V4 全分支补齐（addressed/历史豁免/REMOVED/RENAMED）+ **7 场景合成夹具回归**（`tools/tests/`，--skip-cli 模式验集合代数层）；壳文本全链统一，next 全改磁盘现算态（每门现跑 trace，不记"上次放行"）；背书类权威通道成为宪法 1 的显式补充（准入=frid-impact 标记）；镜像面八处收口。教训定型：**协议升级必须连镜像面一起清点**——SKILL.md 之外，脚本/安装器/模板/命令/README 每处都是会漂移的载体 |
 | **首次真实归档（V6 首跑）** | ① V6.2 七块减法漏「计划在册未建」——分阶段交付的每次中途归档必假 ERROR（实测 Unaccounted=29）；② 归档壳产后无提交提醒，apply/archive 33 个文件裸奔到外部复核才发现 | V6.2 增第八块 **Planned（未建）**（∩ 基线计划现算；V3.4 保证 included⊆计划故其合法为 0，Unaccounted 仍唯一 ERROR——实测补块后归 0，示例即用真实首跑数据）；归档壳产后清单加**提交提醒**（建议 message，不强制代跑）。"untested half 需要真实数据"的预言再次兑现 |
 | **verify 环节接入** | 官方 verify 就位后，闭环最后一段（代码↔artifacts）无治理接线；且代码里的 `依据:` 注释无人核完整性 | **verify 壳**（第四动词，只读委托无需确认）+ **V4.9 源码依据引用完整性**（V4.8 延至 source/，冒号可选匹配、报扫描数；夹具正路径钉住）+ 治理核对清单（repo 机检测试绿 / inventory 登记——技术正确性仍归仓库工具链，边界不破） |
+| **首轮后全量复审（17 agent 对抗验证 + 外部独立 review 交叉）** | 工具层六缺陷：① V4.8 只认半角冒号，全角幽灵依据静默放行（实测复现，V4.9 兜不到 design.md）；② 嵌套 capability 被 basename 压平——合规多级路径假 V4.3 ERROR，basename 碰撞时更产生假放行（外部 review 首报，官方 CLI 1.10.0 实测嵌套是归档保持的一等语义）；③ 无 DOMAIN 概念、同域双 active 静默取字典序最后；④ V3.5 一刀切 ERROR 拦停全线，与「探索态合法」矛盾，且 listdir 回退把杂散文件当 change；⑤ malformed 输入裸 traceback、CLI 未装即崩、工具故障与门禁共用退出码 1；⑥ V4.5 蔓延 WARNING 退出 0 且不查例外记录，CI 下静默绿灯（V2.5/V4.7 都查、唯它不查的实现缺口）。另有模板↔宪法矛盾（交接单注释仍要求预存 Authority 块）、frid-impact 无铸造模具、版本断言无上界 | CITE_RE 共用常量（冒号全半角可省）；capability 按 specs/ 下完整相对路径反查 + 契约新增「capability 身份」节；V1.3 DOMAIN 定位 + 域内唯一 active（多 active ERROR）；V3.5 分层（本 change ERROR / 他 change WARNING 探索态）+ 目录过滤；退出码 0/1/2 三分（2=工具故障）+ 顶层守卫 + `--stage` 报告头；V4.5/V4.7 例外查验与 V2.5 同构（关键词逐类隔离：欠账/蔓延/skip_specs/计划外）；V49_SKIP 去栈化（内置清单+点目录）；版本区间 [1.9,1.10] 上界 WARNING；模板三处收口（交接单只存裁决字段、处置登记位置口径、frid-impact 字段注释）；契约新增**机读常量表**；回归夹具 7→18 场景（含负面测试与多 DOMAIN 金丝雀）；D6 脱敏机检脚本（词表私有）；触发面收紧（工作区锚定 opt-in）。被证伪而**保留不动**的六项：V2.5 零语义门限、rebaseline 禁批量代改、V4.9 全仓扫描、config 探针、inventory、Q 扫描取号——每项的存在理由经对抗验证成立 |
 
 最后两行是这份记录里最值钱的部分：
 
@@ -217,10 +220,10 @@ SKILL.md 曾达 685 行（超出 Claude Code 对 SKILL.md 的 ~500 行建议值�
 
 ## 10. 未验证区域（诚实清单）
 
-真实运行覆盖了 baseline → decompose → propose → trace → rebaseline 联锁。
-以下分支尚未在真实数据上跑过：
+真实运行已覆盖 baseline → decompose → propose → trace → apply → verify →
+archive → V6 首跑 → rebaseline 联锁全链；`addressed()` 的 MODIFIED / REMOVED /
+RENAMED 分支已有合成夹具回归（18 场景）。以下仍未在真实数据上跑过：
 
-- `addressed()` 的 MODIFIED / REMOVED / RENAMED 分支（需主 spec 已有内容）
-- 退休型 change 与 `deprecated` 集合（需某版 PRD 出现 DEPRECATED 标记）
-- V6 七块分账（需先完成一次真实 apply 与 archive）
+- 退休型 change 与 `deprecated` 集合的真实归档（夹具已覆盖判定逻辑）
 - capability 退休删除的放行回显（需 `retire_capabilities: true` 场景）
+- 多 DOMAIN 仓库的真实并行（V1.3 域定位已有夹具，缺真实项目）

@@ -62,7 +62,7 @@ Any requirement can be traced backward to *why it exists*, and any released requ
 |---|---|---|
 | **valkyrja-prd** | Discuss / decide / import / synthesize / release a PRD (the WHAT) | Proven end-to-end on a real project |
 | **valkyrja-arch** | Technical decisions (ADEC) / adopted conventions / shared interface contracts (the foundation of HOW) | First real adopt / decide / contract / publish cycle completed |
-| **valkyrja-spec** | Consume the Released PRD plus the technical foundation, drive the OpenSpec loop | Verified on a real project through the full pre-apply chain (baseline → rebaseline interlock) |
+| **valkyrja-spec** | Consume the Released PRD plus the technical foundation, drive the OpenSpec loop | Completed its first full real-project loop, archive and V6 ledger included |
 
 ### valkyrja-prd
 
@@ -115,7 +115,7 @@ The four verbs (propose / apply / verify / archive) run as a **shell**: gates fi
 
 ## Slash commands
 
-Two entry points, namespaced for cohesion:
+Three entry points, namespaced for cohesion:
 
 ```
 /valkyrja:prd    <anything, in natural language>
@@ -186,7 +186,7 @@ openspec init --tools claude    # run inside the target product repo
 
 ## Design principles
 
-These run through both skills and explain every tradeoff in the design:
+These run through all three skills and explain every tradeoff in the design:
 
 1. **The filesystem is memory; conversation is not.** Any conclusion not written to disk does not exist next session.
 2. **Humans keep decision authority; AI only extracts and proposes.** Product decisions and releases are privileged actions requiring explicit confirmation. A hesitant phrasing counts as a leaning, not a decision.
@@ -205,6 +205,7 @@ valkyrja-forge/
 ├── commands/valkyrja/             # slash-command namespace → /valkyrja:{prd,arch,spec}
 ├── docs/design/                   # design records & evolution logs for all three skills (D-series ruling ledger)
 ├── scripts/install-skills.sh      # installs skills + commands
+├── scripts/check-sanitization.sh # D6 sanitization gate (private wordlist, pre-push/CI)
 └── skills/
     ├── valkyrja-prd/              # SKILL.md + templates/
     ├── valkyrja-arch/             # SKILL.md + templates/ + references/conventions/ (catalog)
@@ -217,11 +218,11 @@ valkyrja-forge/
 ## Status and next steps
 
 - `valkyrja-prd` has been validated on a real project; the PRD it produced was good enough to feed straight into development.
-- `valkyrja-spec` has been through several rounds of review and revision, and its format contracts are all empirically verified against OpenSpec v1.9.0 (the `Sources:` line does not trip `validate`, survives the merge into the main spec, and is machine-extractable). **The full pipeline has not yet had a single real end-to-end run.**
+- `valkyrja-spec` has been through several rounds of review and revision, and its format contracts are all empirically verified against OpenSpec (verified range [1.9, 1.10]: the `Sources:` line does not trip `validate`, survives the merge into the main spec, is machine-extractable, and nested capabilities archive under their full paths). **The full pipeline has completed its first real end-to-end run — archive, the first V6 eight-block ledger, and a full post-run review with fixes included.**
 
 Planned:
 
-- [ ] First end-to-end run against a real PRD: baseline → decompose → propose → trace → apply → verify → trace → archive
+- [x] First end-to-end run against a real PRD: baseline → decompose → propose → trace → apply → verify → trace → archive (archived 2026-08-21)
 - [ ] Split `SKILL.md` into reference files (progressive disclosure)
 - [ ] Push the purely deterministic checks (traceability, set reconciliation) down into scripts and CI
 - [ ] CI rule forbidding edits to already-released `prd/releases/**`

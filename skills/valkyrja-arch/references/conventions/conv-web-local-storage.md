@@ -3,7 +3,7 @@ id: conv-web-local-storage
 concern: 数据
 stack: web-vanilla
 version: 2026-08-20
-source: 自撰（离线优先 Kiosk 场景的存储选型与加密队列模式提炼）
+source: 自撰（离线优先自助终端场景的存储选型与加密队列模式提炼）
 license: 自有
 modified: 提炼泛化
 status: redistributable
@@ -36,6 +36,6 @@ status: redistributable
 
 ## 实测先行
 
-浏览器间配额、持久化保证、清理策略差异极大（且 Kiosk 常驻场景与普通浏览
+浏览器间配额、持久化保证、清理策略差异极大（且自助终端常驻场景与普通浏览
 行为不同）。**目标设备上的存储行为必须 spike 实测**后再定案：
 配额、跨重启持久化、浏览器"存储压力清理"是否可豁免——纸面选型不作数。

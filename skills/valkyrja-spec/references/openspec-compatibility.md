@@ -4,7 +4,10 @@
 > 写 `openspec/config.yaml` 注入、或遇到官方 skill 行为与本技能门禁冲突时。
 > SKILL.md 只保留检测清单与结论；条件分支与理由在这里。
 >
-> 以下行为均为对 OpenSpec **v1.9.0 实测确认**，非文档推断。
+> 以下行为均为对 OpenSpec **v1.9.0 实测确认**，非文档推断；
+> 标注 (1.10.0) 的条目在 v1.10.0 上补测。trace.py 的 V1.1 以
+> **[1.9, 1.10] 为已实测验证区间**：高于区间只 WARNING 不拦，
+> 但升级后应回到本文件逐条复验第六节的依赖行为再抬区间上界。
 
 ## 一、环境前提的条件分支
 
@@ -93,7 +96,9 @@ openspec instructions specs --change <任一change> --json
 官方 explore skill 可不经本技能直接 `openspec new change`。
 这是合法的探索出口，本技能不禁止，但 `status` 与 `trace` 必须把磁盘上存在却不在
 基线计划中的 change 列为**计划外 change**，要求人裁决：纳入基线（补记裁决）/
-保持探索态（不得归档）/ 删除。**计划外 change 一律不得通过归档门禁。**
+保持探索态（不得归档）/ 删除。**计划外 change 一律不得通过归档门禁**——
+唯一出口是 decompose 纳入计划；「保持探索态」的裁决可在基线例外记录做**备案**
+（行含 change 名与「计划外」），备案只消 trace 对它的重复提醒，不改变不得归档。
 
 ### `skip_specs` 逃生口
 
@@ -130,3 +135,8 @@ openspec instructions specs --change <任一change> --json
   时静默不含任何 rules——**无 change 的仓里验证注入必须先
   `openspec new change` 造一次性探针 change**，验证后删除其目录，
   否则「探针为空」与「注入失效」不可区分（零对象 ≠ 零发现）
+- (1.10.0) **嵌套 capability 是一等语义**：delta 放
+  `specs/payments/refunds/spec.md` 时 `validate --strict` 通过，`archive` 输出
+  「Applying changes to openspec/specs/payments/refunds/spec.md」——
+  capability 身份是 specs/ 下**完整相对路径**，归档合并保持嵌套、不压平。
+  trace 的主 spec 反查必须同口径（trace-contract.md「capability 身份」节）

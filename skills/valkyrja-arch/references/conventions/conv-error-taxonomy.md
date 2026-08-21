@@ -35,7 +35,7 @@ status: redistributable
 
 ## 错误码约定（机器侧）
 
-- 命名：`<MODULE>_<REASON>`，UPPER_SNAKE_CASE（如 `LEAD_RATE_LIMITED`）
+- 命名：`<MODULE>_<REASON>`，UPPER_SNAKE_CASE（如 `ORDER_RATE_LIMITED`）
 - **禁止硬编码字符串字面量散落**——集中为常量/枚举，一处定义
 - 分层映射模式（后端场景）：异常类型 → 状态码/错误码的映射**集中在一处**
   （全局 handler / 中间件），业务代码只抛语义异常不拼响应

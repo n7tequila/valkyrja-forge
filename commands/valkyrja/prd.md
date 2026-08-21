@@ -21,4 +21,6 @@ argument-hint: [想做什么，自然语言即可；留空则先复述当前状�
   （STATUS.md → prd/current.md → decisions/ → blocking questions），
   用 3–5 句复述当前状态，再问用户想做什么。
 - **特权动作护栏（不得因走斜杠入口而放宽）**：`decide` 与 `release` 必须先完整回显、
-  等人明确确认后才落盘；用户语气含疑问（"就按 B 吧？"）视为倾向，只记入讨论，不铸造决策。
+  等人明确确认后才落盘；`prototype` 的背书步（委托 decide 铸背书 DEC，须显式出示
+  `frid-impact: none` 标记与理由）与 blocking Q 的改判同为特权动作，均须回显确认；
+  用户语气含疑问（"就按 B 吧？"）视为倾向，只记入讨论，不铸造决策。

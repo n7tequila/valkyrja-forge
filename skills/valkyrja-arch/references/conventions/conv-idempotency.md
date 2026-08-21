@@ -3,7 +3,7 @@ id: conv-idempotency
 concern: 横切
 stack: common
 version: 2026-08-20
-source: 自撰（提炼自内部项目与 Kiosk 离线补传场景的实战约定）
+source: 自撰（提炼自内部项目与自助终端离线补传场景的实战约定）
 license: 自有
 modified: 提炼泛化
 status: redistributable

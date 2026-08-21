@@ -35,6 +35,16 @@ Sources: <FRID>[, <FRID>...]
 > 则「保留历史 ID」与「Sources 必须活跃」两条规则直接对撞，该 Requirement
 > 无论怎么写都过不了 trace。区分二者是唯一自洽解。
 
+### capability 身份 = specs/ 下完整相对路径（勿按 basename 压平）
+
+一切「主 spec 同名 Requirement 反查」（MODIFIED/REMOVED/RENAMED 与契约三）中，
+capability 的身份是 change `specs/` 下的**完整相对路径**（可多级，如
+`payments/refunds`），对应主 spec `openspec/specs/<capability-path>/spec.md`。
+OpenSpec 归档按完整路径合并、保持嵌套（CLI 1.10.0 实测，见
+openspec-compatibility.md）。按目录 basename 压平曾同时制造两类假结果：
+合规嵌套路径被误报 V4.3（假 ERROR），以及 basename 与顶层 capability 碰撞时
+反查到错误主 spec 而全绿放行（假放行——比假 ERROR 更危险）。
+
 ### REMOVED 的判定
 
 被移除 Requirement 所引用的 FRID（从**主 spec 中同名 Requirement 的 Sources 行**反查，
@@ -87,9 +97,16 @@ RENAMED    addressed = 主 spec 中 FROM 所指 Requirement 的 Sources
 ## 检查清单 V1–V6
 
 **V1 前提**
-- V1.1 CLI 可用且 ≥ 1.9.0
+- V1.1 CLI 可用且版本落在**已实测验证区间**（当前 [1.9, 1.10]，区间常量在 trace.py 顶部）：
+  未安装/低于下界 → ERROR；高于上界 → WARNING「兼容性断言可能失效，核对
+  openspec-compatibility.md 第六节」——本仓的全部兼容断言都钉在实测版本上，
+  无上界告警时 CLI 大版本变更会让 trace 以假结果运行（机制静默失效教训的自我应用）
 - V1.2 `openspec context --json` 返回有效 root
-- V1.3 基线存在且 `status: active`
+- V1.3 基线**按 DOMAIN 定位且域内唯一 active**：先从本 change proposal 的
+  `Baseline:` 声明解析出目标基线的 `domain`，在该 DOMAIN 内取 active 基线；
+  恰好一个 → 通过（报告含 DOMAIN）；零个 → ERROR；**多于一个 → ERROR**
+  （rebaseline 漏标 superseded 的治理违规，必须响——按文件名静默挑一个会让
+  全部检查对着错误权威计算）。声明不可解析时退化为全仓 active 集合，仍执行唯一性。
 - V1.4 **技术地基已定**（仅当 `docs/architecture/` 存在时检查；无该目录则显式报
   「跳过」——不用 valkyrja-arch 的项目完全合法）：`decisions/` 下
   `foundational: stack` 与 `foundational: layout` 各须有一条
@@ -126,7 +143,15 @@ RENAMED    addressed = 主 spec 中 FROM 所指 Requirement 的 Sources
   两两互斥（每条 FRID 在基线中恰好一个处置）→ 否则 ERROR
 - V3.3 基线引用的每个 FRID 在 PRD 中真实存在 → 幽灵 ID，ERROR
 - V3.4 每个 `included` FRID 至少被一个 planned change 覆盖 → ERROR
-- V3.5 磁盘 change 与计划对账，输出三态：已建 / 未建 / **计划外**
+- V3.5 磁盘 change 与计划对账，输出三态：已建 / 未建 / **计划外**。severity 分层：
+  **被 trace 的 change 自身计划外 → 一律 ERROR**，唯一出口是 decompose 纳入计划
+  ——例外记录**不开这个口**（计划外 change 一律不得通过门禁；例外通道即便开了
+  也到不了绿：V4.0c 要求 Covered-FRIDs 等于基线计划，而计划外 change 的计划恒为
+  空集）；**其他 change 计划外 → WARNING**（探索态是协议合法状态：不得归档，
+  但不拦别的 change 放行——一刀切 ERROR 曾让一个探索态 change 拦停全部流水线，
+  与 explore 侧门「不禁止」直接矛盾）。例外记录的**探索备案**（行含 change 名与
+  「计划外」字样）只用于消掉他 change 的重复提醒，不改变其不得归档。
+  磁盘扫描只认目录且跳过点开头项（.DS_Store 之类杂散文件不是 change）。
 
 **V4 delta 侧**（逐 change）
 - V4.0 proposal.md 含合法 `## Requirement Authority` 块，且**三重自洽**：
@@ -135,7 +160,10 @@ RENAMED    addressed = 主 spec 中 FROM 所指 Requirement 的 Sources
   会在此被逐个拦下，更新 Authority 块并重新对账后才能放行——需求变更不会静默穿过）；
   (b) `PRD-Release:` 等于该基线 frontmatter 的 `prd_release` → 否则 ERROR；
   (c) `Covered-FRIDs` **等于**该基线为本 change 计划的集合 → 不等则 ERROR（声明与计划漂移）
-- V4.1 每个 `### Requirement:` 有且仅有一个 `Sources:` 行 → ERROR
+- V4.1 每个 `### Requirement:` 有且仅有一个 `Sources:` 行 → ERROR（「仅有一个」
+  由块内扫描实现：块体出现第二个 `Sources:` 行即 ERROR）。附属分支：**散
+  Requirement**（无 ADDED/MODIFIED/REMOVED/RENAMED 小节头）→ WARNING 并按
+  ADDED 从严判定——格式异常不放过、也不武断拦死
 - V4.2 Sources 中 ID 类型只能是 FRID → ERROR（防绕过 release）
 - V4.3 **分场景判定**（见上「契约二」）：
   - ADDED 的全部 Sources ∈ `active` ∩ `included` → 否则 ERROR
@@ -146,14 +174,21 @@ RENAMED    addressed = 主 spec 中 FROM 所指 Requirement 的 Sources
 - V4.4b **RENAMED**：FROM 所指 Requirement 触达的 FRID ⊆ `historical` 即可，
   **不要求 ∈ `deprecated`**——改标题是保持身份的 spec 重构，不是需求退役。
   沿用 REMOVED 的门槛会让任何 active 需求的纯标题重命名被误判为 ERROR。
-- V4.5 `addressed(change)` ⊆ `Covered-FRIDs` → 超出部分 WARNING（范围蔓延，需人裁决）
+- V4.5 `addressed(change)` ⊆ `Covered-FRIDs` → 超出部分＝范围蔓延，需人裁决。
+  「放行须记入例外记录」由机器查验：例外记录中存在同时含 change 名与「蔓延」
+  字样的行 → WARNING 带裁决放行；**无该行 → ERROR**（否则无人值守的 CI 里
+  蔓延会以 WARNING+退出码 0 静默绿灯——与 V2.5/V4.7 的例外查验同构，
+  此前唯独 V4.5 缺查验是实现缺口而非设计）
 - V4.6 `Covered-FRIDs` ⊆ `addressed(change)` → 缺失部分 ERROR（漏做）
   （**在没有经批准的 V4.5 例外时**，V4.5 + V4.6 等价于
-  `addressed(change) == Covered-FRIDs`；若某条 WARNING 经人裁决放行，
-  则合法状态为 `addressed ⊇ Covered`，该放行须记入基线的例外记录。
-  **必须用契约三的 `addressed()`，不得退化为 Sources 并集**。）
-- V4.7 `.openspec.yaml` 含 `skip_specs: true` → ERROR，除非基线「例外记录」中已有裁决
-- V4.8 **design.md 依据标注的引用完整性**：扫描 `依据: DEC-*` / `依据: ADEC-*`，
+  `addressed(change) == Covered-FRIDs`；经裁决放行后合法状态为
+  `addressed ⊇ Covered`。**必须用契约三的 `addressed()`，不得退化为 Sources 并集**。）
+- V4.7 `.openspec.yaml` 含 `skip_specs: true` → ERROR，除非基线「例外记录」中
+  存在同时含 change 名与「skip_specs」字样的行（判据与 V2.5 同构逐类隔离——
+  只查 change 名会让一条欠账豁免静默连带放行 skip_specs）
+- V4.8 **design.md 依据标注的引用完整性**：扫描 `依据: DEC-*` / `依据: ADEC-*`
+  （**冒号全角/半角均可、可省略**；与 V4.9 共用 trace.py 顶部的同一正则常量
+  CITE_RE——两处各写一份曾漂移出「全角冒号在 design.md 静默放行」的假通过），
   被引决策必须真实存在（DEC → initiative 的 `decisions/`；ADEC →
   `docs/architecture/decisions/`）→ 幽灵引用 ERROR；被引决策已 superseded → WARNING。
   三个不做：不查「该标注而未标注」（机器判不出一句话是否约束，留给 config 注入）；
@@ -162,11 +197,15 @@ RENAMED    addressed = 主 spec 中 FROM 所指 Requirement 的 Sources
   不是技术正确性检查——后者属 linter/架构测试/CI，本技能不越界。
 
 - V4.9 **源码依据引用完整性**（V4.8 的 source 延伸，verify 壳产后补检；
-  两时机都跑）：扫描实现代码（全仓排除 `docs/`、`openspec/`、依赖与构建产物
-  目录）中注释里的 `依据: DEC-*/ADEC-*`，判定同 V4.8——幽灵 ERROR、
-  superseded WARNING，并报出处文件。pre-apply 时扫描数通常为 0，
-  **必须报数**（零对象≠零发现）。边界同 V4.8：只查引用完整性，
-  不查「该标注未标注」、不查技术正确性——后者属仓库测试/lint（宪法 8）。
+  两时机都跑）：扫描实现代码中注释里的 `依据: DEC-*/ADEC-*`（正则同 V4.8，
+  共用 CITE_RE），判定同 V4.8——幽灵 ERROR、superseded WARNING，并报出处文件。
+  **排除口径**（确定的，与 trace.py 的 V49_SKIP 常量同源）：`docs/`、`openspec/`、
+  一切点开头目录（.git/.claude/.venv/.next 等自然涵盖），以及主流生态的依赖/
+  构建产物目录（node_modules、dist、build、target、vendor、coverage、out、
+  Pods、DerivedData、__pycache__、venv、env）——清单不得按单一项目的栈现挑，
+  首版按试点 JS 栈写死曾使 Python/Java 仓每次门禁全量遍历依赖树。
+  pre-apply 时扫描数通常为 0，**必须报数**（零对象≠零发现）。边界同 V4.8：
+  只查引用完整性，不查「该标注未标注」、不查技术正确性——后者属仓库测试/lint（宪法 8）。
 
 **V5 委托原生**
 - V5.1 `openspec validate <change> --type change --strict --json` 退出码 0
@@ -222,7 +261,32 @@ WARNING 可带裁决放行，裁决记入回显与基线的例外记录。
 
 ## 确定性实现
 
-V1–V5 与 V4.8 的确定性部分已实现为本技能 `tools/trace.py`
-（用法 `trace.py <产品仓库根> <change-name>`，退出码 0/1 可作 CI 门禁）。
+V1–V5（含 V4.8/V4.9）的确定性部分已实现为本技能 `tools/trace.py`：
+
+```
+用法   trace.py <产品仓库根> <change-name> [--skip-cli] [--stage pre-apply|pre-archive]
+退出码 0 = 放行 / 1 = 有 ERROR 不得放行 / 2 = 工具自身故障（输入损坏、环境缺失）
+```
+
+0/1 可直接作 CI 门禁；**2 表示门禁没有跑完**（malformed 输入、缺参、异常），
+须先修输入或环境——工具故障与门禁 ERROR 不共用退出码，CI 与 LLM 据此分流。
+`--stage` 只改报告头的时机标注（归档壳传 `pre-archive`），判定逻辑两时机相同。
+运行前提：python3 ≥ 3.7（脚本自检）；执行端应先确认 `python3` 可用
+（Windows 无此别名时改用 `python` / `py -3`）。
 **语义判断不在脚本内**——拆分完整性、DEC 范围覆盖仍由人核对；
 一个假阳性的「通过」比不检更危险。
+
+## 机读常量表（协议常量，不可改写）
+
+下列中文字面量被 trace.py 硬匹配，是机读协议的一部分；消费仓改写任何一个
+（比如把基线节标题改一个字）会以「V3.1 漏裁决」之类的间接形态报错、不指向真因：
+
+| 类别 | 常量 |
+|---|---|
+| 基线节标题 | `需求裁决`、`延期项（deferred）`、`外部系统项（external）`、`非软件项（non-software）`、`Change 划分（计划，非现状）`、`例外记录` |
+| 处置枚举 | `处置：直通 / 拆分 / 冲突`（其余三类登记在各自专节，机检以专节标题为准） |
+| 例外记录关键词 | 行须同时含 change 名（边界匹配——`pay` 不蹭 `pay-v2` 的裁决）与类型词：`欠账`（V2.5）/ `蔓延`（V4.5）/ `skip_specs`（V4.7）/ `计划外`（V3.5 探索备案，只消他 change 提醒、不放行本 change） |
+| 依据标注 | `依据[:：]?\s*(A?DEC-…-\d{3})`（CITE_RE，V4.8/V4.9 共用） |
+| DEC 豁免标记 | frontmatter 行首 `frid-impact: none`（拼写与位置都机读，写错即豁免静默失效） |
+
+全链中文绑定是当前版本的显式限制（模板同源、非项目耦合）；国际化待真实需求出现再议。

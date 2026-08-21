@@ -66,7 +66,7 @@ RN / DEC  →  PRD 的 REQ/BR/SEC/NFR  →  OpenSpec Requirement 的 Sources:  �
 |---|---|---|
 | **valkyrja-prd** | 讨论 / 决策 / 导入 / 合成 / 发布 PRD（WHAT） | 已在真实项目跑通完整流程 |
 | **valkyrja-arch** | 技术选型决策（ADEC）/ 采纳约定 / 共享接口契约（HOW 的地基） | 已在真实项目完成首轮 adopt / decide / contract / publish |
-| **valkyrja-spec** | 消费 Released PRD 与技术地基，驱动 OpenSpec 开发闭环 | 已在真实项目验证至 apply 前全链（baseline → rebaseline 联锁） |
+| **valkyrja-spec** | 消费 Released PRD 与技术地基，驱动 OpenSpec 开发闭环 | 已在真实项目跑通首次完整闭环（含归档与 V6 首跑） |
 
 ### valkyrja-prd
 
@@ -130,7 +130,7 @@ ADEC。产物落 `docs/architecture/`（决策 / 已采纳约定副本 / 版本�
 
 ## 斜杠命令
 
-两个入口，用命名空间做内聚：
+三个入口，用命名空间做内聚：
 
 ```
 /valkyrja:prd    <想做什么，自然语言即可>
@@ -153,7 +153,7 @@ ADEC。产物落 `docs/architecture/`（决策 / 已采纳约定副本 / 版本�
 ```
 
 > **斜杠命令是 Claude Code 专属的**，属于手感增强，不是运行机制。
-> 两个技能本来就按自然语言自动路由，所以在其他 harness 上完全可以不要命令，
+> 三个技能本来就按自然语言自动路由，所以在其他 harness 上完全可以不要命令，
 > 把 `skills/` 下的目录放到该工具约定的位置即可，功能不打折——
 > 你只是从 `/valkyrja:spec 建立基线` 变成直接说「建立基线」。
 > `SKILL.md` 本身是纯 Markdown + YAML frontmatter，已有多个 harness 在消费这个格式。
@@ -204,7 +204,7 @@ openspec init --tools claude    # 在目标产品仓库内执行
 
 ## 设计原则
 
-贯穿两个技能，也是理解全部设计取舍的钥匙：
+贯穿三个技能，也是理解全部设计取舍的钥匙：
 
 1. **文件系统是记忆，对话不是。** 任何未落盘的结论，下个会话视为不存在。
 2. **人保留决策权，AI 只做提取和建议。** 产品决策与发布是特权动作，必须显式确认；
@@ -228,6 +228,7 @@ valkyrja-forge/
 ├── commands/valkyrja/             # 斜杠命令命名空间 → /valkyrja:{prd,arch,spec}
 ├── docs/design/                   # 三技能设计定稿与演进记录（含 D 系列裁决台账）
 ├── scripts/install-skills.sh      # 同时安装技能与命令
+├── scripts/check-sanitization.sh # D6 脱敏机检门禁（词表私有，建议接 pre-push/CI）
 └── skills/
     ├── valkyrja-prd/              # SKILL.md + templates/
     ├── valkyrja-arch/             # SKILL.md + templates/ + references/conventions/（catalog）
@@ -240,13 +241,14 @@ valkyrja-forge/
 ## 现状与下一步
 
 - `valkyrja-prd` 已用真实项目验证，产出的 PRD 质量可直接进入下游开发。
-- `valkyrja-spec` 的协议已经过多轮评审与修订，格式契约均已对 OpenSpec v1.9.0
-  实测验证（`Sources:` 行不触发 validate、能随合并进入主 spec、可机读提取）。
-  **但整条流水线尚未做过一次真实的端到端运行。**
+- `valkyrja-spec` 的协议已经过多轮评审与修订，格式契约均已对 OpenSpec 实测验证
+  （验证区间 [1.9, 1.10]：`Sources:` 行不触发 validate、能随合并进入主 spec、
+  可机读提取、嵌套 capability 归档保持完整路径）。
+  **整条流水线已在真实项目完成首次端到端运行（含归档、V6 八块分账首跑与全量复审修复）。**
 
 后续计划：
 
-- [ ] 用真实 PRD 跑通首次端到端：baseline → decompose → propose → trace → apply → verify → trace → archive
+- [x] 用真实 PRD 跑通首次端到端：baseline → decompose → propose → trace → apply → verify → trace → archive（2026-08-21 归档收官）
 - [ ] `SKILL.md` 拆分 reference 文件（progressive disclosure）
 - [ ] 把纯确定性检查（追溯校验、集合对账）下沉为脚本与 CI
 - [ ] CI 禁止修改已发布的 `prd/releases/**`

@@ -1,6 +1,6 @@
 ---
 name: valkyrja-spec
-description: OpenSpec 开发治理层——把已发布 PRD 转为 requirement baseline，裁决 change 划分，校验 PRD↔spec 双向追溯，并为归档把关。当用户要基于已发布 PRD 开始开发、建立需求基线、拆分 OpenSpec change、检查需求覆盖与追溯、开始实现某个 change、或准备归档某个 change 时，必须使用本技能。即使用户只是随口说"PRD 定稿了可以开工了"、"这版需求拆成几个 change"、"看看哪些需求还没做"、"开始开发这个 change"、"这个 change 能归档吗"、"实现有没有跑偏需求"，只要上下文涉及 openspec/ 工作区或 Released PRD 的下游消费，都应触发本技能。
+description: OpenSpec 开发治理层——把已发布 PRD 转为 requirement baseline，裁决 change 划分，校验 PRD↔spec 双向追溯，并为归档把关。当用户要基于已发布 PRD 开始开发、建立需求基线、拆分 OpenSpec change、检查需求覆盖与追溯、开始实现某个 change、或准备归档某个 change 时，必须使用本技能。即使用户只是随口说"PRD 定稿了可以开工了"、"这版需求拆成几个 change"、"看看哪些需求还没做"、"开始开发这个 change"、"这个 change 能归档吗"、"实现有没有跑偏需求"，只要项目已有 valkyrja 基线（docs/product/baselines/）或用户明确要基于 Released PRD 开工建立基线，都应触发本技能。注意：仅有 openspec/ 工作区、无 valkyrja 基线且用户未提及 PRD 的项目（独立使用 OpenSpec 官方流程）不在本技能管辖内，不要接管。
 ---
 
 # Valkyrja Spec（OpenSpec 开发治理层）
@@ -83,7 +83,8 @@ change，其 `Covered-FRIDs` 即这些 deprecated FRID。故一个 change 的 `C
 
 每次会话首次进入本技能时，按顺序检测并把结果并入状态复述：
 
-1. **CLI 可用性**：`openspec --version` ≥ 1.9.0。缺失则给出
+1. **CLI 可用性**：`openspec --version` ≥ 1.9.0（高于已实测区间上界——当前 1.10——
+   时不拦，但提示核对 openspec-compatibility.md 第六节后再抬区间）。缺失则给出
    `npm install -g @fission-ai/openspec` 并停止——本技能的全部动作都依赖它。
 2. **`openspec/` 根**：`openspec context --json` 是否返回有效 root。
    缺失则**回显将执行的命令与将生成的文件清单，经人确认后**代跑
@@ -420,10 +421,10 @@ propose 壳：欠账门 → 交接段现算 → 经确认委托官方 propose �
 
 | 组 | 管什么 | 关键项 |
 |---|---|---|
-| V1 | 前提 | CLI ≥1.9.0、有效 root、基线 active、**技术地基已定（V1.4，WARNING 级）** |
-| V2 | PRD 侧 | 防 release 被手改：blocking Q=0、Sources 合法、无重复 FRID、**发版欠账门限（V2.5：欠账非空 → 未开工 change ERROR）** |
-| V3 | 基线对账 | 五集合互斥且全覆盖、无幽灵 ID、included 全被 planned change 覆盖、计划外 change |
-| V4 | delta 侧 | Authority 三重自洽（含 **rebaseline↔trace 联锁**）、Sources 分场景判定、`addressed == Covered`、skip_specs 例外、依据引用完整性（design V4.8 + 源码 V4.9） |
+| V1 | 前提 | CLI 版本落在已实测区间（低于下界 ERROR、高于上界 WARNING）、有效 root、**基线按 DOMAIN 定位且域内唯一 active（多 active 即 ERROR）**、技术地基已定（V1.4，WARNING 级） |
+| V2 | PRD 侧 | 防 release 被手改：blocking Q=0、Sources 合法（含 DEPRECATED 块）、无重复 FRID、**发版欠账门限（V2.5：欠账非空 → 未开工 change ERROR）** |
+| V3 | 基线对账 | 五集合互斥且全覆盖、无幽灵 ID、included 全被 planned change 覆盖、**计划外 change 分层（本 change 计划外 ERROR / 他 change 计划外 WARNING 探索态）** |
+| V4 | delta 侧 | Authority 三重自洽（含 **rebaseline↔trace 联锁**）、Sources 分场景判定（capability 按完整路径反查）、`addressed == Covered`（**蔓延未裁决 ERROR**）、skip_specs 例外、依据引用完整性（design V4.8 + 源码 V4.9，冒号全半角均收） |
 | V5 | 委托原生 | `openspec validate --strict` 退出 0、required artifacts 齐备 |
 | V6 | 归档后 | 主 spec 保留 Sources、`unaccounted` 八块分账（含 Planned 未建） |
 
@@ -433,7 +434,13 @@ propose 壳：欠账门 → 交接段现算 → 经确认委托官方 propose �
 **放行规则**：任一 ERROR 未清除则不得放行（apply 与归档同此标准）。
 WARNING 可带裁决放行，裁决记入回显与基线的例外记录。
 
-**确定性实现**：V1–V5 与 V4.8 已实现为本技能 `tools/trace.py`（随技能安装分发，产品仓可直接 `python3 ~/.claude/skills/valkyrja-spec/tools/trace.py . <change>` 或项目级安装路径），退出码 0/1 可作 CI 门禁；
+**确定性实现**：V1–V5（含 V4.8/V4.9）已实现为本技能 `tools/trace.py`（随技能安装分发）。
+调用路径按安装形态二选一，先探测项目级再退系统级：
+项目级 `python3 .claude/skills/valkyrja-spec/tools/trace.py . <change>`；
+系统级 `python3 ~/.claude/skills/valkyrja-spec/tools/trace.py . <change>`。
+执行前先确认 `python3` 可用（Windows 无此别名时改用 `python` / `py -3`；需 ≥3.7）。
+退出码 **0 = 放行 / 1 = 门禁 ERROR / 2 = 工具故障（输入损坏、环境缺失，门禁没跑完）**，
+0/1 可作 CI 门禁，2 须先修输入或环境；归档壳调用时加 `--stage pre-archive` 标注报告时机。
 语义判断（拆分完整性、DEC 范围覆盖）不在脚本内，仍由人核对。
 
 ### 归档路径的选择

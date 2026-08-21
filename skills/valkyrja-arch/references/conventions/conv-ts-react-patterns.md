@@ -11,7 +11,7 @@ status: redistributable
 
 # React 模式约定
 
-> 摘编自 ECC（MIT，版权声明见仓库根 NOTICE.md），按本 catalog 风格改写。
+> 摘编自 ECC（MIT，版权声明见本目录 NOTICE.md，随本 catalog 分发），按本 catalog 风格改写。
 > Vue 栈对应条目见 conv-ts-vue-element；API 层（单飞刷新等）见
 > conv-frontend-api-layer，两栈通用。
 

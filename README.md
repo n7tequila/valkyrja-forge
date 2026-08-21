@@ -137,37 +137,63 @@ They are deliberately thin — pure delegation with no routing logic of their ow
 ```
 
 > **Slash commands are Claude Code-specific.** They are a convenience layer, not the mechanism.
-> The skills route on natural language by design, so on any other harness you can drop the commands
-> entirely, place the `skills/` directories where that tool expects them, and everything still works —
-> you just say "build the baseline" instead of `/valkyrja:spec build the baseline`.
-> `SKILL.md` itself is plain Markdown with YAML frontmatter, a format many harnesses now consume.
+> The skills route on natural language by design. `SKILL.md` is plain Markdown with YAML
+> frontmatter — a format that is **portable but untested** on other harnesses (e.g. Codex's
+> `.agents/skills`). This repo currently commits to Claude Code only; a Codex adapter is the
+> first concrete multi-harness target on the roadmap.
 
 ---
 
 ## Installation
 
+### Primary path: Claude Code plugin (recommended)
+
+This repo is a plugin marketplace (`.claude-plugin/`). Inside Claude Code:
+
+```
+/plugin marketplace add n7tequila/valkyrja-forge
+/plugin install valkyrja
+```
+
+Versioning, upgrades (`/plugin marketplace update`), enable/disable, and uninstall all come
+from the official plugin mechanism. Under the plugin, skill names are namespaced
+(e.g. `valkyrja:valkyrja-spec`) and the slash commands are `/valkyrja:prd|arch|spec`.
+
+### Fallback path: copy-based installer (offline / no-git scenarios)
+
 Skills install into your **target product repository** — this repo is only the source.
+The examples below assume **cwd is the forge repo root** — copying the first line verbatim
+would install into the forge repo itself; to target a product repo, pass
+`--project <path>` or `cd` there first and call this script by absolute path:
 
 ```bash
-# Install into the current project (.claude/, shared via the repo)
-scripts/install-skills.sh --project
+# Install into a specific product repo (recommended form)
+scripts/install-skills.sh --project /path/to/your-product-repo
+
+# Or: enter the target repo first, then call the script from the forge checkout
+cd /path/to/your-product-repo && /path/to/valkyrja-forge/scripts/install-skills.sh --project
 
 # Install machine-wide (~/.claude/, applies to every project)
 scripts/install-skills.sh --system
 
-# Upgrade in place (old version is backed up to .backup/ automatically)
-scripts/install-skills.sh --project --force
+# Upgrade in place (old version backed up to .backup/; --no-backup skips it)
+scripts/install-skills.sh --system --force
 
 # Install one skill only (slash commands are skipped in this mode,
 # so a command can never point at a skill that isn't installed)
-scripts/install-skills.sh --project valkyrja-prd
+scripts/install-skills.sh --project /path/to/your-product-repo valkyrja-prd
 
 # Preview and inspect
-scripts/install-skills.sh --project --dry-run
-scripts/install-skills.sh --project --list
+scripts/install-skills.sh --system --dry-run
+scripts/install-skills.sh --system --list
 ```
 
-Before installing, each skill is validated: `SKILL.md` must exist and its frontmatter must carry `name` and `description`. Anything failing that is skipped with an error, without affecting the rest.
+Before installing, each skill is validated: `SKILL.md` must exist and its frontmatter must carry `name` and `description`. Anything failing that is skipped with an error, without affecting the rest. The script deliberately has no version tracking or uninstall — those are the plugin path's job, and the fallback does not re-invent them.
+
+### Prerequisites
+
+bash (installer), python3 >= 3.7 (the trace.py gate), and the OpenSpec CLI (below).
+The installer and workflow are validated on macOS/Linux only; Windows users should prefer the plugin path.
 
 ### Requirements
 
@@ -201,14 +227,16 @@ These run through all three skills and explain every tradeoff in the design:
 
 ```
 valkyrja-forge/
-├── README.md / README.zh-CN.md / NOTICE.md
-├── commands/valkyrja/             # slash-command namespace → /valkyrja:{prd,arch,spec}
+├── README.md / README.zh-CN.md / NOTICE.md (pointer; the authoritative notices ship with the catalog)
+├── .claude-plugin/                # plugin.json + marketplace.json (primary install path)
+├── commands/                      # slash commands (flat; the plugin name or the install dir provides the /valkyrja: namespace)
 ├── docs/design/                   # design records & evolution logs for all three skills (D-series ruling ledger)
-├── scripts/install-skills.sh      # installs skills + commands
+├── scripts/install-skills.sh      # fallback installer (offline / no-git; the plugin is the primary path)
+├── tests/                         # trace.py regression fixtures (forge dev asset, not shipped with the skills)
 ├── scripts/check-sanitization.sh # D6 sanitization gate (private wordlist, pre-push/CI)
 └── skills/
     ├── valkyrja-prd/              # SKILL.md + templates/
-    ├── valkyrja-arch/             # SKILL.md + templates/ + references/conventions/ (catalog)
+    ├── valkyrja-arch/             # SKILL.md + templates/ + references/conventions/ (catalog + NOTICE.md)
     └── valkyrja-spec/             # SKILL.md + templates/ + references/
                                    #   + tools/trace.py (deterministic trace, ships with the skill; CI-gate exit code)
 ```
@@ -226,7 +254,8 @@ Planned:
 - [ ] Split `SKILL.md` into reference files (progressive disclosure)
 - [ ] Push the purely deterministic checks (traceability, set reconciliation) down into scripts and CI
 - [ ] CI rule forbidding edits to already-released `prd/releases/**`
-- [ ] Multi-harness adapters generated from `skills/` as the single source
+- [x] Plugin-ized (`.claude-plugin/`, v0.9.0): versioning/upgrade/uninstall via the official mechanism, install.sh demoted to fallback
+- [ ] First cross-harness adapter: Codex `.agents/skills` (skills-only, no command files) — claim support only after a real test
 
 ---
 

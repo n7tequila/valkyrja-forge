@@ -11,7 +11,7 @@ status: redistributable
 
 # 测试分层约定
 
-> 摘编自 ECC（MIT，版权声明见仓库根 NOTICE.md），按本 catalog 风格改写并加入
+> 摘编自 ECC（MIT，版权声明见本目录 NOTICE.md，随本 catalog 分发），按本 catalog 风格改写并加入
 > 取舍性说明。框架级细则见各 stack 条目（如 conv-spring-testing）。
 
 ## 三层结构

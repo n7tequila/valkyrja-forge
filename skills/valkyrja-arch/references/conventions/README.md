@@ -46,7 +46,7 @@ status: <redistributable | local-only | license-unknown>
 1. **出处四字段在收集时标注**，不做事后追溯考古。
 2. **`license: 未知` ⇒ `status: license-unknown`，公开仓只放 stub**
    （标题 + 出处链接 + 一句"许可证待确认"），且**不得被 adopt 入任何项目仓**。
-3. 第三方摘编（如 MIT 来源）：frontmatter 记全出处 + 仓库根 `NOTICE.md`
+3. 第三方摘编（如 MIT 来源）：frontmatter 记全出处 + 本目录 `NOTICE.md`（随 catalog 分发，仓库根仅留指针）
    集中保留原始版权声明。
 4. **发布门禁**：条目推公开仓前经人工检查（特权确认），检查单——
    ①业务细节已剥离（无客户名/**内部项目名**/领域错误码/内部路径；

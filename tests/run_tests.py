@@ -20,7 +20,8 @@ import subprocess
 import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-TRACE = os.path.join(HERE, '..', 'trace.py')
+# tests/ 在仓库顶层（不随技能分发——测试是 forge 开发资产，消费端只需要 trace.py 本体）
+TRACE = os.path.join(HERE, '..', 'skills', 'valkyrja-spec', 'tools', 'trace.py')
 FIX = os.path.join(HERE, 'fixtures')
 
 # (repo子目录, case, 附加参数, 期望退出码, 必须出现的输出片段, 不得出现的输出片段)

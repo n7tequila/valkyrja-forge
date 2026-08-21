@@ -435,9 +435,11 @@ propose 壳：欠账门 → 交接段现算 → 经确认委托官方 propose �
 WARNING 可带裁决放行，裁决记入回显与基线的例外记录。
 
 **确定性实现**：V1–V5（含 V4.8/V4.9）已实现为本技能 `tools/trace.py`（随技能安装分发）。
-调用路径按安装形态二选一，先探测项目级再退系统级：
+调用路径按安装形态探测（项目级 → 系统级 → plugin）：
 项目级 `python3 .claude/skills/valkyrja-spec/tools/trace.py . <change>`；
-系统级 `python3 ~/.claude/skills/valkyrja-spec/tools/trace.py . <change>`。
+系统级 `python3 ~/.claude/skills/valkyrja-spec/tools/trace.py . <change>`；
+plugin 形态下脚本位于该 plugin 安装目录的 `skills/valkyrja-spec/tools/trace.py`
+（本技能文件自身所在目录即可定位；hook/命令上下文可用 `${CLAUDE_PLUGIN_ROOT}`）。
 执行前先确认 `python3` 可用（Windows 无此别名时改用 `python` / `py -3`；需 ≥3.7）。
 退出码 **0 = 放行 / 1 = 门禁 ERROR / 2 = 工具故障（输入损坏、环境缺失，门禁没跑完）**，
 0/1 可作 CI 门禁，2 须先修输入或环境；归档壳调用时加 `--stage pre-archive` 标注报告时机。

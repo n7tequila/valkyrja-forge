@@ -3,11 +3,17 @@
 # install-skills.sh — 将本仓库 skills/ 下的 Claude Code skill 批量安装到
 # 系统级（~/.claude/skills/）或项目级（<project-root>/.claude/skills/）目录。
 #
+# 定位：**离线/无 git 场景的兜底安装路径**。主路径是官方 plugin 体系——
+#   /plugin marketplace add n7tequila/valkyrja-forge && /plugin install valkyrja
+# （版本、升级、卸载由 plugin 机制原生提供，本脚本不再补造这些能力）。
+#
 # 用法:
 #   scripts/install-skills.sh [目标] [选项] [skill-name ...]
 #
 # 目标（二选一，默认 --project）:
-#   --project [DIR]   安装到项目级 .claude/skills/（DIR 默认当前目录，即仓库根）
+#   --project [DIR]   安装到项目级 .claude/skills/（DIR 默认当前目录——注意：
+#                      在 forge 仓根照抄示例会装进 forge 仓自身；目标是产品仓，
+#                      用 --project <目标仓路径> 或先 cd 到目标仓再调本脚本）
 #   --system          安装到系统级 ~/.claude/skills/（对本机所有项目生效）
 #
 # 选项:
@@ -46,9 +52,11 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 SKILLS_SRC_DIR="${REPO_ROOT}/skills"
 
-# 斜杠命令命名空间：commands/<NS>/<名>.md 安装后即 /<NS>:<名>
+# 斜杠命令命名空间：仓内命令平铺于 commands/<名>.md（plugin 形态由 plugin 名
+# 提供命名空间 /valkyrja:<名>）；本脚本安装到 <dest>/commands/<NS>/<名>.md，
+# 由目录提供同名命名空间——两条安装路径产出同一命令名。
 COMMAND_NS="valkyrja"
-COMMANDS_SRC_DIR="${REPO_ROOT}/commands/${COMMAND_NS}"
+COMMANDS_SRC_DIR="${REPO_ROOT}/commands"
 
 TARGET_MODE=""            # project | system
 PROJECT_ROOT="$(pwd)"
@@ -67,6 +75,14 @@ c_err()   { printf '  \033[31m✗\033[0m %s\n' "$*" >&2; }
 c_step()  { printf '\n\033[1m%s\033[0m\n' "$*"; }
 
 die() { c_err "$*"; exit 1; }
+
+# 从工作树 cp -r 会带上 git 排除不了的垃圾（.DS_Store、__pycache__/*.pyc）——
+# 项目级安装的 .claude/ 随消费仓提交，垃圾会进入其 git 历史，装后清一遍。
+scrub_junk() {
+  find "$1" -name '.DS_Store' -type f -delete 2>/dev/null || true
+  find "$1" -name '*.pyc' -type f -delete 2>/dev/null || true
+  find "$1" -name '__pycache__' -type d -prune -exec rm -rf {} + 2>/dev/null || true
+}
 
 # ---------- 参数解析 ----------
 
@@ -269,6 +285,7 @@ for name in "${TO_INSTALL[@]}"; do
     else
       rm -rf "$dest"
       cp -r "$src" "$dest"
+      scrub_junk "$dest"
       c_ok "${name}：已覆盖安装（升级）"
     fi
     installed=$((installed + 1))
@@ -277,6 +294,7 @@ for name in "${TO_INSTALL[@]}"; do
       c_info "[dry-run] 将新装 ${name} → ${dest}"
     else
       cp -r "$src" "$dest"
+      scrub_junk "$dest"
       c_ok "${name}：已安装"
     fi
     installed=$((installed + 1))

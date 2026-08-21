@@ -153,38 +153,63 @@ ADEC。产物落 `docs/architecture/`（决策 / 已采纳约定副本 / 版本�
 ```
 
 > **斜杠命令是 Claude Code 专属的**，属于手感增强，不是运行机制。
-> 三个技能本来就按自然语言自动路由，所以在其他 harness 上完全可以不要命令，
-> 把 `skills/` 下的目录放到该工具约定的位置即可，功能不打折——
-> 你只是从 `/valkyrja:spec 建立基线` 变成直接说「建立基线」。
-> `SKILL.md` 本身是纯 Markdown + YAML frontmatter，已有多个 harness 在消费这个格式。
+> 三个技能本来就按自然语言自动路由。`SKILL.md` 是纯 Markdown + YAML frontmatter，
+> 格式在其他 harness（如 Codex 的 `.agents/skills`）上**可移植但未实测**——
+> 本仓目前只承诺 Claude Code；Codex 适配是 roadmap 的首个跨 harness 目标。
 
 ---
 
 ## 安装
 
-技能安装到**目标产品仓库**，本仓库只是技能源码仓。
+### 主路径：Claude Code plugin（推荐）
+
+本仓即 plugin marketplace（`.claude-plugin/`）。在 Claude Code 里：
+
+```
+/plugin marketplace add n7tequila/valkyrja-forge
+/plugin install valkyrja
+```
+
+版本、升级（`/plugin marketplace update`）、启停与卸载由官方 plugin 机制
+原生提供。plugin 形态下技能名带命名空间（如 `valkyrja:valkyrja-spec`），
+斜杠命令为 `/valkyrja:prd|arch|spec`。
+
+### 兜底路径：复制式安装脚本（离线 / 无 git 场景）
+
+技能安装到**目标产品仓库**，本仓库只是技能源码仓。下列示例默认
+**cwd 在 forge 仓根**——照抄第一条会装进 forge 仓自身，装目标仓请用
+`--project <目标仓路径>`，或先 `cd` 到目标仓再以绝对路径调本脚本：
 
 ```bash
-# 装到当前项目（.claude/，随仓库共享）
-scripts/install-skills.sh --project
+# 装到指定产品仓（推荐写法）
+scripts/install-skills.sh --project /path/to/your-product-repo
+
+# 或：先进目标仓，再调 forge 仓里的脚本
+cd /path/to/your-product-repo && /path/to/valkyrja-forge/scripts/install-skills.sh --project
 
 # 装到本机全局（~/.claude/，对所有项目生效）
 scripts/install-skills.sh --system
 
-# 覆盖升级（自动备份旧版本到 .backup/）
-scripts/install-skills.sh --project --force
+# 覆盖升级（自动备份旧版本到 .backup/；--no-backup 跳过备份）
+scripts/install-skills.sh --system --force
 
 # 只装指定技能（此模式下不装斜杠命令，
 # 避免命令指向一个并未安装的技能）
-scripts/install-skills.sh --project valkyrja-prd
+scripts/install-skills.sh --project /path/to/your-product-repo valkyrja-prd
 
 # 预览与查看
-scripts/install-skills.sh --project --dry-run
-scripts/install-skills.sh --project --list
+scripts/install-skills.sh --system --dry-run
+scripts/install-skills.sh --system --list
 ```
 
 安装前会校验每个技能：`SKILL.md` 必须存在，且 frontmatter 含 `name` 与 `description`。
-不合格的跳过并报错，不影响其余技能。
+不合格的跳过并报错，不影响其余技能。脚本不提供版本追踪与卸载——那些是
+plugin 主路径的职责，兜底脚本不再补造。
+
+### 前置条件
+
+bash（安装脚本）、python3 ≥ 3.7（trace.py 门禁）、OpenSpec CLI（见下）。
+安装脚本与工作流目前只在 macOS/Linux 上验证过；Windows 用户建议走 plugin 主路径。
 
 ### 依赖
 
@@ -224,14 +249,16 @@ openspec init --tools claude    # 在目标产品仓库内执行
 
 ```
 valkyrja-forge/
-├── README.md / README.zh-CN.md / NOTICE.md
-├── commands/valkyrja/             # 斜杠命令命名空间 → /valkyrja:{prd,arch,spec}
+├── README.md / README.zh-CN.md / NOTICE.md（指针；权威声明随 catalog 分发）
+├── .claude-plugin/                # plugin.json + marketplace.json（plugin 主安装路径）
+├── commands/                      # 斜杠命令（平铺；plugin 名或安装目录提供 /valkyrja: 命名空间）
 ├── docs/design/                   # 三技能设计定稿与演进记录（含 D 系列裁决台账）
-├── scripts/install-skills.sh      # 同时安装技能与命令
+├── scripts/install-skills.sh      # 兜底安装脚本（离线/无 git；主路径是 plugin）
 ├── scripts/check-sanitization.sh # D6 脱敏机检门禁（词表私有，建议接 pre-push/CI）
+├── tests/                         # trace.py 回归夹具（forge 开发资产，不随技能分发）
 └── skills/
     ├── valkyrja-prd/              # SKILL.md + templates/
-    ├── valkyrja-arch/             # SKILL.md + templates/ + references/conventions/（catalog）
+    ├── valkyrja-arch/             # SKILL.md + templates/ + references/conventions/（catalog + NOTICE.md）
     └── valkyrja-spec/             # SKILL.md + templates/ + references/
                                    #   + tools/trace.py（确定性 trace，随技能安装分发，退出码可作 CI 门禁）
 ```
@@ -252,7 +279,8 @@ valkyrja-forge/
 - [ ] `SKILL.md` 拆分 reference 文件（progressive disclosure）
 - [ ] 把纯确定性检查（追溯校验、集合对账）下沉为脚本与 CI
 - [ ] CI 禁止修改已发布的 `prd/releases/**`
-- [ ] 以 `skills/` 为唯一真相源，生成多 harness 适配目录
+- [x] Plugin 化（`.claude-plugin/`，v0.9.0）：版本/升级/卸载走官方机制，install.sh 降为兜底
+- [ ] 首个跨 harness 适配：Codex `.agents/skills`（skills-only，无命令文件），实测后再宣称支持
 
 ---
 

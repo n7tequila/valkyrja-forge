@@ -1,0 +1,16 @@
+{
+  "name": "valkyrja-forge",
+  "description": "valkyrja 需求治理工作流的官方 marketplace：prd / arch / spec 三技能 + trace.py 确定性门禁。",
+  "owner": {
+    "name": "n7tequila",
+    "url": "https://github.com/n7tequila"
+  },
+  "plugins": [
+    {
+      "name": "valkyrja",
+      "source": "./",
+      "description": "需求治理 + AI 开发工作流三技能（prd / arch / spec），含 trace.py 确定性追溯门禁与 /valkyrja:* 命令入口。",
+      "version": "0.9.0"
+    }
+  ]
+}

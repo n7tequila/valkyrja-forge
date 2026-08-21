@@ -70,7 +70,7 @@ RN / DEC  →  PRD 的 REQ/BR/SEC/NFR  →  OpenSpec Requirement 的 Sources:  �
 
 ### valkyrja-prd
 
-把松散讨论治理为可追溯的产品状态。八个动作：`discuss`、`decide`、`import`、
+把松散讨论治理为可追溯的产品状态。九个动作：`discuss`、`decide`、`import`、`prototype`、
 `bootstrap`、`status`、`synthesize`、`release`、`check`。
 不需要输入动作名，按话语自动路由；`decide` 与 `release` 是特权动作，必须人类显式确认。
 
@@ -83,6 +83,7 @@ docs/product/initiatives/<slug>/
 ├── discussions/           # DISC-* 讨论话题，按话题建档、追加式
 ├── decisions/             # DEC-*  决策，一决策一文件
 ├── tech-memos/            # TM-*   技术讨论（不产生需求，只被 DEC 引用）
+├── prototype/             # 系统原型：original/vN 原件 + vN 背书基线包
 ├── others/originals/      # 外部原始文件，只读不改
 └── prd/
     ├── current.md         # 可反复重新生成的草稿

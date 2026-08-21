@@ -66,7 +66,7 @@ Any requirement can be traced backward to *why it exists*, and any released requ
 
 ### valkyrja-prd
 
-Governs loose discussion into traceable product state. Eight actions: `discuss`, `decide`, `import`, `bootstrap`, `status`, `synthesize`, `release`, `check`. You never type an action name — the skill routes on what you say. `decide` and `release` are privileged and require explicit human confirmation.
+Governs loose discussion into traceable product state. Nine actions: `discuss`, `decide`, `import`, `prototype`, `bootstrap`, `status`, `synthesize`, `release`, `check` — `prototype` ingests externally-made system prototypes (Figma exports, generated HTML) into a governed genre: machine-checked against the release's UI requirements, human-reviewed, then blessed as the visual baseline via a DEC. You never type an action name — the skill routes on what you say. `decide` and `release` are privileged and require explicit human confirmation.
 
 Workspace layout:
 
@@ -77,6 +77,7 @@ docs/product/initiatives/<slug>/
 ├── discussions/           # DISC-* one file per topic, append-only
 ├── decisions/             # DEC-*  one file per decision
 ├── tech-memos/            # TM-*   technical notes (never create requirements)
+├── prototype/             # system prototype: original/vN raw + vN blessed baseline pack
 ├── others/originals/      # external source files, read-only
 └── prd/
     ├── current.md         # regenerable draft

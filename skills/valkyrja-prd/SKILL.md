@@ -31,6 +31,7 @@ docs/product/initiatives/<slug>/
 ├── discussions/         # DISC-* 讨论话题文件，按话题建档、追加式
 ├── decisions/           # DEC-*  决策，一决策一文件，轻量结构化
 ├── tech-memos/          # TM-*  技术讨论，自由格式
+├── prototype/           # 系统原型：original/v<N>/ 原件；v<N>/ 背书基线包（见 prototype 动作）
 ├── others/              # 其他材料；originals/ 子目录存放不可修改的外部原文
 └── prd/
     ├── current.md       # 可无限次重新生成的草稿
@@ -91,6 +92,7 @@ docs/product/initiatives/<slug>/
 | "就按 X"、"定了"、"确认采用"、"记下来作为决策" | decide（特权，需握手） |
 | 上传/粘贴外部文档、"看看这份材料" | import |
 | 新建 initiative 且已有一批存量文档、"把这些历史材料导进来" | bootstrap |
+| 拿到原型稿、"评审原型"、"背书为视觉基线"、原型大改 | prototype（背书步特权，需握手） |
 | "现在什么状态"、"还有什么没定" | status |
 | "检查工作区"、"格式体检"、"skill 更新了，看看有什么影响" | check |
 | "整理一版 PRD"、"更新 PRD" | synthesize-draft |
@@ -190,6 +192,31 @@ import 提案、批量疑似 DEC 裁决等）：
 5. bootstrap 仍受宪法约束：AI 只能提取与标记，不得补充材料中不存在的需求；
    疑似决策的"确认"是 decide 级特权，必须由人逐条表态（可整批说"1、3、5 确认，
    其余转讨论"，但不可默认全部确认）。
+
+### prototype（背书步特权）
+
+原型是**制品类**外部材料（Figma 导出、claude.ai 生成的 HTML、图稿），
+与 import 的话语类材料（文本 → RN 提取）体裁不同，走本动作。四步：
+
+1. **收编**：原件入 `prototype/original/v<N>/`（原样保存不改写）；可执行包
+   先拆壳取真身再机检——**核对清单必须从当前 release 机读区逐项提取、
+   带 FRID 锚点，不得凭记忆编写**（真实踩坑两次：凭记忆的清单让原型
+   忠实继承了清单作者的记忆漏洞）。
+2. **评审**：机检报告 + 人工项（视觉占比、隐私残留、整体气质等机器不可判项）。
+   反馈按**三层拆解**分流：观感层 → 原型迭代；行为层 → DISC 回流
+   （**原型不得成为第二需求源**，行为唯一权威是 release）；
+   标定/数值层 → 需求链。原型自带的清单外行为标注「建议」，逐条裁决。
+3. **背书（特权）**：委托 decide 铸背书 DEC（「视觉基线 = 原型 v<N>」）
+   + 建基线包 `prototype/v<N>/`（manifest 按模板 + token 值表提取 + 关键截图）。
+   **未背书 = 参考材料，不构成任何权威**；背书要求原型与当时 release 一致。
+   **尺寸权威不转移**：图稿像素不构成尺寸依据，物理尺寸权威始终在
+   标定链（相关 DEC/NFR）。
+4. **演进**：新版本新目录，背书 DEC 走 supersede 链，旧版冻结不删；
+   大改先过三层拆解再动手；实现侧的观感机检载体是**视觉回归测试**
+   （截图基线钉在背书版本上），不由本层承担。
+
+跨层边界：向 openspec 注入视觉权威属 valkyrja-spec 的 config 特权——
+本动作只产出待注入内容与背书 DEC id，不越层代写。
 
 ### status
 现场扫描目录计算（不信任任何缓存）：当前 round、PRD 版本、DEC 总数、
@@ -306,7 +333,8 @@ STATUS.md 是全系统**唯一被豁免的派生缓存**，仅为加速 Resume �
 
 - [decision.md](templates/decision.md) — DEC 文件结构（铸造决策时使用）
 - [discussion.md](templates/discussion.md) — DISC 话题文件结构（新话题建档时使用）
-- [prd.md](templates/prd.md) — PRD 标准结构（synthesize 时使用，含下游语法契约）
+- [prd.md](templates/prd.md)
+- [prototype-manifest.md](templates/prototype-manifest.md) — 原型基线包清单 — PRD 标准结构（synthesize 时使用，含下游语法契约）
 - [status.md](templates/status.md) — STATUS.md 结构
 
 requirements/、tech-memos/、others/ 刻意不设内容模板（自由格式），但 frontmatter 要求：

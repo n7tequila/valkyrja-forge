@@ -189,6 +189,7 @@ REMOVED / RENAMED 从主 spec 同名（或 FROM 所指）Requirement 的 Sources
 | "PRD 定稿了"、"可以开工了"、"建立基线" | baseline（特权，需确认） |
 | "拆成几个 change"、"怎么划分" | decompose（特权，需确认） |
 | "下一个 propose"、"给我 <change> 的交接段" | 交接段生成（decompose 只读伴生，现算不落盘） |
+| "next"、"下一个"、"继续" | **next 复合路由**（见表后说明）——现算流水线位置，推进一步 |
 | "开始开发这个 change"、"可以 apply 了"、"开始实现" | trace（pre-apply，V1–V5）→ 通过后委托官方 apply |
 | "能归档吗"、"检查这个 change"、"追溯对不对" | trace（pre-archive，V1–V5） |
 | "现在什么进度"、"哪些需求还没做" | status |
@@ -196,6 +197,22 @@ REMOVED / RENAMED 从主 spec 同名（或 FROM 所指）Requirement 的 Sources
 | "PRD 出新版了"、"v1.1 发布了" | rebaseline（特权，需确认） |
 
 意图不明时按 status 处理（只读、无副作用）。
+
+**next 复合路由**：现算当前流水线位置（磁盘 change 状态 + tasks 勾选 +
+基线计划顺序，全部现算不信缓存），然后**执行下一个只读步骤，或产出下一步的
+准备物**：
+
+```
+无在途 change            → 按计划顺序生成下一个 change 的交接段（交用户贴 propose）
+已 propose、未过 pre-apply → 跑 trace（pre-apply, V1–V5）
+pre-apply 已放行          → 提示进入官方 apply（本技能不代跑）
+apply 进行中/完成         → 提示官方 verify（若装了），然后跑 trace（pre-archive）
+pre-archive 通过          → 出示归档确认回显，**停在门前等确认**
+```
+
+**next 永不代行特权步骤**——它把你送到每道门前，从不替你过门：
+归档确认、基线修订、代跑 CLI 等一律照常回显等确认。多个 change 并行时
+先报告各自位置，请用户点名。
 
 ## 特权动作确认
 

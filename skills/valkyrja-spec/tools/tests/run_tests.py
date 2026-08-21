@@ -21,7 +21,7 @@ REPO = os.path.join(HERE, 'fixtures', 'repo')
 
 # (case, 期望退出码, 必须出现的输出片段, 不得出现的输出片段)
 CASES = [
-    ('case-added',          0, ['错误 0', '分场景判定全部通过'], []),
+    ('case-added',          0, ['错误 0', '分场景判定全部通过', '源码依据 1 条'], []),
     ('case-mod',            0, ['错误 0'], ['范围蔓延']),
     ('case-removed-dep',    0, ['错误 0', 'REMOVED 触达 FRID 全部 ⊆ deprecated'], []),
     ('case-removed-active', 1, ['移除仍 active'], []),

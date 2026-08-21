@@ -120,8 +120,7 @@ ADEC。产物落 `docs/architecture/`（决策 / 已采纳约定副本 / 版本�
 
 产物落在 `docs/product/baselines/<DOMAIN>-vX.Y.md`。
 
-三个动词（propose / apply / 归档）以**壳**形态编排：门禁在前、确认在中、
-委托官方 OpenSpec 在后、产后自动检查——说 `next` 即可沿流水线推进一步，
+四个动词（propose / apply / verify / 归档）以**壳**形态编排：门禁在前、确认在中、委托官方 OpenSpec 在后、产后自动检查——说 `next` 即可沿流水线推进一步，
 任何特权确认都不被跳过。
 
 > `trace` 与官方 `verify` 是两种不同的一致性：

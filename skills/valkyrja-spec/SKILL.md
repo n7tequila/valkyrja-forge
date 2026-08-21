@@ -201,7 +201,8 @@ REMOVED / RENAMED 从主 spec 同名（或 FROM 所指）Requirement 的 Sources
 | "拆成几个 change"、"怎么划分" | decompose（特权，需确认） |
 | "propose <change>"、"下一个 propose"、"给我交接段" | **propose 壳**：V2.5 欠账门 → 交接段现算 → 经确认委托官方 propose → 产后自动 trace（pre-apply）。只要交接段、不委托时说一声即可 |
 | "next"、"下一个"、"继续" | **next 复合路由**（见表后说明）——现算流水线位置，推进一步 |
-| "开始开发这个 change"、"可以 apply 了"、"开始实现" | **apply 壳**：查验（必要时现跑）pre-apply 放行 → 确认 → 委托官方 apply → 完成后提示官方 verify |
+| "开始开发这个 change"、"可以 apply 了"、"开始实现" | **apply 壳**：查验（必要时现跑）pre-apply 放行 → 确认 → 委托官方 apply → 完成后进入 verify 壳 |
+| "verify"、"核对实现" | **verify 壳**：委托官方 verify（只读，无需确认）→ V4.9 源码依据完整性 + 治理核对清单 → 衔接 trace（pre-archive） |
 | "能归档吗"、"检查这个 change"、"追溯对不对" | **归档壳**：trace（pre-archive）→ 确认回显 → 代跑 CLI → V6 |
 | "现在什么进度"、"哪些需求还没做" | status |
 | "检查工作区"、"体检"、"skill 更新了" | check |
@@ -219,7 +220,8 @@ REMOVED / RENAMED 从主 spec 同名（或 FROM 所指）Requirement 的 Sources
 已 propose、未开工（tasks 零勾选） → 现跑 trace（pre-apply）；通过则当场出示
                                     apply 确认
 apply 进行中（tasks 部分勾选）     → 经确认续跑官方 apply
-apply 完成（tasks 全勾选）         → 提示官方 verify（若装了）→ 现跑 trace
+apply 完成（tasks 全勾选）         → verify 壳：委托官方 verify（若装了）
+                                    → V4.9 + 治理核对清单 → 现跑 trace
                                     （pre-archive）
 pre-archive 本次现跑通过           → 归档确认回显，确认后代跑 CLI → V6
 ```
@@ -232,10 +234,15 @@ pre-archive 本次现跑通过           → 归档确认回显，确认后代�
 委托，但门本身一道不少：委托官方 propose/apply、归档、基线修订等
 一律照常回显等确认。多个 change 并行时先报告各自位置，请用户点名。
 
-**三动词壳（sequencing）**：propose / apply / 归档一律以壳形态执行——
-**门禁在前、确认在中、委托在后、产后自动检查**。壳不改官方任何产物语义、
-不代写 proposal/design/代码，官方 skill 的中途提问与 planning boundary
-原样透传。诚实边界：`/opsx:*` 侧门依旧存在（explore 是合法用途，
+**动词壳（sequencing）**：propose / apply / verify / 归档四个动词一律以
+壳形态执行——**门禁在前、确认在中、委托在后、产后自动检查**。
+写入型委托（propose / apply / 归档）确认在中；**verify 是只读分析，
+委托无需确认**，但产后补检照跑：① V4.9 源码依据引用完整性；
+② 治理核对清单（人工项，不代实现）——design 规划的 repo 级机检测试
+存在且绿（token 断言、单位禁令、样式清单核对等，执行力属仓库工具链，
+宪法 8/技术正确性边界不破）、apply 新增公共对象已登记 arch inventory。
+壳不改官方任何产物语义、不代写 proposal/design/代码，官方 skill 的
+中途提问与 planning boundary 原样透传。诚实边界：`/opsx:*` 侧门依旧存在（explore 是合法用途，
 `openspec update` 也会重新生成官方命令），壳是**约定级收口**——
 把正道变成唯一顺手的路径，不是强制拦截；终审始终是 trace 机检与 CI。
 
@@ -403,7 +410,7 @@ rebaseline 后过期（真实事故：承袭基线的预存段仍指旧版路径
 ```
 propose 壳：欠账门 → 交接段现算 → 经确认委托官方 propose → 自动 trace (pre-apply)
    → apply 壳：放行查验 → 确认 → 委托官方 apply
-   → 官方 verify（实现 ↔ artifacts，若已安装）
+   → verify 壳：委托官方 verify（实现 ↔ artifacts）→ V4.9 + 治理核对清单
    → 归档壳：trace (pre-archive) → 人工确认放行 → 代跑 openspec archive
    → post-archive verification (V6)
 ```
@@ -416,7 +423,7 @@ propose 壳：欠账门 → 交接段现算 → 经确认委托官方 propose �
 | V1 | 前提 | CLI ≥1.9.0、有效 root、基线 active、**技术地基已定（V1.4，WARNING 级）** |
 | V2 | PRD 侧 | 防 release 被手改：blocking Q=0、Sources 合法、无重复 FRID、**发版欠账门限（V2.5：欠账非空 → 未开工 change ERROR）** |
 | V3 | 基线对账 | 五集合互斥且全覆盖、无幽灵 ID、included 全被 planned change 覆盖、计划外 change |
-| V4 | delta 侧 | Authority 三重自洽（含 **rebaseline↔trace 联锁**）、Sources 分场景判定、`addressed == Covered`、skip_specs 例外、依据引用完整性 |
+| V4 | delta 侧 | Authority 三重自洽（含 **rebaseline↔trace 联锁**）、Sources 分场景判定、`addressed == Covered`、skip_specs 例外、依据引用完整性（design V4.8 + 源码 V4.9） |
 | V5 | 委托原生 | `openspec validate --strict` 退出 0、required artifacts 齐备 |
 | V6 | 归档后 | 主 spec 保留 Sources、`unaccounted` 七块分账 |
 

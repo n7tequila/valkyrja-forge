@@ -161,6 +161,13 @@ RENAMED    addressed = 主 spec 中 FROM 所指 Requirement 的 Sources
   定性：**引用完整性**检查（与 Sources 同族，防 AI 编造权威），
   不是技术正确性检查——后者属 linter/架构测试/CI，本技能不越界。
 
+- V4.9 **源码依据引用完整性**（V4.8 的 source 延伸，verify 壳产后补检；
+  两时机都跑）：扫描实现代码（全仓排除 `docs/`、`openspec/`、依赖与构建产物
+  目录）中注释里的 `依据: DEC-*/ADEC-*`，判定同 V4.8——幽灵 ERROR、
+  superseded WARNING，并报出处文件。pre-apply 时扫描数通常为 0，
+  **必须报数**（零对象≠零发现）。边界同 V4.8：只查引用完整性，
+  不查「该标注未标注」、不查技术正确性——后者属仓库测试/lint（宪法 8）。
+
 **V5 委托原生**
 - V5.1 `openspec validate <change> --type change --strict --json` 退出码 0
 - V5.2 `openspec status --change <name> --json` 中 required artifacts 无缺失

@@ -376,6 +376,42 @@ if os.path.isfile(design_p):
     else: ok('V4.8', f'{len(cites)} 条依据标注全部真实存在')
     if superseded_cited: warn('V4.8', f'引用了已 superseded 的决策: {superseded_cited}')
 
+# V4.9 源码依据引用完整性（V4.8 的 source 延伸）——只查引用完整性，
+# 不查技术正确性；两时机都跑，pre-apply 常为 0，必须报数（零对象≠零发现）。
+V49_SKIP = {'.git', 'docs', 'openspec', 'node_modules', 'dist', '.claude',
+            '__pycache__', '.valkyrja-backup', 'coverage'}
+code_cites, scanned49 = {}, 0
+for base9, dirs9, files9 in os.walk(R):
+    dirs9[:] = [d for d in dirs9 if d not in V49_SKIP]
+    for fn9 in files9:
+        p9 = os.path.join(base9, fn9)
+        try:
+            if os.path.getsize(p9) > 1_000_000:
+                continue
+            tx9 = open(p9, encoding='utf-8').read()
+        except (UnicodeDecodeError, OSError):
+            continue
+        scanned49 += 1
+        for cid9 in re.findall(r'依据[:：]?\s*((?:A?DEC)-[A-Z][A-Z0-9_]*-\d{3})', tx9):
+            code_cites.setdefault(cid9, os.path.relpath(p9, R))
+_init_dec9 = glob.glob(os.path.join(R, 'docs/product/initiatives/*/decisions'))
+_arch_dec9 = os.path.join(R, 'docs/architecture/decisions')
+ghosts9, sup9 = [], []
+for cid9, where9 in sorted(code_cites.items()):
+    dirs_ = [_arch_dec9] if cid9.startswith('ADEC-') else _init_dec9
+    hits9 = [p for d in dirs_ for p in glob.glob(os.path.join(d, cid9 + '*.md'))]
+    if not hits9:
+        ghosts9.append(f'{cid9}（{where9}）')
+    elif re.search(r'^(?:status:[ \t]*superseded|superseded-by:[ \t]*\S)',
+                   open(hits9[0], encoding='utf-8').read(), re.M):
+        sup9.append(f'{cid9}（{where9}）')
+if ghosts9:
+    err('V4.9', f'源码幽灵依据: {ghosts9}')
+else:
+    ok('V4.9', f'源码依据 {len(code_cites)} 条全部真实存在（扫描 {scanned49} 个文件）')
+if sup9:
+    warn('V4.9', f'源码引用已 superseded 的决策: {sup9}')
+
 meta = os.path.join(CHDIR, '.openspec.yaml')
 MT = open(meta, encoding='utf-8').read() if os.path.isfile(meta) else ''
 if re.search(r'^skip_specs:\s*true', MT, re.M):

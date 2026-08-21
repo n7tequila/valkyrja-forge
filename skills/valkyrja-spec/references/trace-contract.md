@@ -177,9 +177,12 @@ RENAMED    addressed = 主 spec 中 FROM 所指 Requirement 的 Sources
 - V6.2 计算 `unaccounted`，**仅它是 ERROR**：
 
   ```
+  planned_unbuilt = (included − main_spec_coverage − open_change_coverage)
+                    ∩ 基线计划覆盖（现算自「Change 划分」，不落盘）
   unaccounted = active
               − main_spec_coverage      （主 spec Sources 并集）
               − open_change_coverage    （未归档 change 的 addressed 并集）
+              − planned_unbuilt         （已裁决纳入、计划在册、change 尚未创建）
               − non_software
               − external
               − deferred
@@ -189,17 +192,24 @@ RENAMED    addressed = 主 spec 中 FROM 所指 Requirement 的 Sources
   **不得写成「active ⊆ 若干项之并，差集即缺口」**——`deferred`、`external`、
   `conflicted` 都是 `active` 的子集且都不在覆盖侧，那样算出的差集必然混入它们，
   把「已裁决延期」「由外部系统承担」「待上游收敛」误报成「漏做」。
-  报告须分列七块，只有最后一块是 ERROR：
+
+  **`planned_unbuilt` 块由首次真实 V6 逼出**（首个中途归档实测：无此块
+  Unaccounted=29 条假 ERROR，有此块 =0）——分阶段交付时大部分 included
+  就是「计划在册、还没轮到建」，把它们记成缺口会让每次中途归档必报错。
+  合法性由 V3.4 保证（included ⊆ 计划覆盖），故全程 Unaccounted 合法为 0；
+  它剩下要抓的是真缺口：计划被改坏、覆盖蒸发、归档后计划外丢失。
+  报告须分列八块，只有最后一块是 ERROR（示例为首个真实 V6 的实测值）：
 
   ```
-  Active FRIDs   44
-  ├ Implemented  25   已归档进主 spec
-  ├ Open changes  7   未归档 change 覆盖中
-  ├ Non-software  6   非软件交付（永久无需 spec）
-  ├ External      3   外部系统承担（本仓不 spec，欠账仍在）
-  ├ Deferred      1   已裁决延期，仍欠实现
-  ├ Conflicted    2   待上游收敛
-  └ Unaccounted   0   ← 真实缺口，ERROR
+  Active FRIDs    44
+  ├ Implemented    4   已归档进主 spec
+  ├ Open changes   0   未归档 change 覆盖中
+  ├ Planned 未建  29   已裁决纳入、计划在册、change 尚未创建
+  ├ Non-software   7   非软件交付（永久无需 spec）
+  ├ External       4   外部系统承担（本仓不 spec，欠账仍在）
+  ├ Deferred       0   已裁决延期，仍欠实现
+  ├ Conflicted     0   待上游收敛
+  └ Unaccounted    0   ← 真实缺口，ERROR
   ```
 
 ## 双向可达与放行

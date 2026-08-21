@@ -412,7 +412,7 @@ propose 壳：欠账门 → 交接段现算 → 经确认委托官方 propose �
    → apply 壳：放行查验 → 确认 → 委托官方 apply
    → verify 壳：委托官方 verify（实现 ↔ artifacts）→ V4.9 + 治理核对清单
    → 归档壳：trace (pre-archive) → 人工确认放行 → 代跑 openspec archive
-   → post-archive verification (V6)
+   → post-archive verification (V6) → 提交提醒
 ```
 
 **六组检查**（完整清单见
@@ -425,7 +425,7 @@ propose 壳：欠账门 → 交接段现算 → 经确认委托官方 propose �
 | V3 | 基线对账 | 五集合互斥且全覆盖、无幽灵 ID、included 全被 planned change 覆盖、计划外 change |
 | V4 | delta 侧 | Authority 三重自洽（含 **rebaseline↔trace 联锁**）、Sources 分场景判定、`addressed == Covered`、skip_specs 例外、依据引用完整性（design V4.8 + 源码 V4.9） |
 | V5 | 委托原生 | `openspec validate --strict` 退出 0、required artifacts 齐备 |
-| V6 | 归档后 | 主 spec 保留 Sources、`unaccounted` 七块分账 |
+| V6 | 归档后 | 主 spec 保留 Sources、`unaccounted` 八块分账（含 Planned 未建） |
 
 **双向可达**：正向（防漏做）＝ V3.4 + V4.6 + V6.2；
 反向（防越权造需求）＝ V4.0 + V4.2 + V4.3 + V4.5。
@@ -441,6 +441,11 @@ WARNING 可带裁决放行，裁决记入回显与基线的例外记录。
 trace（pre-archive）放行后，**优先委托 CLI**：`openspec archive <change-name>`
 （回显后经人确认执行），随后跑 V6。
 
+**产后清单最后一项：提交提醒。** 归档触及 change 目录移动、主 spec 改写、
+实现代码与治理登记多处——**未提交的归档在仓库史上不存在**（首圈实测：
+33 个文件裸奔到外部复核才被发现，git init 的审计初衷差点落空）。
+壳给出建议 commit message；执行与否由用户定夺，本技能不强制代跑。
+
 理由：CLI 自带 validate → 合并 delta → 必要时 capability 退休 → 移动 change
 → 失败回滚的完整实现，**不依赖 sync skill 是否安装**；且官方 archive *skill*
 的原则是「警告不阻塞」，与本技能的门禁语义相悖。
@@ -448,8 +453,8 @@ trace（pre-archive）放行后，**优先委托 CLI**：`openspec archive <chan
 
 ### status（只读）
 
-现场扫描计算，不信任任何缓存。核心产出是 **V6.2 的七块分账**
-（Implemented / Open changes / Non-software / External / Deferred / Conflicted / Unaccounted），
+现场扫描计算，不信任任何缓存。核心产出是 **V6.2 的八块分账**
+（Implemented / Open changes / **Planned 未建** / Non-software / External / Deferred / Conflicted / Unaccounted），
 外加：基线版本与状态、每个 planned change 的已建/未建与 artifact 进度
 （`openspec status --change`）、**计划外 change 清单**、待澄清项、
 **发版欠账**（现算：上游 `round` 大于当前 release round 的 DEC，

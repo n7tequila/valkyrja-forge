@@ -12,7 +12,7 @@ authority:                         # 权威在外部系统时填 external（版�
 
 <!-- 契约描述接口形状与语义（字段、格式、兼容规则），不写实现。
      实现属各 change 的 design/代码。
-     修订流程：contract 特权握手 → version+1 → Changelog 记破坏性 → 回显消费方影响。 -->
+     修订流程：contract 特权确认 → version+1 → Changelog 记破坏性 → 回显消费方影响。 -->
 
 ## 用途与消费方
 

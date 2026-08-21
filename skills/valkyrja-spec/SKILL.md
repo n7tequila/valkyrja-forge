@@ -105,7 +105,7 @@ change，其 `Covered-FRIDs` 即这些 deprecated FRID。故一个 change 的 `C
 ```
 docs/product/baselines/<DOMAIN>-v<X.Y>.md     # 本技能唯一的持久化产物
 openspec/                                      # CLI 拥有，本技能只读或经 CLI 写
-├── config.yaml                                # 本技能经握手写入通用治理协议（不绑定具体 PRD）
+├── config.yaml                                # 本技能经确认写入通用治理协议（不绑定具体 PRD）
 ├── specs/<capability-path>/spec.md            # 主 spec，真相源；只经 CLI 合并
 └── changes/<change-name>/                     # 只经 `openspec new change` 创建
     └── proposal.md                            # 含 Requirement Authority 块（PRD 绑定在此）
@@ -186,17 +186,17 @@ REMOVED / RENAMED 从主 spec 同名（或 FROM 所指）Requirement 的 Sources
 
 | 用户话语特征 | 路由 |
 |---|---|
-| "PRD 定稿了"、"可以开工了"、"建立基线" | baseline（特权，需握手） |
-| "拆成几个 change"、"怎么划分" | decompose（特权，需握手） |
+| "PRD 定稿了"、"可以开工了"、"建立基线" | baseline（特权，需确认） |
+| "拆成几个 change"、"怎么划分" | decompose（特权，需确认） |
 | "开始开发这个 change"、"可以 apply 了"、"开始实现" | trace（pre-apply，V1–V5）→ 通过后委托官方 apply |
 | "能归档吗"、"检查这个 change"、"追溯对不对" | trace（pre-archive，V1–V5） |
 | "现在什么进度"、"哪些需求还没做" | status |
 | "检查工作区"、"体检"、"skill 更新了" | check |
-| "PRD 出新版了"、"v1.1 发布了" | rebaseline（特权，需握手） |
+| "PRD 出新版了"、"v1.1 发布了" | rebaseline（特权，需确认） |
 
 意图不明时按 status 处理（只读、无副作用）。
 
-## 特权动作握手
+## 特权动作确认
 
 沿用与 valkyrja-prd 一致的结构：识别意图后**不直接落盘** → 完整回显将要发生的事 →
 等用户明确回复"确认"（或同义表达）后才写。
@@ -267,7 +267,7 @@ change 覆盖（V4.3 拦截）。
 语义完整性无法机检，一个假阳性的"通过"比不检更危险。
 
 **拆分回显保底（不可降级，同族于 valkyrja-prd 的疑似 DEC 保底规则）**：
-baseline 握手出示拆分项时，必须**逐条对照 PRD 原文要点**——每个行为点标注
+baseline 确认出示拆分项时，必须**逐条对照 PRD 原文要点**——每个行为点标注
 对应的原文条目或引用原文短语，并显式列出「原文有而未映射」的余项（应为空）。
 只出示提取物清单而不带原文对照，确认即退化为对提取者的信任；
 已有真实案例：原文与提取物**数量相同但内容错位**（一条原文要点被静默丢弃、
@@ -483,7 +483,7 @@ apply 或归档。**不得批量代改 Authority 块**：逐个更新迫使人�
 
 ## 与官方 skill 的分工与冲突缓释
 
-**config.yaml 注入**：baseline 首次定稿时（经握手）写入 `context` 与 `rules`，
+**config.yaml 注入**：baseline 首次定稿时（经确认）写入 `context` 与 `rules`，
 抑制 propose 重新追问 PRD 已定事项。三条硬约束：
 ①**只写与具体 PRD 无关的通用协议**（写死具体 PRD 会在多 DOMAIN 仓库造成串域）；
 ②**写入后必须实跑 `openspec instructions specs --change <任一> --json` 验证注入生效**

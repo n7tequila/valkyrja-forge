@@ -59,7 +59,7 @@
   (3) ECC 摘编双重署名：条目 frontmatter 记 source/license/modified + 仓库根
   `NOTICE.md` 集中保留第三方版权声明（已核实 ECC LICENSE 为 MIT，
   Copyright (c) 2026 Affaan Mustafa）；
-  (4) 发布门禁：catalog 条目推公开仓前经人工检查（特权握手），检查单三项——
+  (4) 发布门禁：catalog 条目推公开仓前经人工检查（特权确认），检查单三项——
   业务细节已剥离（**含客户名与内部项目名**）/ 四字段齐全且 redistributable /
   摘编版权声明未丢。
   边界：内部项目泛化条目同受检查单第 1 项约束，**模式出仓、领域不出仓**；
@@ -86,7 +86,7 @@
 - **D9 接回 试点项目 测试的顺序 = arch 先行、最小可用**：
   (1) 建 valkyrja-arch skill 本体 + 仅 试点项目 design.md 三空缺直接需要的 4 条 catalog
   （幂等标识、错误分类、共享契约格式、本地存储），其余 16 条不阻塞后补；
-  (2) 初始化 试点项目 `docs/architecture/`（DOMAIN=DEMO_KIOSK），经握手铸首批 ADEC
+  (2) 初始化 试点项目 `docs/architecture/`（DOMAIN=DEMO_KIOSK），经确认铸首批 ADEC
   （存储技术定案＝SEC-003 降级悬案、幂等采纳、错误采纳）+ 首份共享契约（内容包结构）；
   (3) 回填 add-lead-capture-flow 的 design.md，三个空缺段改为真实 `依据: ADEC-*`
   引用——同时是 V4.8 首次实战；
@@ -101,7 +101,7 @@
   钉着三个具体空缺，且内部项目已独立演化出其雏形（standards-backlog graduate 机制）。
   评审建议隐含的条件「等真实需要出现再扩」恰好被满足。
   命令沿用薄转接模式：纯委托、零路由逻辑，重申 decide / adopt / contract / publish
-  四个特权动作的握手不因斜杠入口放宽。
+  四个特权动作的确认不因斜杠入口放宽。
 - **D11 bootstrap 入口流程 + 奠基性决策（2026-08-20，首次 apply 暴露）**：
   首次真实 apply 中，技术栈（Vue/TS/Vite）与仓库布局在实现现场被临时决定且不留痕
   ——skill 只能回答「把这个记下来」，回答不了「我该定什么」，偏离了

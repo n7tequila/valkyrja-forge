@@ -61,7 +61,7 @@ trace（pre-archive）放行后，**优先委托 CLI**：`openspec archive <chan
 
 ## 三、config.yaml 注入：抑制 propose 重新追问已决事项
 
-baseline 首次定稿时（经握手）写入 `openspec/config.yaml` 的 `context` 与 `rules`
+baseline 首次定稿时（经确认）写入 `openspec/config.yaml` 的 `context` 与 `rules`
 （模板见 `../templates/config-injection.yaml`）。
 
 **config 只写与具体 PRD 无关的通用治理协议**——绝不写死某个 PRD 或基线路径，

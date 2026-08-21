@@ -89,18 +89,18 @@ docs/product/initiatives/<slug>/
 | 用户话语特征 | 路由 |
 |---|---|
 | 探讨、比较方案、提出想法、"聊聊 XX" | discuss |
-| "就按 X"、"定了"、"确认采用"、"记下来作为决策" | decide（特权，需握手） |
+| "就按 X"、"定了"、"确认采用"、"记下来作为决策" | decide（特权，需确认） |
 | 上传/粘贴外部文档、"看看这份材料" | import |
 | 新建 initiative 且已有一批存量文档、"把这些历史材料导进来" | bootstrap |
-| 拿到原型稿、"评审原型"、"背书为视觉基线"、原型大改 | prototype（背书步特权，需握手） |
+| 拿到原型稿、"评审原型"、"背书为视觉基线"、原型大改 | prototype（背书步特权，需确认） |
 | "现在什么状态"、"还有什么没定" | status |
 | "检查工作区"、"格式体检"、"skill 更新了，看看有什么影响" | check |
 | "整理一版 PRD"、"更新 PRD" | synthesize-draft |
-| "发布"、"这版定稿为 vX.Y" | release（特权，需握手） |
+| "发布"、"这版定稿为 vX.Y" | release（特权，需确认） |
 
-意图不明时按 discuss 处理。**decide 与 release 永远不允许仅凭推断执行**——见特权握手。
+意图不明时按 discuss 处理。**decide 与 release 永远不允许仅凭推断执行**——见特权确认。
 
-## 特权动作握手（decide / release 共用）
+## 特权动作确认（decide / release 共用）
 
 1. 识别到决策/发布意图后，**不直接落盘**。
 2. 完整回显将要发生的事：
@@ -130,7 +130,7 @@ import 提案、批量疑似 DEC 裁决等）：
 3. 无论节奏与粒度如何：**确认必须显式且可枚举**。用户须明确指出各项处置
    （"全部确认"、"1、3、5 确认，2 否决，其余转 DISC"均可）；
    沉默、跳过、"差不多就这样"不构成确认，未被点名的项默认悬置并再次询问。
-4. 批量确认不降低权威等级：整批确认 DEC 等同于对每条完成一次 decide 握手，
+4. 批量确认不降低权威等级：整批确认 DEC 等同于对每条完成一次 decide 确认，
    宪法 3 的约束原样适用。
 
 ## Checkpoint 机制（贯穿所有动作）
@@ -156,7 +156,7 @@ import 提案、批量疑似 DEC 裁决等）：
 讨论中出现的未决问题记为 Q（写入相关 DISC，并在成为阻塞项时列入 STATUS.md）。
 
 ### decide
-经握手后：按 `templates/decision.md` 生成 DEC 文件；若该决策回答了某个 Q，将其标记
+经确认后：按 `templates/decision.md` 生成 DEC 文件；若该决策回答了某个 Q，将其标记
 `answered by DEC-XXX-NNN`；若推翻旧决策，旧 DEC 标记 `superseded-by`，不删除（宪法 8）。
 
 ### import
@@ -172,7 +172,7 @@ import 提案、批量疑似 DEC 裁决等）：
 ### bootstrap（存量文档批量初始化）
 适用于 initiative 建立之初、用户手上已有一批历史积累（旧需求文档、会议纪要、
 聊天记录、半成品 PRD、技术方案）的场景。它是 import 的批量形态，
-用**一次完整清点报告**代替逐份握手：
+用**一次完整清点报告**代替逐份确认：
 
 1. 用户指定文件或目录，AI 批量读取全部材料（数量大时分批，逐批汇报进度）。
 2. 输出**清点报告**，包含四部分：
@@ -287,7 +287,7 @@ TM 永远不直接产生 REQ（宪法 6）。
 - tech-memos 内容不生成 REQ；技术约束只以行为后果形式进入（宪法 6）。
 
 ### release（特权）
-握手回显前先执行 **Pre-Release Lint**，结果纳入回显：
+确认回显前先执行 **Pre-Release Lint**，结果纳入回显：
 
 - 硬门禁（任一不过则不得发布）：
   1. **ID 完整性**——无重复、无重编号（对照 current 历史与上一 release）；
@@ -300,7 +300,7 @@ TM 永远不直接产生 REQ（宪法 6）。
      含 DEC 背书视为经决策的强制实现约束、放行；仅溯至 TM 建议的标警。
      只提示、不自动删改。
 
-Lint 通过或裁决后，经握手：将 `prd/current.md` 复制为 `prd/releases/vX.Y.md`（版本号由用户定，
+Lint 通过或裁决后，经确认：将 `prd/current.md` 复制为 `prd/releases/vX.Y.md`（版本号由用户定，
 不与 round 绑定）；release 文件头部写入版本、日期、round；round 计数 +1；
 更新 STATUS.md；最后提醒用户：**下游 valkyrja-spec 现在可以基于
 `prd/releases/vX.Y.md` 做 baseline / rebaseline**。

@@ -1,4 +1,4 @@
-# 写入产品仓库 openspec/config.yaml 的片段（baseline 首次定稿时经握手写入）。
+# 写入产品仓库 openspec/config.yaml 的片段（baseline 首次定稿时经确认写入）。
 #
 # ⚠ 只写与具体 PRD 无关的通用治理协议。
 #   绝不把某个 PRD 路径、基线路径或 DOMAIN 写进本文件 ——

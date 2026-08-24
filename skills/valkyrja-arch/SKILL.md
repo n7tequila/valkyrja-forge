@@ -155,7 +155,7 @@ docs/architecture/
 | "把 catalog 的 XX 拿进来"、"按标准约定来" | adopt（特权，需确认） |
 | "定义 XX 契约"、"内容包结构定一下"、"改契约" | contract（特权，需确认） |
 | "架构现状"、"有哪些决策"、"约定都有什么" | status |
-| "体检"、"检查架构工作区" | check |
+| "体检"、"检查架构工作区"、"补 CLAUDE.md 治理块" | check |
 | "生成 lint 配置"、"把约定投影到 CI" | publish（特权，需确认） |
 
 意图不明按 discuss 处理。**特权动作永不允许仅凭推断执行。**
@@ -351,7 +351,9 @@ inventory 条目所指实现的存在性（记录了路径的条目）；
 被引 conventions/contracts 文件必须存在；指纹不匹配或文件缺失报
 `[需人工处理]`（重跑 publish 重投影）；
 **requires 闭包**——绑定层约定副本存在时，其 `adopted-from` 所指 catalog
-条目声明的 `requires:` 基础层副本必须也已采纳，缺失报 `[需人工处理]`。
+条目声明的 `requires:` 基础层副本必须也已采纳，缺失报 `[需人工处理]`；
+**仓库根 `CLAUDE.md` 的 valkyrja 治理块存在性**——缺失或被外部工具抹掉时报
+`[需人工处理]`，按 `templates/claude-guard-block.md` 提议补写（经确认落盘）。
 产出三态报告（可自动修复 / 需人工处理 / 仅报告），自动修复只改形式不改语义。
 
 ### publish（特权）

@@ -206,7 +206,7 @@ REMOVED / RENAMED 从主 spec 同名（或 FROM 所指）Requirement 的 Sources
 | "verify"、"核对实现" | **verify 壳**：委托官方 verify（只读，无需确认）→ V4.9 源码依据完整性 + 治理核对清单 → 衔接 trace（pre-archive） |
 | "能归档吗"、"检查这个 change"、"追溯对不对" | **归档壳**：trace（pre-archive）→ 确认回显 → 代跑 CLI → V6 |
 | "现在什么进度"、"哪些需求还没做" | status |
-| "检查工作区"、"体检"、"skill 更新了" | check |
+| "检查工作区"、"体检"、"skill 更新了"、"补 CLAUDE.md 治理块" | check |
 | "PRD 出新版了"、"v1.1 发布了" | rebaseline（特权，需确认） |
 
 意图不明时按 status 处理（只读、无副作用）。
@@ -501,7 +501,9 @@ trace（pre-archive）放行后，**优先委托 CLI**：`openspec archive <chan
 基线 frontmatter 与结构契约；基线是否混入了禁止存储的现状或派生字段（宪法 5）；
 `Sources:` 行格式契约（全 change 与主 spec）；`Requirement Authority` 块格式；
 FRID 类型合法性；计划外 change；基线引用完整性；
-**对已归档 change 补跑 V4/V6 类追溯检查**。
+**对已归档 change 补跑 V4/V6 类追溯检查**；
+**仓库根 `CLAUDE.md` 的 valkyrja 治理块存在性**——缺失或被外部工具抹掉时报
+`[需人工处理]`，按 `templates/claude-guard-block.md` 提议补写（经确认落盘）。
 
 > **能力边界（不得含糊）**：本技能**无法**判定一个已归档 change 当初是否跑过 trace——
 > trace 只读、不写 receipt，事后没有任何状态证据。check 能做的是**重新验证归档产物

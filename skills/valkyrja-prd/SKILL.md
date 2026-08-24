@@ -98,7 +98,7 @@ docs/product/initiatives/<slug>/
 | 新建 initiative 且已有一批存量文档、"把这些历史材料导进来" | bootstrap |
 | 拿到原型稿、"评审原型"、"背书为视觉基线"、原型大改 | prototype（背书步特权，需确认） |
 | "现在什么状态"、"还有什么没定" | status |
-| "检查工作区"、"格式体检"、"skill 更新了，看看有什么影响" | check |
+| "检查工作区"、"格式体检"、"skill 更新了，看看有什么影响"、"补 CLAUDE.md 治理块" | check |
 | "整理一版 PRD"、"更新 PRD" | synthesize-draft |
 | "发布"、"这版定稿为 vX.Y" | release（特权，需确认） |
 
@@ -270,6 +270,8 @@ open questions（blocking/non-blocking 分列）、活跃 DISC 话题、
    （复用 Pre-Release Lint 的 1、2 号检查，扩展到全工作区语境）。
 6. **STATUS 一致性**：等同 status 修复的检查项。
 7. **冻结版本**：prd/releases/ 下文件**仅报告不合项，永不就地修改**。
+8. **仓库根 `CLAUDE.md` 的 valkyrja 治理块存在性**：缺失或被外部工具抹掉时报
+   `[需人工处理]`，按 `templates/claude-guard-block.md` 提议补写（经确认落盘）。
 
 产出**体检报告**，每项标注三种处置之一：
 `[可自动修复]`（纯形式：ID 格式、frontmatter 补齐、文件移位、Source→Sources 改写）、

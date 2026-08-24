@@ -192,6 +192,17 @@ docs/architecture/
 展开完整原文。本条只约束呈现顺序与可读性，不放宽任何「回显必须包含」的
 完整性要求。
 
+**消费仓 CLAUDE.md 治理块**：产品仓根目录的 `CLAUDE.md` 每次会话都在上下文里，
+是**技能未被触发时唯一仍然生效的护栏**——有人直接手改已发布 PRD 或主 spec 时，
+技能不在场，机检也只在跑 trace 时才发现后果。因此两个时机提议写入
+`templates/claude-guard-block.md` 的界定块：**首次在本仓落盘治理文件后**
+（prd 首个 release / arch bootstrap 落盘 / spec baseline 定稿），以及**任何一次特权确认时
+发现该块缺失**（含被外部工具重写抹掉、以及协议升级前就已存在的老项目）。
+提议＝回显块全文、经确认才落盘（特权动作），每会话至多提议一次，被拒不再重复。
+写入纪律见该模板头部：已有文件只插入块、其余内容一字不动；文件不存在则只创建含块的
+文件（项目总体说明交给 `/init`，本技能不代写）；块已存在则什么都不做。
+回显时必须如实说明：**该块是 prompt 级提示、不是强制**，门禁仍是 trace 机检与 CI。
+
 ## 各动作运行协议
 
 ### bootstrap（特权）——建立技术地基
@@ -221,7 +232,7 @@ STATUS.md 作为派生缓存按现状重算。
 |---|---|
 | 构建与依赖 | `package.json` / `pom.xml` / `build.gradle` / `go.mod` / `pyproject.toml` / `Cargo.toml` … |
 | 目录布局 | 顶层 surface 划分、各 surface 根目录、是否 monorepo |
-| 既有规范 | linter / formatter / tsconfig / 编辑器配置、编码规范文档、`CLAUDE.md` / `AGENTS.md` |
+| 既有规范 | linter / formatter / tsconfig / 编辑器配置、编码规范文档、`CLAUDE.md` / `AGENTS.md`——**读 CLAUDE.md 时跳过 `valkyrja:begin/end` 块**：那是本套技能自己写入的治理块，不是既有事实，把它读成「项目已有 XX 约定」是自指幻觉（空白项目里没有别的事实稀释它，最易踩） |
 | CI | workflow 配置中已固化的运行时版本与检查项 |
 
 > **发现 `package.json` 里有 vue，不等于「决定用 Vue」。** 那是**既成事实**，

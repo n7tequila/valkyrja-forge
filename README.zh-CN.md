@@ -250,6 +250,7 @@ openspec init --tools claude    # 在目标产品仓库内执行
 ```
 valkyrja-forge/
 ├── README.md / README.zh-CN.md / NOTICE.md（指针；权威声明随 catalog 分发）
+├── CLAUDE.md                      # 本仓自身的编辑纪律（三载体同源、提交前必跑、脱敏门禁）
 ├── .claude-plugin/                # plugin.json + marketplace.json（plugin 主安装路径）
 ├── commands/                      # 斜杠命令（平铺；plugin 名或安装目录提供 /valkyrja: 命名空间）
 ├── docs/design/                   # 三技能设计定稿与演进记录（含 D 系列裁决台账）

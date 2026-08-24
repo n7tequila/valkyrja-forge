@@ -228,6 +228,7 @@ These run through all three skills and explain every tradeoff in the design:
 ```
 valkyrja-forge/
 ├── README.md / README.zh-CN.md / NOTICE.md (pointer; the authoritative notices ship with the catalog)
+├── CLAUDE.md                      # editing discipline for this repo (single-authority rule, pre-commit checks, sanitization gate)
 ├── .claude-plugin/                # plugin.json + marketplace.json (primary install path)
 ├── commands/                      # slash commands (flat; the plugin name or the install dir provides the /valkyrja: namespace)
 ├── docs/design/                   # design records & evolution logs for all three skills (D-series ruling ledger)

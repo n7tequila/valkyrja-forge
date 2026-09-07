@@ -1,6 +1,6 @@
 {
   "name": "valkyrja",
-  "version": "0.9.4",
+  "version": "0.9.5",
   "description": "需求治理 + AI 开发工作流三技能：valkyrja-prd（产品需求工作坊）→ valkyrja-arch（技术契约治理）→ valkyrja-spec（OpenSpec 开发治理，含 trace.py 确定性门禁）。PRD 是唯一产品权威，人保留决策权，追溯闭环由机检把关。",
   "author": {
     "name": "n7tequila",

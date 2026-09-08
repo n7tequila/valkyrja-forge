@@ -36,8 +36,11 @@ plugin 形态下技能名带前缀，如 `valk-tools:context-handoff`。
 ## 编辑纪律
 
 - `skills/*/SKILL.md` 是**唯一真相源**。每次调用全量进上下文——控制篇幅。
-- `commands/*.md` 是**薄转接**：只转发意图，**不复述技能里的规则、清单或确认要求**。
-  复述即产生第二个可独立演化的副本，必然漂移。要改规则，改 SKILL.md 那一处。
+- **本 plugin 不设 `commands/` 层。** 技能名本身就短，`/valk-tools:merge-pr` 直接
+  调起技能即可。曾经加过同名的薄转接命令，结果是斜杠面板里同一个名字出现两次——
+  命令与技能同名就会双列。valk 那边不撞是因为命令叫 `arch`、技能叫 `valkyrja-arch`，
+  短命令是给长技能名当入口的；这里技能名已经短，命令纯属重复。
+  **今后若要加命令，命令名必须与技能名不同**，否则不要加。
 - 改了本目录内容，**只抬本 plugin 的版本**（`valk-tools/.claude-plugin/plugin.json`
   与仓根 `marketplace.json` 里 `valk-tools` 条目，两处必须一致），
   **不要动 `valk` 的版本**——两个 plugin 的版本互不相干。

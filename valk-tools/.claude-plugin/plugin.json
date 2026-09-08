@@ -1,6 +1,6 @@
 {
   "name": "valk-tools",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "个人工作方式工具箱：context-handoff（上下文交接与续接）、merge-pr（跨 forge 开 PR/MR）。跟人走，不跟项目走——与 valkyrja 治理协议互不依赖。",
   "author": {
     "name": "n7tequila",

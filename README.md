@@ -159,6 +159,24 @@ Versioning, upgrades (`/plugin marketplace update`), enable/disable, and uninsta
 from the official plugin mechanism. Under the plugin, skill names are namespaced
 (e.g. `valkyrja:valkyrja-spec`) and the slash commands are `/valkyrja:prd|arch|spec`.
 
+#### Second plugin: `valk-tools`
+
+This marketplace hosts **two independent plugins**. `valk-tools` is a personal-workflow
+toolbox — context handoff, four-dimension code review, cross-forge PR drafting — that
+travels with the person rather than with the project:
+
+```
+/plugin install valk-tools
+```
+
+It carries its own version and installs, upgrades and uninstalls separately; it shares
+this repo's git history with `valkyrja` but not its release cadence, and the two have no
+dependency on each other. Skill names are namespaced as `valk-tools:context-handoff`,
+slash commands are `/valk-tools:*`. See [valk-tools/README.md](valk-tools/README.md).
+
+The fallback installer below covers the **`valkyrja` skills only** — `valk-tools` is
+plugin-only by design.
+
 ### Fallback path: copy-based installer (offline / no-git scenarios)
 
 Skills install into your **target product repository** — this repo is only the source.

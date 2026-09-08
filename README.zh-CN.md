@@ -174,6 +174,21 @@ ADEC。产物落 `docs/architecture/`（决策 / 已采纳约定副本 / 版本�
 原生提供。plugin 形态下技能名带命名空间（如 `valkyrja:valkyrja-spec`），
 斜杠命令为 `/valkyrja:prd|arch|spec`。
 
+#### 第二个 plugin：`valk-tools`
+
+本 marketplace 托管**两个互相独立的 plugin**。`valk-tools` 是个人工作方式工具箱——
+上下文交接、四维并行代码审查、跨 forge 开 PR——跟人走，不跟项目走：
+
+```
+/plugin install valk-tools
+```
+
+它有自己的版本，独立安装、升级与卸载；与 `valkyrja` 只共享本仓的 git 历史，
+不共享发版节奏，两者互无依赖。plugin 形态下技能名为 `valk-tools:context-handoff`，
+斜杠命令为 `/valk-tools:*`。详见 [valk-tools/README.md](valk-tools/README.md)。
+
+下面的兜底安装脚本**只覆盖 `valkyrja` 的技能**——`valk-tools` 按设计只走 plugin。
+
 ### 兜底路径：复制式安装脚本（离线 / 无 git 场景）
 
 技能安装到**目标产品仓库**，本仓库只是技能源码仓。下列示例默认

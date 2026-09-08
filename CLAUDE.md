@@ -1,8 +1,13 @@
 # valkyrja-forge
 
-**这是协议 / 技能源码仓，不是应用仓。** 产出物是三个 Claude Code 技能
+**这是协议 / 技能源码仓，不是应用仓。** 主产出是三个 Claude Code 技能
 （`valkyrja-prd` / `valkyrja-arch` / `valkyrja-spec`）与一个确定性门禁脚本
 `trace.py`，安装到**别的**产品仓库里使用。本仓没有应用代码，也不消费自己的协议。
+
+本仓同时托管第二个**互相独立**的 plugin `valk-tools`（`valk-tools/`）——个人工作
+方式工具箱，跟人走不跟项目走。它与 valkyrja 协议**没有任何依赖关系**，只共享
+git 历史：各自独立版本、独立安装卸载。**下面的纪律除特别注明外只约束 valkyrja**；
+valk-tools 的纪律见 `valk-tools/README.md`。
 
 ## 第一纪律：三载体同源，任何规则只有一个权威副本
 
@@ -42,7 +47,8 @@ bash scripts/check-sanitization.sh    # D6 脱敏门禁，期望「0 命中」
 | `commands/*.md` | 斜杠入口，薄转接 | 只转发意图，**不复述特权与确认规则**——那是 SKILL.md 的唯一权威 |
 | `tests/` | trace.py 回归夹具 | **不随技能分发**（forge 开发资产）；新增检查分支就补场景 |
 | `docs/design/` | 设计定稿与演进记录 | 每次协议修订追加一行演进记录，注明来源：纸面推演 / 外部评审 / 真实运行 |
-| `.claude-plugin/` | plugin 与 marketplace 清单 | 两份 `version` 必须一致；内容变更后抬版本号，否则 `/plugin update` 认不出新版 |
+| `valk-tools/` | 第二个 plugin，与协议无关 | 自成一体：改它**只抬它自己的版本**，不动 valkyrja 的；不受三载体同源纪律约束 |
+| `.claude-plugin/` | marketplace 清单（列两个 plugin）与 valkyrja 的 plugin 清单 | **两个 plugin 各有一对 `version`**（`plugin.json` 与 marketplace 中对应条目），**每对内部必须一致，两对之间互不相干**；改了谁的内容就抬谁的版本，否则 `/plugin update` 认不出新版 |
 
 ## 本地验证
 

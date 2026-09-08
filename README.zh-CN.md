@@ -177,7 +177,7 @@ ADEC。产物落 `docs/architecture/`（决策 / 已采纳约定副本 / 版本�
 #### 第二个 plugin：`valk-tools`
 
 本 marketplace 托管**两个互相独立的 plugin**。`valk-tools` 是个人工作方式工具箱——
-上下文交接、四维并行代码审查、跨 forge 开 PR——跟人走，不跟项目走：
+上下文交接、跨 forge 开 PR——跟人走，不跟项目走：
 
 ```
 /plugin install valk-tools

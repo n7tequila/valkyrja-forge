@@ -1,6 +1,6 @@
 # valk-tools
 
-个人工作方式工具箱。三条**跟人走**的技能——换哪个项目都一样用，与项目领域无关。
+个人工作方式工具箱。两条**跟人走**的技能——换哪个项目都一样用，与项目领域无关。
 
 本目录是 valkyrja-forge 仓里的**第二个 plugin**，与同仓的 `valkyrja` 协议
 **没有任何依赖关系**，只共享 git 历史：
@@ -11,12 +11,11 @@
 | 装到哪 | 消费产品仓，项目级 | 跟着人走，用户级 |
 | 版本 | 独立 | 独立 |
 
-## 三条技能
+## 两条技能
 
 | 技能 | 做什么 | 斜杠入口 |
 |---|---|---|
 | `context-handoff` | 上下文将满时固化现场、清空、再无损接上；也用于新会话恢复现场 | `/valk-tools:context-handoff` |
-| `code-review-full` | 后端 / 前端 / Java DDD / 安全四维并行审查，按严重级别去重汇总并裁决 | `/valk-tools:code-review-full` |
 | `merge-pr` | 开 PR/MR，GitHub 走 gh CLI，自建 forge 降级为标题正文 + compare URL | `/valk-tools:merge-pr` |
 
 plugin 形态下技能名带前缀，如 `valk-tools:context-handoff`。
@@ -43,9 +42,8 @@ plugin 形态下技能名带前缀，如 `valk-tools:context-handoff`。
   与仓根 `marketplace.json` 里 `valk-tools` 条目，两处必须一致），
   **不要动 valkyrja 的版本**——两个 plugin 的版本互不相干。
 
-## 已知的可移植性限制
+## 收录门槛
 
-`code-review-full` 引用了本机私有规则目录（`~/.claude/rules/*`）与一套约定的
-仓库布局（`backend/` `frontend/` 及其文档路径）。不符合该布局的项目上，
-那些引用会落空——技能里已写明「若某 skill 不可用，退回 rules 对应规则」，
-但换机器或换布局时它的效果会明显打折。这是已知取舍，不是缺陷。
+本 plugin 随公开仓分发，因此**只收不依赖本机私有配置、也不暴露仓库布局的技能**。
+依赖 `~/.claude/rules/*` 或特定目录结构的技能留在 `~/.claude/skills/` 本地使用，
+不进本目录——`code-review-full` 即因此未收录。

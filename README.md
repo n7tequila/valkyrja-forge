@@ -162,8 +162,8 @@ from the official plugin mechanism. Under the plugin, skill names are namespaced
 #### Second plugin: `valk-tools`
 
 This marketplace hosts **two independent plugins**. `valk-tools` is a personal-workflow
-toolbox — context handoff, four-dimension code review, cross-forge PR drafting — that
-travels with the person rather than with the project:
+toolbox — context handoff and cross-forge PR drafting — that travels with the person
+rather than with the project:
 
 ```
 /plugin install valk-tools

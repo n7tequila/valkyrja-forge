@@ -170,11 +170,12 @@ rather than with the project:
 ```
 
 It carries its own version and installs, upgrades and uninstalls separately; it shares
-this repo's git history with `valkyrja` but not its release cadence, and the two have no
-dependency on each other. Skill names are namespaced as `valk-tools:context-handoff`,
-slash commands are `/valk-tools:*`. See [valk-tools/README.md](valk-tools/README.md).
+this repo's git history with `valk` but not its release cadence, and the two have no
+dependency on each other. It ships **skills only, no command layer** — invoke them
+directly as `/valk-tools:context-handoff` and `/valk-tools:merge-pr`.
+See [valk-tools/README.md](valk-tools/README.md).
 
-The fallback installer below covers the **`valkyrja` skills only** — `valk-tools` is
+The fallback installer below covers the **`valk` skills only** — `valk-tools` is
 plugin-only by design.
 
 ### Fallback path: copy-based installer (offline / no-git scenarios)

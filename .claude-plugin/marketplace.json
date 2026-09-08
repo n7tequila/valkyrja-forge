@@ -16,7 +16,7 @@
       "name": "valk-tools",
       "source": "./valk-tools",
       "description": "个人工作方式工具箱：context-handoff（上下文交接）、merge-pr（跨 forge 开 PR），以 /valk-tools:<技能名> 调起。跟人走，与 valkyrja 无依赖。",
-      "version": "0.1.1"
+      "version": "0.1.2"
     }
   ]
 }

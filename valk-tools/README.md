@@ -2,10 +2,10 @@
 
 个人工作方式工具箱。两条**跟人走**的技能——换哪个项目都一样用，与项目领域无关。
 
-本目录是 valkyrja-forge 仓里的**第二个 plugin**，与同仓的 `valkyrja` 协议
-**没有任何依赖关系**，只共享 git 历史：
+本目录是 valkyrja-forge 仓里的**第二个 plugin**，与同仓承载 valkyrja 协议的
+`valk` plugin **没有任何依赖关系**，只共享 git 历史：
 
-| | `valkyrja` | `valk-tools` |
+| | `valk` | `valk-tools` |
 |---|---|---|
 | 治理什么 | 产品生命周期（需求 → 技术契约 → 开发） | 会话与个人工作回路 |
 | 装到哪 | 消费产品仓，项目级 | 跟着人走，用户级 |
@@ -13,7 +13,7 @@
 
 ## 两条技能
 
-| 技能 | 做什么 | 斜杠入口 |
+| 技能 | 做什么 | 调起方式（技能自身，无命令层） |
 |---|---|---|
 | `context-handoff` | 上下文将满时固化现场、清空、再无损接上；也用于新会话恢复现场 | `/valk-tools:context-handoff` |
 | `merge-pr` | 开 PR/MR，GitHub 走 gh CLI，自建 forge 降级为标题正文 + compare URL | `/valk-tools:merge-pr` |
@@ -27,11 +27,11 @@ plugin 形态下技能名带前缀，如 `valk-tools:context-handoff`。
 /plugin install valk-tools
 ```
 
-装完需重启。装 `valk-tools` 与装 `valkyrja` 互不影响，可以只装一个。
+装完需重启。装 `valk-tools` 与装 `valk` 互不影响，可以只装一个。
 
 **不要再把 `skills/` 手动拷进 `~/.claude/skills/`**——两种形态同装会双注册
 （同一技能出现两次），且手动那份不随 plugin 更新，模型可能读到旧版而无任何提示。
-仓根的 `scripts/install-skills.sh` 按设计**不覆盖本目录**，只装 valkyrja 的技能。
+仓根的 `scripts/install-skills.sh` 按设计**不覆盖本目录**，只装 `valk` 的技能。
 
 ## 编辑纪律
 

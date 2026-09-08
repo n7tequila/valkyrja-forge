@@ -183,11 +183,12 @@ ADEC。产物落 `docs/architecture/`（决策 / 已采纳约定副本 / 版本�
 /plugin install valk-tools
 ```
 
-它有自己的版本，独立安装、升级与卸载；与 `valkyrja` 只共享本仓的 git 历史，
-不共享发版节奏，两者互无依赖。plugin 形态下技能名为 `valk-tools:context-handoff`，
-斜杠命令为 `/valk-tools:*`。详见 [valk-tools/README.md](valk-tools/README.md)。
+它有自己的版本，独立安装、升级与卸载；与 `valk` 只共享本仓的 git 历史，
+不共享发版节奏，两者互无依赖。它**只带技能、不设命令层**——直接以
+`/valk-tools:context-handoff`、`/valk-tools:merge-pr` 调起。
+详见 [valk-tools/README.md](valk-tools/README.md)。
 
-下面的兜底安装脚本**只覆盖 `valkyrja` 的技能**——`valk-tools` 按设计只走 plugin。
+下面的兜底安装脚本**只覆盖 `valk` 的技能**——`valk-tools` 按设计只走 plugin。
 
 ### 兜底路径：复制式安装脚本（离线 / 无 git 场景）
 

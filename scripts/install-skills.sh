@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# install-skills.sh — 将本仓库 skills/ 下的 Claude Code skill 批量安装到
+# install-skills.sh — 将本仓库 valkyrja/skills/ 下的 Claude Code skill 批量安装到
 # 系统级（~/.claude/skills/）或项目级（<project-root>/.claude/skills/）目录。
 #
 # 定位：**离线/无 git 场景的兜底安装路径**。主路径是官方 plugin 体系——
@@ -17,7 +17,7 @@
 #   --system          安装到系统级 ~/.claude/skills/（对本机所有项目生效）
 #
 # 选项:
-#   --all             安装 skills/ 下全部 skill（未指定 skill-name 时的默认行为）
+#   --all             安装 valkyrja/skills/ 下全部 skill（未指定 skill-name 时的默认行为）
 #   --force           已存在同名 skill 时覆盖安装（不加此项遇到已安装则跳过并提示）
 #   --no-backup       覆盖时不做备份（默认会备份，见下）
 #   --dry-run         只打印将要执行的操作，不实际写入
@@ -25,7 +25,7 @@
 #   -h, --help        显示本帮助
 #
 # 参数:
-#   skill-name ...    只安装指定的一个或多个 skill（对应 skills/<name>/ 目录名）
+#   skill-name ...    只安装指定的一个或多个 skill（对应 valkyrja/skills/<name>/ 目录名）
 #                      不指定则等同 --all
 #
 # 覆盖安装行为:
@@ -50,13 +50,13 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
-SKILLS_SRC_DIR="${REPO_ROOT}/skills"
+SKILLS_SRC_DIR="${REPO_ROOT}/valkyrja/skills"
 
 # 斜杠命令命名空间：仓内命令平铺于 commands/<名>.md（plugin 形态由 plugin 名
 # 提供命名空间 /valkyrja:<名>）；本脚本安装到 <dest>/commands/<NS>/<名>.md，
 # 由目录提供同名命名空间——两条安装路径产出同一命令名。
 COMMAND_NS="valkyrja"
-COMMANDS_SRC_DIR="${REPO_ROOT}/commands"
+COMMANDS_SRC_DIR="${REPO_ROOT}/valkyrja/commands"
 
 TARGET_MODE=""            # project | system
 PROJECT_ROOT="$(pwd)"

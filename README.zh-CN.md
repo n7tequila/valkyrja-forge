@@ -100,7 +100,7 @@ docs/product/initiatives/<slug>/
 ADEC。产物落 `docs/architecture/`（决策 / 已采纳约定副本 / 版本化共享契约 /
 公共对象清单 / 规则候选 backlog）。
 
-自带**约定目录（catalog）**：`skills/valkyrja-arch/references/conventions/`，
+自带**约定目录（catalog）**：`valkyrja/skills/valkyrja-arch/references/conventions/`，
 按 concern × stack 两轴组织，条目带出处与许可证四字段；`adopt` 时以自包含副本
 落入项目并铸 ADEC 记录偏离。条目以真实项目撞上的缺口驱动，事故背书的规则优先。
 

@@ -13,9 +13,9 @@ valk-tools 的纪律见 `valk-tools/README.md`。
 
 **检查条目（V1–V6 系列）的增删改必须同时改三处**，缺一即漂移：
 
-- `skills/valkyrja-spec/tools/trace.py` —— 可执行判定（终审）
-- `skills/valkyrja-spec/references/trace-contract.md` —— 详版契约
-- `skills/valkyrja-spec/SKILL.md` —— 摘要表（只留组名与结论，不复述判定细节）
+- `valkyrja/skills/valkyrja-spec/tools/trace.py` —— 可执行判定（终审）
+- `valkyrja/skills/valkyrja-spec/references/trace-contract.md` —— 详版契约
+- `valkyrja/skills/valkyrja-spec/SKILL.md` —— 摘要表（只留组名与结论，不复述判定细节）
 
 理由与事故史见 trace-contract.md 头部的同步提醒，**不要在本文件复述规则本身**。
 推广到全仓：一条规则需要在第二处被提到时，写指针、不写副本。
@@ -42,9 +42,9 @@ bash scripts/check-sanitization.sh    # D6 脱敏门禁，期望「0 命中」
 
 | 路径 | 是什么 | 编辑时注意 |
 |---|---|---|
-| `skills/**` | 唯一真相源，随安装分发 | `SKILL.md` 每次调用全量进上下文——控制篇幅，判定细则进 `references/` |
-| `skills/*/templates/` | 落盘格式的权威 | 模板注释与 SKILL.md 曾经互相矛盾（交接单预存 Authority 块），改任一侧都要对账另一侧 |
-| `commands/*.md` | 斜杠入口，薄转接 | 只转发意图，**不复述特权与确认规则**——那是 SKILL.md 的唯一权威 |
+| `valkyrja/skills/**` | valkyrja 的唯一真相源，随安装分发 | `SKILL.md` 每次调用全量进上下文——控制篇幅，判定细则进 `references/` |
+| `valkyrja/skills/*/templates/` | 落盘格式的权威 | 模板注释与 SKILL.md 曾经互相矛盾（交接单预存 Authority 块），改任一侧都要对账另一侧 |
+| `valkyrja/commands/*.md` | 斜杠入口，薄转接 | 只转发意图，**不复述特权与确认规则**——那是 SKILL.md 的唯一权威 |
 | `tests/` | trace.py 回归夹具 | **不随技能分发**（forge 开发资产）；新增检查分支就补场景 |
 | `docs/design/` | 设计定稿与演进记录 | 每次协议修订追加一行演进记录，注明来源：纸面推演 / 外部评审 / 真实运行 |
 | `valk-tools/` | 第二个 plugin，与协议无关 | 自成一体：改它**只抬它自己的版本**，不动 valkyrja 的；不受三载体同源纪律约束 |

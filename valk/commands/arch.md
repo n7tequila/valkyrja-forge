@@ -3,9 +3,9 @@ description: 技术契约治理层 —— 技术选型决策（ADEC）、约定�
 argument-hint: [想做什么，自然语言即可；留空则先复述架构现状]
 ---
 
-# /valkyrja:arch
+# /valk:arch
 
-`valkyrja-arch` 技能的斜杠入口（plugin 安装形态下技能名为 `valkyrja:valkyrja-arch`）。
+`valkyrja-arch` 技能的斜杠入口（plugin 安装形态下技能名为 `valk:valkyrja-arch`）。
 
 ## Arguments
 

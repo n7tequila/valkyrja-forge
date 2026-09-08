@@ -3,9 +3,9 @@ description: 产品需求工作坊 —— 讨论、决策、导入存量文档�
 argument-hint: [想做什么，自然语言即可；留空则先复述当前状态]
 ---
 
-# /valkyrja:prd
+# /valk:prd
 
-`valkyrja-prd` 技能的斜杠入口（plugin 安装形态下技能名为 `valkyrja:valkyrja-prd`）。
+`valkyrja-prd` 技能的斜杠入口（plugin 安装形态下技能名为 `valk:valkyrja-prd`）。
 
 ## Arguments
 

@@ -88,7 +88,7 @@ docs/product/initiatives/<slug>/
 
 The technical-contract layer, structurally identical to valkyrja-prd (discuss → decide) but deciding engineering matters. Eight actions: `bootstrap`, `discuss`, `decide`, `adopt`, `contract`, `status`, `check`, `publish` — `bootstrap` is the entry flow that detects existing technical facts, reads product-side constraints, and drives the foundational decisions (tech stack, repo layout) **before the first apply**. The boundary test is **acceptance observability**: anything acceptance-testable belongs to the product side; engineering-internal constraints are ruled here as ADECs. Output lands in `docs/architecture/` (decisions / adopted convention copies / versioned shared contracts / a common-object inventory / a rule-candidate backlog).
 
-Ships a **convention catalog** under `valkyrja/skills/valkyrja-arch/references/conventions/`, organized on two axes (concern × stack), every entry carrying provenance and license fields. `adopt` drops a self-contained copy into the project and mints an ADEC recording the deltas. Entries are driven by gaps real projects actually hit; regression-backed rules take priority.
+Ships a **convention catalog** under `valk/skills/valkyrja-arch/references/conventions/`, organized on two axes (concern × stack), every entry carrying provenance and license fields. `adopt` drops a self-contained copy into the project and mints an ADEC recording the deltas. Entries are driven by gaps real projects actually hit; regression-backed rules take priority.
 
 ### valkyrja-spec
 
@@ -118,21 +118,21 @@ The four verbs (propose / apply / verify / archive) run as a **shell**: gates fi
 Three entry points, namespaced for cohesion:
 
 ```
-/valkyrja:prd    <anything, in natural language>
-/valkyrja:arch   <anything, in natural language>
-/valkyrja:spec   <anything, in natural language>
+/valk:prd    <anything, in natural language>
+/valk:arch   <anything, in natural language>
+/valk:spec   <anything, in natural language>
 ```
 
 They are deliberately thin — pure delegation with no routing logic of their own, so the intent-routing table inside each `SKILL.md` stays the single source of truth. Examples:
 
 ```
-/valkyrja:prd   let's talk about pausing the recording
+/valk:prd   let's talk about pausing the recording
    → routes to discuss
 
-/valkyrja:prd   ok, that's decided
+/valk:prd   ok, that's decided
    → routes to decide (privileged, requires handshake)
 
-/valkyrja:spec  can this change be archived?
+/valk:spec  can this change be archived?
    → routes to trace
 ```
 
@@ -152,12 +152,12 @@ This repo is a plugin marketplace (`.claude-plugin/`). Inside Claude Code:
 
 ```
 /plugin marketplace add n7tequila/valkyrja-forge
-/plugin install valkyrja
+/plugin install valk
 ```
 
 Versioning, upgrades (`/plugin marketplace update`), enable/disable, and uninstall all come
 from the official plugin mechanism. Under the plugin, skill names are namespaced
-(e.g. `valkyrja:valkyrja-spec`) and the slash commands are `/valkyrja:prd|arch|spec`.
+(e.g. `valk:valkyrja-spec`) and the slash commands are `/valk:prd|arch|spec`.
 
 #### Second plugin: `valk-tools`
 
@@ -248,7 +248,7 @@ valkyrja-forge/
 ├── README.md / README.zh-CN.md / NOTICE.md (pointer; the authoritative notices ship with the catalog)
 ├── CLAUDE.md                      # editing discipline for this repo (single-authority rule, pre-commit checks, sanitization gate)
 ├── .claude-plugin/                # plugin.json + marketplace.json (primary install path)
-├── commands/                      # slash commands (flat; the plugin name or the install dir provides the /valkyrja: namespace)
+├── commands/                      # slash commands (flat; the plugin name or the install dir provides the /valk: namespace)
 ├── docs/design/                   # design records & evolution logs for all three skills (D-series ruling ledger)
 ├── scripts/install-skills.sh      # fallback installer (offline / no-git; the plugin is the primary path)
 ├── tests/                         # trace.py regression fixtures (forge dev asset, not shipped with the skills)

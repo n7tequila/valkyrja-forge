@@ -104,7 +104,7 @@
   依据：剩余测试环节无法绕过 apply（未实现即归档＝让主 spec 说谎）；
   现在 apply 则三空缺各自现编、arch 建成后必返工。
   此顺序让 试点项目 成为三层（prd/spec/arch）在同一真实项目上的依次首验。
-- **D10 第三个 skill 正式确认 + 命名**：加 `valkyrja-arch`，命令 `/valkyrja:arch`。
+- **D10 第三个 skill 正式确认 + 命名**：加 `valkyrja-arch`，命令 `/valk:arch`。
   本项推翻了 valkyrja-spec RC 评审时「暂不加第三个 skill」的建议，理由是前提已变：
   当时反对的是纸面推演式的投机扩张；现在是证据驱动——真实端到端产出的 design.md
   钉着三个具体空缺，且内部项目已独立演化出其雏形（standards-backlog graduate 机制）。

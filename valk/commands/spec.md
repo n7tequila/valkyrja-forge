@@ -3,9 +3,9 @@ description: OpenSpec 开发治理层 —— 需求基线、change 划分、PRD�
 argument-hint: [想做什么，自然语言即可；留空则先复述基线与进度]
 ---
 
-# /valkyrja:spec
+# /valk:spec
 
-`valkyrja-spec` 技能的斜杠入口（plugin 安装形态下技能名为 `valkyrja:valkyrja-spec`）。
+`valkyrja-spec` 技能的斜杠入口（plugin 安装形态下技能名为 `valk:valkyrja-spec`）。
 
 ## Arguments
 

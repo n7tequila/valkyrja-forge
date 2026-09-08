@@ -4,6 +4,11 @@
 （`valkyrja-prd` / `valkyrja-arch` / `valkyrja-spec`）与一个确定性门禁脚本
 `trace.py`，安装到**别的**产品仓库里使用。本仓没有应用代码，也不消费自己的协议。
 
+**命名分三层，别混**：协议叫 **valkyrja**（本文档里单说「valkyrja」即指它）；
+承载它的 plugin 叫 **`valk`**（目录 `valk/`，命令 `/valk:prd|arch|spec`）；
+技能名仍是 **`valkyrja-prd/arch/spec`**（plugin 形态下即 `valk:valkyrja-spec`）。
+plugin 名短是为了敲命令，技能名长是为了在全局技能池里唯一——两者不必一致。
+
 本仓同时托管第二个**互相独立**的 plugin `valk-tools`（`valk-tools/`）——个人工作
 方式工具箱，跟人走不跟项目走。它与 valkyrja 协议**没有任何依赖关系**，只共享
 git 历史：各自独立版本、独立安装卸载。**下面的纪律除特别注明外只约束 valkyrja**；
@@ -13,9 +18,9 @@ valk-tools 的纪律见 `valk-tools/README.md`。
 
 **检查条目（V1–V6 系列）的增删改必须同时改三处**，缺一即漂移：
 
-- `valkyrja/skills/valkyrja-spec/tools/trace.py` —— 可执行判定（终审）
-- `valkyrja/skills/valkyrja-spec/references/trace-contract.md` —— 详版契约
-- `valkyrja/skills/valkyrja-spec/SKILL.md` —— 摘要表（只留组名与结论，不复述判定细节）
+- `valk/skills/valkyrja-spec/tools/trace.py` —— 可执行判定（终审）
+- `valk/skills/valkyrja-spec/references/trace-contract.md` —— 详版契约
+- `valk/skills/valkyrja-spec/SKILL.md` —— 摘要表（只留组名与结论，不复述判定细节）
 
 理由与事故史见 trace-contract.md 头部的同步提醒，**不要在本文件复述规则本身**。
 推广到全仓：一条规则需要在第二处被提到时，写指针、不写副本。
@@ -42,13 +47,14 @@ bash scripts/check-sanitization.sh    # D6 脱敏门禁，期望「0 命中」
 
 | 路径 | 是什么 | 编辑时注意 |
 |---|---|---|
-| `valkyrja/skills/**` | valkyrja 的唯一真相源，随安装分发 | `SKILL.md` 每次调用全量进上下文——控制篇幅，判定细则进 `references/` |
-| `valkyrja/skills/*/templates/` | 落盘格式的权威 | 模板注释与 SKILL.md 曾经互相矛盾（交接单预存 Authority 块），改任一侧都要对账另一侧 |
-| `valkyrja/commands/*.md` | 斜杠入口，薄转接 | 只转发意图，**不复述特权与确认规则**——那是 SKILL.md 的唯一权威 |
+| `valk/skills/**` | valkyrja 的唯一真相源，随安装分发 | `SKILL.md` 每次调用全量进上下文——控制篇幅，判定细则进 `references/` |
+| `valk/skills/*/templates/` | 落盘格式的权威 | 模板注释与 SKILL.md 曾经互相矛盾（交接单预存 Authority 块），改任一侧都要对账另一侧 |
+| `valk/commands/*.md` | 斜杠入口，薄转接 | 只转发意图，**不复述特权与确认规则**——那是 SKILL.md 的唯一权威 |
 | `tests/` | trace.py 回归夹具 | **不随技能分发**（forge 开发资产）；新增检查分支就补场景 |
 | `docs/design/` | 设计定稿与演进记录 | 每次协议修订追加一行演进记录，注明来源：纸面推演 / 外部评审 / 真实运行 |
-| `valk-tools/` | 第二个 plugin，与协议无关 | 自成一体：改它**只抬它自己的版本**，不动 valkyrja 的；不受三载体同源纪律约束 |
-| `.claude-plugin/` | marketplace 清单（列两个 plugin）与 valkyrja 的 plugin 清单 | **两个 plugin 各有一对 `version`**（`plugin.json` 与 marketplace 中对应条目），**每对内部必须一致，两对之间互不相干**；改了谁的内容就抬谁的版本，否则 `/plugin update` 认不出新版 |
+| `valk/` | valkyrja 协议的 plugin 根 | 目录名 = plugin 名；`plugin.json` 在其 `.claude-plugin/` 下 |
+| `valk-tools/` | 第二个 plugin，与协议无关 | 自成一体：改它**只抬它自己的版本**，不动 `valk` 的；不受三载体同源纪律约束 |
+| `.claude-plugin/` | **只剩 marketplace 清单**（列 `valk` 与 `valk-tools` 两个 plugin）；各自的 `plugin.json` 已下沉到 `valk/` 与 `valk-tools/` | **两个 plugin 各有一对 `version`**（`plugin.json` 与 marketplace 中对应条目），**每对内部必须一致，两对之间互不相干**；改了谁的内容就抬谁的版本，否则 `/plugin update` 认不出新版 |
 
 ## 本地验证
 

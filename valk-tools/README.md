@@ -40,7 +40,7 @@ plugin 形态下技能名带前缀，如 `valk-tools:context-handoff`。
   复述即产生第二个可独立演化的副本，必然漂移。要改规则，改 SKILL.md 那一处。
 - 改了本目录内容，**只抬本 plugin 的版本**（`valk-tools/.claude-plugin/plugin.json`
   与仓根 `marketplace.json` 里 `valk-tools` 条目，两处必须一致），
-  **不要动 valkyrja 的版本**——两个 plugin 的版本互不相干。
+  **不要动 `valk` 的版本**——两个 plugin 的版本互不相干。
 
 ## 收录门槛
 

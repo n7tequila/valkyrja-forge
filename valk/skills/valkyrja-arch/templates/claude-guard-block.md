@@ -18,11 +18,11 @@
 本仓的需求与技术治理由 valkyrja 技能承担。以下路径的写入**一律经技能或 OpenSpec CLI**，
 不要直接手改：
 
-- `docs/product/initiatives/**` —— 需求讨论、决策与 PRD，入口 `/valkyrja:prd`。
+- `docs/product/initiatives/**` —— 需求讨论、决策与 PRD，入口 `/valk:prd`。
   其中 `prd/releases/**` 是**已发布 PRD，不可变**：要改一律发新版本，绝不编辑既有版本。
-- `docs/architecture/**` —— 技术选型（ADEC）、编码约定副本、共享接口契约，入口 `/valkyrja:arch`。
+- `docs/architecture/**` —— 技术选型（ADEC）、编码约定副本、共享接口契约，入口 `/valk:arch`。
 - `docs/product/baselines/**` 与 `openspec/**` —— 需求基线、change 与主 spec，
-  入口 `/valkyrja:spec`；主 spec 只经 `openspec archive` 合并。
+  入口 `/valk:spec`；主 spec 只经 `openspec archive` 合并。
 
 需求以**已发布 PRD 为唯一权威**：不要凭记忆复述需求，也不要在下游就地改写或收窄它；
 发现缺口或矛盾时停下来问人。

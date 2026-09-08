@@ -100,7 +100,7 @@ docs/product/initiatives/<slug>/
 ADEC。产物落 `docs/architecture/`（决策 / 已采纳约定副本 / 版本化共享契约 /
 公共对象清单 / 规则候选 backlog）。
 
-自带**约定目录（catalog）**：`valkyrja/skills/valkyrja-arch/references/conventions/`，
+自带**约定目录（catalog）**：`valk/skills/valkyrja-arch/references/conventions/`，
 按 concern × stack 两轴组织，条目带出处与许可证四字段；`adopt` 时以自包含副本
 落入项目并铸 ADEC 记录偏离。条目以真实项目撞上的缺口驱动，事故背书的规则优先。
 
@@ -133,22 +133,22 @@ ADEC。产物落 `docs/architecture/`（决策 / 已采纳约定副本 / 版本�
 三个入口，用命名空间做内聚：
 
 ```
-/valkyrja:prd    <想做什么，自然语言即可>
-/valkyrja:arch   <想做什么，自然语言即可>
-/valkyrja:spec   <想做什么，自然语言即可>
+/valk:prd    <想做什么，自然语言即可>
+/valk:arch   <想做什么，自然语言即可>
+/valk:spec   <想做什么，自然语言即可>
 ```
 
 它们刻意保持很薄——纯委托、自身不含任何路由逻辑，
 好让各 `SKILL.md` 里的意图路由表始终是唯一的路由权威。例如：
 
 ```
-/valkyrja:prd   我们聊聊录像暂停
+/valk:prd   我们聊聊录像暂停
    → 路由到 discuss
 
-/valkyrja:prd   这个就这么定了
+/valk:prd   这个就这么定了
    → 路由到 decide（特权，需确认）
 
-/valkyrja:spec  这个 change 能归档吗
+/valk:spec  这个 change 能归档吗
    → 路由到 trace
 ```
 
@@ -167,12 +167,12 @@ ADEC。产物落 `docs/architecture/`（决策 / 已采纳约定副本 / 版本�
 
 ```
 /plugin marketplace add n7tequila/valkyrja-forge
-/plugin install valkyrja
+/plugin install valk
 ```
 
 版本、升级（`/plugin marketplace update`）、启停与卸载由官方 plugin 机制
-原生提供。plugin 形态下技能名带命名空间（如 `valkyrja:valkyrja-spec`），
-斜杠命令为 `/valkyrja:prd|arch|spec`。
+原生提供。plugin 形态下技能名带命名空间（如 `valk:valkyrja-spec`），
+斜杠命令为 `/valk:prd|arch|spec`。
 
 #### 第二个 plugin：`valk-tools`
 
@@ -267,7 +267,7 @@ valkyrja-forge/
 ├── README.md / README.zh-CN.md / NOTICE.md（指针；权威声明随 catalog 分发）
 ├── CLAUDE.md                      # 本仓自身的编辑纪律（三载体同源、提交前必跑、脱敏门禁）
 ├── .claude-plugin/                # plugin.json + marketplace.json（plugin 主安装路径）
-├── commands/                      # 斜杠命令（平铺；plugin 名或安装目录提供 /valkyrja: 命名空间）
+├── commands/                      # 斜杠命令（平铺；plugin 名或安装目录提供 /valk: 命名空间）
 ├── docs/design/                   # 三技能设计定稿与演进记录（含 D 系列裁决台账）
 ├── scripts/install-skills.sh      # 兜底安装脚本（离线/无 git；主路径是 plugin）
 ├── scripts/check-sanitization.sh # D6 脱敏机检门禁（词表私有，建议接 pre-push/CI）

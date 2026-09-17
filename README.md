@@ -162,8 +162,8 @@ from the official plugin mechanism. Under the plugin, skill names are namespaced
 #### Second plugin: `valk-tools`
 
 This marketplace hosts **two independent plugins**. `valk-tools` is a personal-workflow
-toolbox — context handoff and cross-forge PR drafting — that travels with the person
-rather than with the project:
+toolbox — context handoff, cross-forge PR drafting and a review-only refactoring gate —
+that travels with the person rather than with the project:
 
 ```
 /plugin install valk-tools
@@ -172,7 +172,8 @@ rather than with the project:
 It carries its own version and installs, upgrades and uninstalls separately; it shares
 this repo's git history with `valk` but not its release cadence, and the two have no
 dependency on each other. It ships **skills only, no command layer** — invoke them
-directly as `/valk-tools:context-handoff` and `/valk-tools:merge-pr`.
+directly as `/valk-tools:context-handoff`, `/valk-tools:merge-pr` and
+`/valk-tools:refactor-review`.
 See [valk-tools/README.md](valk-tools/README.md).
 
 The fallback installer below covers the **`valk` skills only** — `valk-tools` is

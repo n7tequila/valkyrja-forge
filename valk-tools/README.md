@@ -1,6 +1,6 @@
 # valk-tools
 
-个人工作方式工具箱。两条**跟人走**的技能——换哪个项目都一样用，与项目领域无关。
+个人工作方式工具箱。三条**跟人走**的技能——换哪个项目都一样用，与项目领域无关。
 
 本目录是 valkyrja-forge 仓里的**第二个 plugin**，与同仓承载 valkyrja 协议的
 `valk` plugin **没有任何依赖关系**，只共享 git 历史：
@@ -11,12 +11,13 @@
 | 装到哪 | 消费产品仓，项目级 | 跟着人走，用户级 |
 | 版本 | 独立 | 独立 |
 
-## 两条技能
+## 三条技能
 
 | 技能 | 做什么 | 调起方式（技能自身，无命令层） |
 |---|---|---|
 | `context-handoff` | 上下文将满时固化现场、清空、再无损接上；也用于新会话恢复现场 | `/valk-tools:context-handoff` |
 | `merge-pr` | 开 PR/MR，GitHub 走 gh CLI，自建 forge 降级为标题正文 + compare URL | `/valk-tools:merge-pr` |
+| `refactor-review` | 重构审查，只审不改：按局部→结构→模式三级阶梯判断哪里值得重构、哪里不该动，结论含 KEEP / REJECT / TESTS_FIRST / REWRITE，按级别分层确认 | `/valk-tools:refactor-review` |
 
 plugin 形态下技能名带前缀，如 `valk-tools:context-handoff`。
 

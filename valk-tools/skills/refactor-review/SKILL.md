@@ -1,0 +1,121 @@
+---
+name: refactor-review
+description: 重构审查，只审不改。扫描指定范围的代码与 git 历史，按「局部重构、结构抽象、设计模式」三级阶梯判断哪里值得重构、哪里不该动，每条给出 REFACTOR / KEEP / REJECT / TESTS_FIRST / REWRITE 之一，并按级别分层确认。当用户说「看看哪里值得重构」「这几个模块做完了，该重构了吗」「这个 switch 要不要改成 Strategy」「要不要抽接口 / 抽象类」「是不是过度设计了」「评估一下这段代码的结构」时使用。不执行重构、不清死代码、不简化刚改完的 diff，那些交给别的工具。
+---
+
+# 重构审查
+
+这个技能是**校验层**，不是生成层。微软 2014 年对 328 名工程师的调查里有一句话可以当它的定位：
+需要的是校验重构正确性的工具，不是更好的重构工具。它回答四个问题：这里有没有问题、
+值不值得动、动到哪一级为止、怎么动才不出 bug。它同样负责说「不动」：过度抽象和抽象不足
+一样是它的对象。
+
+## 硬边界
+
+- **不改代码，不提交，不落盘。** 产出是对话里的报告与确认后的执行清单；用户指定路径才写文件。
+- **不全仓扫描**，除非用户明确要求。默认范围见「范围」。
+- **不依赖仓库布局**，不读任何治理工作区；任何仓库都能用。
+- **不夹带。** 每条只写一个手法；发现的疑似 bug 列在附录，不修。
+
+## 范围
+
+`args` 可选：一个路径、包名、分支名或 PR 号。省略时取当前分支相对主分支改过的文件。
+用户说「全仓」才扫全仓。范围过大时先按 git 改动频次排出前十个热点再审，并说明这么做了。
+
+## 四步
+
+### 一 · 定范围
+
+列出待审文件；确认测试套件位置与运行方式；**跑一遍基线**。基线红的先报告，不开工。
+
+### 二 · 取证
+
+对每个热点，按 [references/evidence.md](references/evidence.md) 取三类证据：
+git 历史（近 N 月改动次数、上次「新增一种类型」的提交波及几个文件）、测试现状
+（有没有测试、覆盖不覆盖将被移动的分支）、规模数字（方法行数、类方法数，对照阈值）。
+**没有证据就写「推测」**，不许用「经常」「以后可能」。
+
+### 三 · 过门
+
+对每个候选：
+
+1. 定级：局部 / 结构 / 模式，见 [references/ladder.md](references/ladder.md)。
+2. 过七问，见 [references/abstraction-gate.md](references/abstraction-gate.md)。模式级还要过
+   [references/pattern-directions.md](references/pattern-directions.md) 的「先试更简单方案」。
+3. 写步骤：每步一个有名字的手法、步间全绿。写不出这样的步骤，结论不是 REFACTOR。
+4. 定风险：先按手法类型给先验，再对照 [references/risk-java-spring.md](references/risk-java-spring.md)
+   逐条查机制（Java / Spring 项目）。
+5. 定兜底档位与时机，见 evidence.md。
+
+### 四 · 出报告、分层确认
+
+按 [references/description-protocol.md](references/description-protocol.md) 的固定块出示，
+按热点分组，每组先出最高级的那条。确认方式见下表。确认完的清单就是最终产出。
+
+## 结论枚举
+
+| 结论 | 含义 | 需要确认 |
+|---|---|---|
+| REFACTOR | 值得做，且能拆成步间全绿的小步 | 是，按级别 |
+| KEEP | 有味道但不该动：无变化压力 / 当作 API 永不改 / 改了不减复杂度 | 否，可推翻 |
+| REJECT | 有人（含 AI 自己）想加的抽象或模式不该加 | 否，可推翻 |
+| TESTS_FIRST | 值得做，但兜底不够，先补测试 | 否，补完再评 |
+| REWRITE | 行为必须变，或拆不成保行为的小步；这不是重构，另走流程 | 单独裁决 |
+
+REFACTOR 条目带时机：**First**（下一个碰这段的需求之前）/ **After**（做完手头需求顺手）/
+**Later**（排期集中做）。KEEP 即 Never。
+
+## 分层确认
+
+| 级 | 内容 | 怎么确认 |
+|---|---|---|
+| Level 3 模式 | 引入或移除设计模式 | 逐条；必须同时出示被否掉的更简单方案；等裁决再出下一条 |
+| Level 2 结构 | 改公开形状：抽类、抽接口、搬职责、改层级 | 逐条，按依赖序 |
+| Level 1 局部 | 抽函数、改名、卫语句、解释变量、死代码 | 整批一个清单，一次回复确认或排除 |
+| KEEP / REJECT / TESTS_FIRST | 不改代码 | 不确认，但必须可见，一句话可推翻 |
+
+**确认自上而下，执行自下而上。** 先裁形状，因为它决定下面的小步还剩几条；执行时先走小步。
+一次审查里 Level 3 候选超过 5 条，说明门禁在漏，直接报告「门禁没拦住」，不逐条问。
+
+唯一的特权动作是把报告写进文件：识别意图后先回显路径与内容，等用户明确「确认」再写；
+疑问语气视为倾向，不写。
+
+## 十二条原则
+
+出示任何一条之前逐条自检，缺一不出示。
+
+1. **问题先于方案，方案先于模式名。** 标题不许出现模式名。
+2. **恶名词必须带实例。** 「耦合高」「违反开闭」「不优雅」单独出现视为没写。
+3. **「为什么」只有两种合法来源**：现在的痛，或已知的下一个需求。推测不是理由。
+   （Fowler 预备性重构；Rule of Three，Don Roberts）
+4. **压力要么有 git 数字，要么明写推测。**
+5. **重构不改可观察行为。** 要变就拆出去，另开条目。（Fowler 的定义；Beck 的两顶帽子、结构与行为分提交）
+6. **每步一个有名字的手法，步间全绿，一步一个 `refactor:` 提交。红了回退，不带红前进。**
+7. **没有兜住行为的测试不开工。** 有测试不等于覆盖了要动的分支；高风险手法要突变测试。
+   （Feathers 特征测试；Just 等 2014）
+8. **影响面按名字列。** 「影响较小」视为没写。
+9. **风险说机制不说等级。** 先给类型先验，再说具体机制。（Bavota 等 2012；Di Penta 等 2020）
+10. **最后一行是问题，写明可选答案。一次确认只裁一个决定。**
+11. **不夹带。** 一条只做它写的手法，不加功能、不顺手修、不动范围外文件；改名全仓一致，
+    字符串引用也算。（Bagheri 与 Hegedűs 2022；Refactoring Runaway 2026）
+12. **机械手法交给 IDE，不手写。** 改名、抽函数、搬移用 IDE 引擎执行；这也是 Level 1
+    能整批确认的根据。（EM-Assist 2024；provable-refactorings）
+
+## 输出纪律
+
+读者设定为**没读过本技能的工程师**。每条固定块第一行是现象级人话，读完第一行就能停；
+术语（seam、特征测试、突变测试、Repeated Switches 等）在一次报告里首次出现给一句释义；
+Level 1 用单行形式。报告默认打印在对话里。
+
+## 参考文件
+
+| 文件 | 管什么 | 何时读 |
+|---|---|---|
+| [references/description-protocol.md](references/description-protocol.md) | 固定块、话术、确认问句、自检 | 出报告前必读 |
+| [references/ladder.md](references/ladder.md) | 三级阶梯、允许手法、风险先验、确认与执行顺序 | 定级时 |
+| [references/abstraction-gate.md](references/abstraction-gate.md) | 七问、接口/抽象类/组合选型、去抽象检查 | 每条候选 |
+| [references/smells.md](references/smells.md) | 坏味道清单与方向 | 取证后定名 |
+| [references/pattern-directions.md](references/pattern-directions.md) | 从信号到模式的路径、先试的更简单方案 | Level 3 候选 |
+| [references/safe-change.md](references/safe-change.md) | 安全改动方法：三法则、特征测试、Parallel Change、Mikado、REWRITE 路径 | 写步骤与 REWRITE |
+| [references/risk-java-spring.md](references/risk-java-spring.md) | Java / Spring 静默失效机制 | 写风险行 |
+| [references/evidence.md](references/evidence.md) | 压力、规模、兜底三档、影响、时机的取证口径 | 取证时 |

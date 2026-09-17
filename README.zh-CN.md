@@ -177,7 +177,7 @@ ADEC。产物落 `docs/architecture/`（决策 / 已采纳约定副本 / 版本�
 #### 第二个 plugin：`valk-tools`
 
 本 marketplace 托管**两个互相独立的 plugin**。`valk-tools` 是个人工作方式工具箱——
-上下文交接、跨 forge 开 PR——跟人走，不跟项目走：
+上下文交接、跨 forge 开 PR、只审不改的重构审查——跟人走，不跟项目走：
 
 ```
 /plugin install valk-tools
@@ -185,7 +185,7 @@ ADEC。产物落 `docs/architecture/`（决策 / 已采纳约定副本 / 版本�
 
 它有自己的版本，独立安装、升级与卸载；与 `valk` 只共享本仓的 git 历史，
 不共享发版节奏，两者互无依赖。它**只带技能、不设命令层**——直接以
-`/valk-tools:context-handoff`、`/valk-tools:merge-pr` 调起。
+`/valk-tools:context-handoff`、`/valk-tools:merge-pr`、`/valk-tools:refactor-review` 调起。
 详见 [valk-tools/README.md](valk-tools/README.md)。
 
 下面的兜底安装脚本**只覆盖 `valk` 的技能**——`valk-tools` 按设计只走 plugin。

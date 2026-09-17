@@ -16,7 +16,7 @@
       "name": "valk-tools",
       "source": "./valk-tools",
       "description": "个人工作方式工具箱：context-handoff（上下文交接）、merge-pr（跨 forge 开 PR）、refactor-review（重构审查，只审不改），以 /valk-tools:<技能名> 调起。跟人走，与 valkyrja 无依赖。",
-      "version": "0.2.0"
+      "version": "0.2.1"
     }
   ]
 }

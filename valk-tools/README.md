@@ -17,7 +17,7 @@
 |---|---|---|
 | `context-handoff` | 上下文将满时固化现场、清空、再无损接上；也用于新会话恢复现场 | `/valk-tools:context-handoff` |
 | `merge-pr` | 开 PR/MR，GitHub 走 gh CLI，自建 forge 降级为标题正文 + compare URL | `/valk-tools:merge-pr` |
-| `refactor-review` | 重构审查，只审不改：按局部→结构→模式三级阶梯判断哪里值得重构、哪里不该动，结论含 KEEP / REJECT / TESTS_FIRST / REWRITE，按级别分层确认 | `/valk-tools:refactor-review` |
+| `refactor-review` | 重构审查，只审不改：按局部→结构→模式三级阶梯判断哪里值得重构、哪里不该动，结论含 KEEP / REJECT / TESTS_FIRST / REWRITE，按级别分层确认；审完留重构台账，下次先对账 | `/valk-tools:refactor-review` |
 
 plugin 形态下技能名带前缀，如 `valk-tools:context-handoff`。
 

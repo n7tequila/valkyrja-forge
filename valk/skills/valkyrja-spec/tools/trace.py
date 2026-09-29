@@ -391,6 +391,18 @@ for f in specs:
     # 与假放行（basename 碰撞时反查到错误主 spec）。
     cap = os.path.relpath(os.path.dirname(f), os.path.join(CHDIR, 'specs')).replace(os.sep, '/')
     mains = main_spec_sources(cap)
+    # 同一 delta 内 RENAMED 与 MODIFIED 并用时，OpenSpec 按 RENAMED → MODIFIED 合并且要求 MODIFIED 写新标题，
+    # 主 spec 里只有旧标题——MODIFIED 反查须经本文件的 FROM/TO 配对把新标题映射回旧标题，否则合法改名必报「无同名」。
+    renamed_from = {}
+    pending_from = None
+    for ln in L:
+        fm = re.match(r'^-\s*FROM:\s*`?#*\s*Requirement:\s*(.+?)`?\s*$', ln)
+        tm = re.match(r'^-\s*TO:\s*`?#*\s*Requirement:\s*(.+?)`?\s*$', ln)
+        if fm:
+            pending_from = fm.group(1).strip()
+        elif tm and pending_from is not None:
+            renamed_from[tm.group(1).strip()] = pending_from
+            pending_from = None
     for m41 in re.finditer(r'^### Requirement:(.*)$\n([\s\S]*?)(?=^#{2,3}\s|\Z)', tx, re.M):
         if len(re.findall(r'^Sources:', m41.group(2), re.M)) > 1:
             multi41.append(f'{cap}: {m41.group(1).strip()[:32]}')
@@ -436,6 +448,8 @@ for f in specs:
                 badsrc.append(f'{cap}: {nm[:36]}'); continue
             if op == 'MODIFIED':
                 msrc = mains.get(nm)
+                if msrc is None and nm in renamed_from:
+                    msrc = mains.get(renamed_from[nm])
                 if msrc is None:
                     v43.append(f'{cap} MODIFIED「{nm[:30]}」主 spec 无同名 Requirement')
                     addressed |= ids

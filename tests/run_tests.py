@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """trace.py 回归夹具跑测器。
 
-19 个场景（末位 1 个条件执行），覆盖范围（如实声明，勿夸大）：
+22 个场景（末位 1 个条件执行），覆盖范围（如实声明，勿夸大）：
   契约二/三主干全分支（ADDED/MODIFIED 历史豁免/REMOVED 两向/RENAMED/蔓延/漏做）、
+  RENAMED 与 MODIFIED 同刀（新标题经 FROM/TO 反查、改名后删既有 Sources、无 RENAMED 的幽灵 MODIFIED）、
   V1.3 DOMAIN 定位与同域双 active、V3.5 计划外分层（本 change ERROR/探索备案
   消提醒/前缀名不蹭裁决）与杂散文件过滤、V4.1 块内多 Sources、V4.5 例外裁决两分支、
   V4.8 全角冒号幽灵依据、嵌套 capability path、TOOL ERROR 退出码 2
@@ -32,6 +33,11 @@ CASES = [
     ('repo', 'case-removed-dep', [], 0, ['错误 0', 'REMOVED 触达 FRID 全部 ⊆ deprecated'], []),
     ('repo', 'case-removed-active', [], 1, ['移除仍 active'], []),
     ('repo', 'case-renamed', [], 0, ['错误 0', 'RENAMED 触达 FRID 全部 ∈ historical'], []),
+    # RENAMED + MODIFIED 同刀：OpenSpec 要求 MODIFIED 写新标题，V4.3 须经 FROM/TO 反查旧标题；
+    # drop 钉「改名后删既有 Sources 仍拦」，ghost 钉「无 RENAMED 的新标题仍报无同名」（修复不得放宽）
+    ('repo', 'case-renamed-mod', [], 0, ['错误 0', '分场景判定全部通过'], ['主 spec 无同名']),
+    ('repo', 'case-renamed-mod-drop', [], 1, ['删除了既有 Sources'], ['主 spec 无同名']),
+    ('repo', 'case-mod-ghost', [], 1, ['主 spec 无同名'], []),
     ('repo', 'case-creep', [], 0, ['范围蔓延', '已有裁决', '警告 1'], []),
     ('repo', 'case-creep-raw', [], 1, ['范围蔓延且未见例外记录裁决'], []),
     ('repo', 'case-missing', [], 1, ['漏做'], []),

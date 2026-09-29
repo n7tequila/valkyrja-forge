@@ -78,7 +78,8 @@ ADDED      addressed = delta 该 Requirement 的 Sources
 
 MODIFIED   historical_exempt = main_sources − Covered-FRIDs
            addressed         = delta_sources − historical_exempt
-           （main_sources = 主 spec 中同名 Requirement 的 Sources）
+           （main_sources = 主 spec 中同名 Requirement 的 Sources；同一 delta 内有 RENAMED 以该名为 TO 时，
+            取其 FROM 所指 Requirement——OpenSpec 按 RENAMED → MODIFIED 合并，且要求 MODIFIED 写新标题）
 
 REMOVED    addressed = 主 spec 中被移除 Requirement 的 Sources
 
@@ -169,6 +170,8 @@ RENAMED    addressed = 主 spec 中 FROM 所指 Requirement 的 Sources
   - ADDED 的全部 Sources ∈ `active` ∩ `included` → 否则 ERROR
   - MODIFIED 沿袭的旧 ID ∈ `historical` 即可（允许 DEPRECATED）→ 否则 ERROR
   - MODIFIED 本次新增的 ID ∈ `active` ∩ `included` → 否则 ERROR
+  - MODIFIED 的「主 spec 对应 Requirement」按同名查找；同刀 RENAMED 时经 FROM/TO 配对取 FROM 所指者，
+    两者都查不到才报「主 spec 无同名」ERROR（改名后仍按旧条目核「删除了既有 Sources」）
 - V4.4a **REMOVED**：被移除 Requirement 所触达的 FRID（从主 spec 同名 Requirement 的
   Sources 反查）⊆ `deprecated(当前release)` → 否则 ERROR（不得移除仍 active 的需求）
 - V4.4b **RENAMED**：FROM 所指 Requirement 触达的 FRID ⊆ `historical` 即可，

@@ -48,6 +48,12 @@ date: 2026-01-02
 覆盖：REQ-T-001
 ### case-v41-dup
 覆盖：REQ-T-001
+### case-renamed-mod
+覆盖：REQ-T-003
+### case-renamed-mod-drop
+覆盖：REQ-T-003
+### case-mod-ghost
+覆盖：REQ-T-001
 
 ## 例外记录
 

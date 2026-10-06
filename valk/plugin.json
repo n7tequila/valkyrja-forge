@@ -1,7 +1,7 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "valk",
-  "version": "0.12.2",
+  "version": "0.12.3",
   "description": "需求治理与 AI 开发工作流：产品需求、技术契约、OpenSpec 编排与确定性追溯门禁。支持 Codex 与 Claude Code，人保留决策权。",
   "author": {"name": "n7tequila", "url": "https://github.com/n7tequila"},
   "repository": "https://github.com/n7tequila/valkyrja-forge",

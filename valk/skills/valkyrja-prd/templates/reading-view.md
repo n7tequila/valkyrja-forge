@@ -3,7 +3,7 @@
      选底、决策状态与输出路径安全以 SKILL.md 的 view 动作为准。
 
      引用纪律：
-     - 逐字照搬，一个字不改（含数字、阈值、单位、标点）：需求条目正文（标题到 Sources: 之前）、
+     - 逐字照搬，一个字不改（含数字、阈值、单位、标点；全角标点保持全角，不写成半角）：需求条目正文（标题到 Sources: 之前）、
        DEC 的 Decision 段、Open Questions、Out of Scope、Deprecated、PRD 阅读区、RN 正文
      - 可以摘要，标「摘要」并附出处 ID：DISC 讨论过程、TM、版本间变化、一页概览、DEC 的 Context
      - 不收全文，只给相对路径：others/ 下的外部原件

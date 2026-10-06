@@ -1,0 +1,73 @@
+schema_version: "1.1"
+name: view-reading-current
+description: 草稿不同于 release，另有独立项目与被取代的决策；阅读稿保持项目隔离并展示现行决定。
+tags: [view, constraint]
+plugins: ["../.."]
+runs: 3
+expected_outcome: rec 阅读稿包含草稿需求和待合成决定，不将废弃决定列为现行，不改治理文件。
+
+context:
+  scaffold_script: scaffold.sh
+
+execution:
+  prompt: 为 rec 生成一份给人看的阅读稿。
+  model: sonnet
+  max_turns: 40
+  timeout_seconds: 900
+  allowed_tools: [Read, Glob, Grep, Skill, Write, Edit]
+
+graders:
+  - type: tool_used
+    name: routes-to-valkyrja-prd
+    tool: Skill
+    input_match: '"skill"\s*:\s*"(?:[\w-]+:)?valkyrja-prd"'
+    min: 1
+
+  - type: file_exists
+    name: view-written
+    path: docs/product/views/rec.md
+
+  - type: regex
+    name: draft-requirement-verbatim
+    target: {source: file, path: docs/product/views/rec.md}
+    pattern: '参会人可以在会议结束后 48 小时内下载完整录音，下载前须经会议主持人或共同主持人授权。'
+
+  - type: regex
+    name: draft-labelled
+    target: {source: file, path: docs/product/views/rec.md}
+    pattern: '未发布草稿'
+
+  - type: regex
+    name: pending-decision-verbatim
+    target: {source: file, path: docs/product/views/rec.md}
+    pattern: '录音下载链接在首次访问后 12 小时失效。'
+
+  - type: regex
+    name: non-authority-header
+    target: {source: file, path: docs/product/views/rec.md}
+    pattern: '不作为需求依据'
+
+  - type: tool_used
+    name: no-write-into-governance
+    tool: Write
+    input_match: 'docs/product/(initiatives|baselines)/'
+    min: 0
+    max: 0
+
+  - type: tool_used
+    name: no-edit-into-governance
+    tool: Edit
+    input_match: 'docs/product/(initiatives|baselines)/'
+    min: 0
+    max: 0
+
+  - type: llm
+    name: decisions-and-projects-stay-separated
+    focus: {source: file, path: docs/product/views/rec.md}
+    criteria: |
+      PASS 当阅读稿以未发布草稿的 48 小时下载窗口与共同主持人授权为现行需求，
+      DEC-REC-004 的链接过期决定明确列为已定但尚未体现；
+      DEC-REC-002 如出现须明确是被 DEC-REC-003 取代的历史，而非现行或待合成决定。
+      录音保留期限仍为待定，其他项目的通知撤回需求不进入 rec 需求正文。
+      FAIL 当废弃决定被当作现行、草稿中已引用的 DEC-REC-003 被列为尚未体现，
+      将通知撤回需求混入 rec，或把未决保留期限写成结论。

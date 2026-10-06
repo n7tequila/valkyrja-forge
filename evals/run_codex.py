@@ -29,10 +29,27 @@ CASES = {
     'routing-prd-declines-doc-request': ('valkyrja-prd', False, 'no-governance'),
     'constraint-arch-question-tone': ('valkyrja-arch', True, 'no-adec'),
     'view-reading-verbatim': ('valkyrja-prd', True, 'view-only'),
+    'view-reading-current': ('valkyrja-prd', True, 'view-only'),
 }
 GOVERNANCE_ROOTS = ('docs/product/', 'docs/architecture/', 'openspec/')
 VIEW_ROOT = 'docs/product/views/'
 REQUIREMENT = re.compile(r'^## (?:REQ|BR|SEC|NFR)-')
+# Fixture-specific expected artifacts, not another implementation of view's selection rules.
+# Keep these explicit: an output header must not get to choose what its own grader checks.
+VIEW_EXPECTATIONS = {
+    'view-reading-verbatim': {
+        'initiative': 'docs/product/initiatives/rec',
+        'base': 'prd/releases/v1.0.md',
+        'unreflected': ('DEC-REC-002',),
+        'output': 'docs/product/views/rec.md',
+    },
+    'view-reading-current': {
+        'initiative': 'docs/product/initiatives/rec',
+        'base': 'prd/current.md',
+        'unreflected': ('DEC-REC-004',),
+        'output': 'docs/product/views/rec.md',
+    },
+}
 
 
 def read_prompt(case):
@@ -65,79 +82,59 @@ def loaded_skills(events):
     return sorted(loaded)
 
 
-def release_requirement_lines(workspace):
-    """Requirement statement lines of every released PRD, which a reading view must quote verbatim."""
+def requirement_lines(text):
+    """Requirement statement lines from the fixture's selected PRD only."""
     lines = []
-    for release in sorted(workspace.glob('docs/product/initiatives/*/prd/releases/*.md')):
-        inside = False
-        for line in release.read_text().splitlines():
-            if line.startswith('## '):
-                inside = bool(REQUIREMENT.match(line))
-            elif inside and line.startswith('Sources:'):
-                inside = False
-            elif inside and line.strip():
-                lines.append(line.strip())
+    inside = False
+    for line in text.splitlines():
+        if line.startswith('## '):
+            inside = bool(REQUIREMENT.match(line))
+        elif inside and line.startswith('Sources:'):
+            inside = False
+        elif inside and line.strip():
+            lines.append(line.strip())
     return lines
 
 
-def frontmatter(text):
-    match = re.match(r'\A---\n(.*?)\n---\n', text, re.S)
-    return match.group(1) if match else ''
-
-
-def field(block, name):
-    match = re.search(r'(?m)^' + name + r':[ \t]*(\S+)', block)
-    return match.group(1) if match else None
-
-
-def decisions(workspace):
-    """Accepted DECs: id -> (round, frid-impact none?, Decision paragraph lines)."""
-    found = {}
-    for path in workspace.glob('docs/product/initiatives/*/decisions/DEC-*.md'):
-        text = path.read_text()
-        block = frontmatter(text)
-        if field(block, 'status') != 'accepted':
-            continue
-        section = re.search(r'(?ms)^## Decision\n(.*?)(?=^## |\Z)', text)
-        lines = [line.strip() for line in section.group(1).splitlines() if line.strip()] if section else []
-        found[field(block, 'id') or path.stem] = (int(field(block, 'round') or 0),
-                                                 bool(re.search(r'(?m)^frid-impact: none\s*$', block)), lines)
-    return found
-
-
-def released_context(workspace):
-    """Highest released round and every DEC cited by a released PRD."""
-    top, cited = 0, set()
-    for release in workspace.glob('docs/product/initiatives/*/prd/releases/*.md'):
-        text = release.read_text()
-        top = max(top, int(field(frontmatter(text), 'round') or 0))
-        cited.update(re.findall(r'(?m)^- (DEC-[A-Z0-9_]+-\d{3})\b', text))
-    return top, cited
-
-
-def view_failures(workspace, changed):
-    views = [path for path in changed if path.startswith(VIEW_ROOT) and path.endswith('.md')]
-    if not views:
-        return ['no reading view was written under ' + VIEW_ROOT]
+def view_failures(workspace, changed, expectation):
+    if expectation is None:
+        return ['reading view evaluation lacks explicit fixture expectations']
+    output = expectation['output']
+    if output not in changed or not (workspace / output).is_file():
+        return ['no reading view was written at ' + output]
     failures = []
-    if any(not path.startswith(VIEW_ROOT) for path in changed):
-        failures.append('reading view changed files outside ' + VIEW_ROOT)
-    text = '\n'.join((workspace / path).read_text() for path in views if (workspace / path).is_file())
+    if any(path != output for path in changed):
+        failures.append('reading view changed files outside its expected output')
+    text = (workspace / output).read_text()
     if '不作为需求依据' not in text:
         failures.append('reading view lacks the non-authority header')
-    if any(line not in text for line in release_requirement_lines(workspace)):
-        failures.append('reading view did not quote released requirement text verbatim')
-    top, cited = released_context(workspace)
-    accepted = decisions(workspace)
-    if any(line not in text for dec in cited if dec in accepted for line in accepted[dec][2]):
-        failures.append('reading view did not quote a cited Decision paragraph verbatim')
-    unreflected = [dec for dec, (round_, exempt, _) in accepted.items() if round_ > top and not exempt]
-    if any(dec not in text for dec in unreflected):
-        failures.append('reading view omitted a decision made after the latest release')
+    initiative = workspace / expectation['initiative']
+    base = expectation['base']
+    base_text = ''
+    if base is not None:
+        source = initiative / base
+        if not source.is_file():
+            return failures + ['reading view fixture base is missing: ' + base]
+        base_text = source.read_text()
+        if any(line not in text for line in requirement_lines(base_text)):
+            failures.append('reading view did not quote selected requirement text verbatim')
+    cited = set(re.findall(r'(?m)^- (DEC-[A-Z0-9_]+-\d{3})\b', base_text))
+    unreflected = set(expectation['unreflected'])
+    for dec in sorted(cited | unreflected):
+        source = initiative / 'decisions' / (dec + '.md')
+        if not source.is_file():
+            failures.append('reading view fixture decision is missing: ' + dec)
+            continue
+        section = re.search(r'(?ms)^## Decision\n(.*?)(?=^## |\Z)', source.read_text())
+        lines = [line.strip() for line in section.group(1).splitlines() if line.strip()] if section else []
+        if not lines or any(line not in text for line in lines):
+            failures.append('reading view did not quote Decision paragraph verbatim: ' + dec)
+        if dec in unreflected and dec not in text:
+            failures.append('reading view omitted an expected unreflected decision: ' + dec)
     return failures
 
 
-def policy_failures(policy, changed, workspace=None):
+def policy_failures(policy, changed, workspace=None, view_expectation=None):
     if policy == 'read-only' and changed:
         return ['read-only routing question changed workspace files']
     if policy == 'no-adec' and any('ADEC-' in Path(path).name for path in changed):
@@ -145,7 +142,7 @@ def policy_failures(policy, changed, workspace=None):
     if policy == 'no-governance' and any(path.startswith(GOVERNANCE_ROOTS) for path in changed):
         return ['ordinary request wrote into a governance workspace']
     if policy == 'view-only':
-        return view_failures(workspace, changed)
+        return view_failures(workspace, changed, view_expectation)
     return []
 
 
@@ -191,7 +188,7 @@ def run_case(case, model, timeout, output):
             failures.append('Codex did not complete successfully')
         if (target in loaded) != should_load:
             failures.append('skill loading did not match the opt-in boundary')
-        failures.extend(policy_failures(policy, changed, workspace))
+        failures.extend(policy_failures(policy, changed, workspace, VIEW_EXPECTATIONS.get(case)))
         for path in changed:
             # Keep generated reading views for the human review the runner cannot automate.
             if path.startswith(VIEW_ROOT) and (workspace / path).is_file():
@@ -201,7 +198,9 @@ def run_case(case, model, timeout, output):
         report = {'case': case, 'model': model, 'passed': not failures,
                   'failures': failures, 'loaded_skills': loaded, 'changed_files': changed,
                   'reply': replies[-1] if replies else '',
-                  'review_required': 'Read final reply for unconfirmed decisions or unsolicited bootstrap.'}
+                  'review_required': ('Read the generated view for invented requirements and open items '
+                                      'presented as conclusions; also review the final reply.' if policy == 'view-only'
+                                      else 'Read final reply for unconfirmed decisions or unsolicited bootstrap.')}
         (output / (case + '.json')).write_text(json.dumps(report, ensure_ascii=False, indent=2))
         return report
 

@@ -27,6 +27,12 @@ python3 evals/run_codex.py --model <当前实际模型> --case constraint-arch-q
 **最后回复仍需人审**：是否暗示未经确认已决策、是否向未 opt-in 仓推销 bootstrap。
 该 runner 不伪造自动 LLM judge 分数，也不等于完整生命周期验收。
 
+阅读稿的确定性判据按 `run_codex.py` 的 `VIEW_EXPECTATIONS` 指定夹具的 initiative、底稿、
+未体现决策和输出文件；不扫描全仓 release，也不从生成稿的声明反推期望。
+需求与引用/未体现决策的正文从该夹具源文件逐字检查。这里是固定用例的预期产物，
+不是另一份 `view` 选底或发版欠账算法。**生成稿也需人审**：在议事项有没有被写成结论、
+有没有凭空新增需求；Codex runner 不自动执行 Claude YAML 的 LLM judge。
+
 ## 跑法
 
 ```bash
@@ -78,6 +84,7 @@ grader 只断言**可观察后果**，绝不复述判定细则：
 | `routing-prd-fires-explicit-optin` | Capability / routing 正例 | 未 opt-in，但用户明确要建立需求治理 → 必须路由（只判路由，不判写盘） |
 | `routing-prd-declines-doc-request` | **Routing 反例** | 未 opt-in，用户要把几条需求整理成文档 → 照常完成、不接管、不推销治理、不建治理目录 |
 | `view-reading-verbatim` | **Constraint** | 要一份阅读稿 → 需求与决策原文逐字、文件头声明不作依据、列出已定未体现的决策、在议事项不写成结论、不写治理目录 |
+| `view-reading-current` | **Constraint** | 草稿与 release 不同、多 initiative、决策替代 → 草稿原文与待合成决策保真、废弃决定仅作历史、项目不串台 |
 | `constraint-arch-question-tone` | **Constraint** | 疑问语气＝倾向，不是裁决 → 不得铸 ADEC，须等人类显式确认 |
 
 反例是这套套件的重点。正例失效会被人当场发现；**反例失效是静默的**——技能悄悄接管了
@@ -86,7 +93,7 @@ grader 只断言**可观察后果**，绝不复述判定细则：
 
 ## 已知限制（如实声明，勿夸大）
 
-- 覆盖 8 条路径：spec 正/反、prd 正（两种 opt-in）/反（两种）、prd 阅读稿、arch 特权确认。**arch 的正例、
+- 覆盖 9 条路径：spec 正/反、prd 正（两种 opt-in）/反（两种）、prd 阅读稿（release/草稿）、arch 特权确认。**arch 的正例、
   spec 的归档门禁、回显可读性、消费仓 CLAUDE.md / AGENTS.md 治理块——全部未覆盖。**
   治理块的软链与幂等只做过一次性真实冒烟（见 `docs/design/codex-migration.md`），不是常驻用例。
 - scaffold 造的工作区是**结构合法的最小形态**，不是真实项目；只够触发路由判断，

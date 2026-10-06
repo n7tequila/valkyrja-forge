@@ -55,6 +55,11 @@ graders:
     target: {source: file, path: docs/product/views/rec.md}
     pattern: 'DEC-REC-002'
 
+  - type: regex
+    name: unreflected-decision-verbatim
+    target: {source: file, path: docs/product/views/rec.md}
+    pattern: '参会人下载录音前须经会议主持人授权。'
+
   - type: tool_used
     name: no-write-into-governance
     tool: Write

@@ -309,10 +309,15 @@ Session Resume 时若读盘发现明显不合当前契约的内容，应建议�
 1. **选底**（现场比对文件，不看 STATUS）：`prd/current.md` 正文（去掉文件头）与最新 release
    不同 → 以 current 为底，标「未发布草稿」；相同或没有 current → 以最新 release 为底；
    只有 current → 首版草稿；都没有 → 只汇总已定决策与在议话题，标「尚无 PRD」。
-2. **已定未体现的决策**：口径同 status 的发版欠账；以 current 为底时再剔除其中已被引用的。
+2. **已定未体现的决策**：从 status 的发版欠账中只展示 `status: accepted` 的决策；
+   以 current 为底时再剔除其中已被引用的。`superseded` 决策只作明确标注替代关系的历史，
+   不写成现行结论；此展示过滤不改变 status 与 V2.5 的欠账口径。
 3. **按 `templates/reading-view.md` 生成**：章节、文件头声明与逐字/摘要界线以模板为准。
-   默认写到 `docs/product/views/<slug>.md`（覆盖旧稿）；用户指定路径则从之，但不得落在
-   `docs/product/initiatives/` 或 `docs/product/baselines/` 之内。
+   默认写到 `docs/product/views/<slug>.md`（覆盖旧稿）；用户指定安全路径则从之。
+   **写入前**解析输出文件及父目录中的软链与 `..`，按真实目标比对：不得落在
+   `docs/product/initiatives/`、`docs/product/baselines/` 或已识别的非规范需求/基线工作区内，
+   也不得覆盖本次读取的任何源文件（链接别名指向同一文件也算覆盖）。
+   目标冲突就停止并请用户换路径，不先覆盖。
 4. **自检后返回路径**：需求正文与 Decision 段逐字比对来源，有出入就改回原文。
 
 ### synthesize（draft）

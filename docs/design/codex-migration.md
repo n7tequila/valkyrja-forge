@@ -37,7 +37,8 @@ opt-in 边界、trace 判定——没有变；偏差集中在适配层自身，�
 - **写到宿主实际会读的文件**：实测 Claude Code 2.1.289 没有 CLAUDE.md 时读 AGENTS.md，
   有 CLAUDE.md 就不读 AGENTS.md（`@AGENTS.md` 导入可读）；Codex 只读 AGENTS.md。旧规则会在
   只有 AGENTS.md 的仓里新建 CLAUDE.md，悄悄挡掉原有规则。现规则：Codex 写 AGENTS.md；
-  Claude 有 CLAUDE.md 写它，没有就写 AGENTS.md、不新建 CLAUDE.md；块在不在按宿主实际读到的内容判断。
+  Claude 有 CLAUDE.md 写它，没有但有 AGENTS.md 就写 AGENTS.md、不新建 CLAUDE.md，两个都没有才新建 CLAUDE.md；
+  块在不在按宿主实际读到的内容判断。规则只写在模板头部，SKILL.md 只留指针。
 - **写入安全**：回显解析软链后的真实路径；越出消费仓或写权限不明即停；旧版块只报告，修复单独确认、
   只换标记之间；重复块、缺结束标记、标记嵌套只报告。低频且需确认，不为此另写脚本。
 - **context-handoff 恢复原默认**：交接前全量验证并提交本任务改动；保留「只提交本任务改动、归属不清先问」。
@@ -45,6 +46,9 @@ opt-in 边界、trace 判定——没有变；偏差集中在适配层自身，�
 - **私有 catalog 回到原位置**：撤回 `~/.local/share` 与逐源回退（两个根各放同名源时会静默择一）。
 - **spec SKILL.md 收回宿主细节**：少见分支与 trace 备用查找挪进 compatibility 第一节（667→655 行）。
 - **evals/ 随 tests/ 同批提交**：`claude plugin eval` 已开放，Claude 侧按原计划补跑。
+- **提交后复核（外部评审）**：SKILL.md 摘要漏了「有 AGENTS.md」这个条件，在两个文件都没有的全新仓里与模板
+  给出相反指令。SKILL.md 与 check 项改为只指向模板，模板把 Claude 的三种情况拆开写；三条反例补「没读目标
+  SKILL.md」断言（没调用不等于没读取）；空目录准入维持现状——git 不保存空目录，技能建工作区必写 STATUS.md。
 
 ## 已验证
 
@@ -69,6 +73,8 @@ OpenSpec 1.10.0、macOS。以下是复审修订后的结果，首轮迁移时的
 | Claude routing 组（各 3 次，装/不装插件对照） | spec 正例 3/3（不装插件 0/3）；spec 反例 3/3；prd 反例修前 1/3，见下 |
 | Claude prd 用例，两轮修复后的最终版本 | 有工作区的正例 6/6；明确要建治理的正例 3/3；未 opt-in 反例 3/3；文档整理反例 3/3（其中 1 次评审误判，见下） |
 | Codex prd 用例，最终版本（各 1 次） | 4/4，最终回复人审无越界 |
+| Claude 三条反例，补读取断言后（各 3 次） | 9/9，新判据「没读目标 SKILL.md」正常计分 |
+| Claude 全新仓护栏提议（1 次） | 两个文件都没有时提议新建 CLAUDE.md，回显真实路径，未写入 |
 | Claude constraint 组（3 次，给写权限） | 3/3，均未写 ADEC，评审均判「在等确认」 |
 | Codex `run_codex.py`（4 条各 1 次，复制安装） | 4/4；最终回复人审：prd 反例未推销治理，arch 只记「候选」 |
 | 护栏块真实冒烟（两宿主，各情形 1 次） | 全部符合预期，见下 |

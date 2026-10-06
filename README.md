@@ -153,10 +153,11 @@ They are deliberately thin — pure delegation with no routing logic of their ow
 > The short `/valk:*` aliases remain Claude Code-specific. Codex consumes the same
 > `SKILL.md`, references, templates and trace script, with no duplicate skill tree.
 > After the first governance files land, the skill proposes a guard block for the
-> instruction file the active host actually reads — `AGENTS.md` for Codex; `CLAUDE.md`
-> for Claude Code, or `AGENTS.md` when the repo has no `CLAUDE.md` (Claude Code then
-> reads `AGENTS.md`, so no `CLAUDE.md` is created) — and writes it only after you
-> confirm. The block text is the same for both hosts; everything outside it is untouched.
+> instruction file the active host actually reads — `AGENTS.md` for Codex; for Claude
+> Code, `CLAUDE.md` if it exists, otherwise an existing `AGENTS.md` (Claude Code reads it
+> then, so no `CLAUDE.md` is created), and a new `CLAUDE.md` only when neither exists —
+> and writes it only after you confirm. The block text is the same for both hosts;
+> everything outside it is untouched. The guard template holds the authoritative rule.
 
 ---
 

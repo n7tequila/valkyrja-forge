@@ -166,9 +166,10 @@ $valk:valkyrja-spec  这个 change 能归档吗
 
 > `/valk:*` 短入口仍是 Claude Code 专属。Codex 读取同一份 `SKILL.md`、引用、模板
 > 与 trace 脚本，不复制第二棵技能源码。首次落盘治理文件后，技能会为当前宿主
-> 实际会读的指令文件提议写入治理块：Codex 是 `AGENTS.md`；Claude Code 是 `CLAUDE.md`，
-> 仓库没有 `CLAUDE.md` 时是 `AGENTS.md`（这时 Claude Code 读的就是它，不会新建
-> `CLAUDE.md`）。你确认后才写；块正文两个宿主相同，块外的原有内容一字不动。
+> 实际会读的指令文件提议写入治理块：Codex 是 `AGENTS.md`；Claude Code 有 `CLAUDE.md`
+> 就写它，没有但有 `AGENTS.md` 就写 `AGENTS.md`（这时 Claude Code 读的就是它，不新建
+> `CLAUDE.md`），两个都没有才新建 `CLAUDE.md`。你确认后才写；块正文两个宿主相同，
+> 块外的原有内容一字不动。权威规则在护栏模板里。
 
 ---
 

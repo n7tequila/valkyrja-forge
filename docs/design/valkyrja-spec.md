@@ -194,6 +194,7 @@ verify 缺失没有任何替代——闭环会缺「代码 ↔ artifacts」一�
 | **Codex 适配（2026-10-06）** | 用户要求迁移；OpenSpec 官方支持表与本机 CLI 1.10.0 安装源码确认 Codex 是 `.agents/skills/` 的 skills-only；旧说明把所有缺 workflow 都引向 core，实际上 core 不含 verify；trace 按目录优先级可能调用错版本 | 当前会话宿主显式选 init/probe/委托，Codex 用 `$openspec-propose` / `$openspec-apply-change` / `$openspec-verify-change`；verify 补装必须选包含它的 custom profile。trace 先按当前加载 skill 的相对路径定位；护栏新增 AGENTS.md 模板，确认、planning boundary 与 PRD 唯一权威不放宽。安装契约验证不等于 Codex 模型真实项目闭环验证 |
 | **Codex 路由烟测反馈（2026-10-06）** | 主任务的实际 gpt-6.1-sol 烟测观察：spec-negative 与 prd-negative 在检查 opt-in 前读取了 SKILL.md，虽未接管或写入，仍违反已有「不触发即不读」路由断言；原 description 的正向「必须使用」位于准入条件之前 | 三技能 description 前置轻量工作区/明确请求准入检查，准入失败明确不读技能、不接管、不提议初始化；保留原有正向触发信息与正文协议，评测判据不改。该记录只说明已观察到的失败与适配修订，重跑结果由实际烟测确认 |
 | **Codex 适配复审（2026-10-06，外部评审 + 真实运行）** | Claude 侧复审 Codex 完成的迁移：护栏块拆成两个宿主各一份正文且无跨份测试；Codex 用 plugin 安装时注册名带 `valk:` 前缀（`codex debug prompt-input` 离线实测），模板里的 `$valkyrja-*` 只对复制安装成立；spec SKILL.md 新增的宿主细节与 compatibility 第一节同文 | 三技能共用一份 `templates/guard-block.md`，宿主只决定写 CLAUDE.md 还是 AGENTS.md，入口写稳定技能名、精确调用名只进 README；写入纪律补软链（回显解析后的真实路径、越出消费仓或权限不明即停、两文件同一真实文件只写一次）、旧版块只报告且修复单独确认、标记异常只报告；少见宿主分支与 trace 备用查找挪进 compatibility 第一节。常驻测试守模板一致、技能引用、三段共享文字与文档调用名；真实冒烟只作宿主行为证据，不当确定性保证 |
+| **提交后复核（2026-10-06，外部评审）** | 三技能 SKILL.md 的护栏摘要漏了「有 AGENTS.md」条件，与模板在全新仓给出相反指令——又一次「同一规则有第二个副本」；反例只断言没调用 Skill，没断言没读技能文件 | SKILL.md 与 check 项只留指向 `templates/guard-block.md` 的指针，模板把 Claude 三种情况拆开写；三条反例补 Read 目标 SKILL.md 的 max 0 断言（arm: both）。空目录准入经评估维持现状 |
 
 其中「首个 change 评审」一行的两项产出是这份记录里最值钱的部分：
 

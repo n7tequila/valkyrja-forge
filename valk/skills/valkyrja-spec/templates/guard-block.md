@@ -4,9 +4,11 @@
 
      写到当前宿主**实际会读**的那个指令文件：
      - Codex 只读 `AGENTS.md` → 写 `AGENTS.md`，没有就新建
-     - Claude Code 有 `CLAUDE.md` 时只读它 → 写 `CLAUDE.md`；没有 `CLAUDE.md` 时它读
-       `AGENTS.md` → 写进 `AGENTS.md`，**绝不新建 `CLAUDE.md`**（新建后 Claude 不再读
-       `AGENTS.md`，项目原有规则会被悄悄挡掉）；两个都没有才新建 `CLAUDE.md`
+     - Claude Code，按仓库现状三选一：
+       · 有 `CLAUDE.md` → 写 `CLAUDE.md`（Claude 只读它）
+       · 没有 `CLAUDE.md`、有 `AGENTS.md` → 写进 `AGENTS.md`（这时 Claude 读的就是它），
+         **不要新建 `CLAUDE.md`**——新建后 Claude 不再读 `AGENTS.md`，项目原有规则会被悄悄挡掉
+       · 两个都没有 → 新建 `CLAUDE.md`
      块正文两个宿主相同；不因两个文件并存而自动各写一份。
      判断「块已在」按宿主实际读到的内容：软链指向的文件、`CLAUDE.md` 里 `@AGENTS.md`
      导入的文件中已有块，都算已在。

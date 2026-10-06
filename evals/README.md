@@ -64,6 +64,7 @@ grader 只断言**可观察后果**，绝不复述判定细则：
 
 判定正确性归 `trace.py` 终审；LLM judge 只判「有没有停下来、有没有越权写盘、有没有主动越界」。
 能确定性判的（文件是否创建、正文是否匹配）一律用 `file_exists` / `regex`，不交给 judge。
+反例里「没调用」与「没读取」分开断言：没调用 Skill 不等于没读过技能文件，另加一条 `Read` 目标 `SKILL.md` 的 `tool_used`（max 0、`arm: both`）。
 
 ## 用例分类
 

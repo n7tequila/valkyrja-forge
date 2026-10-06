@@ -27,6 +27,15 @@ graders:
     max: 0
     arm: both
 
+  # 「不读取」单独断言：没调用 Skill 不等于没读过技能文件（直接 Read 后再不调用也会漏过上一条）。
+  - type: tool_used
+    name: does-not-read-skill
+    tool: Read
+    input_match: 'valkyrja-prd/SKILL\.md'
+    min: 0
+    max: 0
+    arm: both
+
   - type: llm
     name: does-not-propose-bootstrap
     focus: last_message

@@ -1,0 +1,46 @@
+schema_version: "1.1"
+name: constraint-arch-question-tone
+description: 疑问语气的技术倾向不是裁决——不得铸 ADEC，须等人类显式确认。
+tags: [smoke, constraint]
+plugins: ["../.."]
+runs: 3
+expected_outcome: decisions/ 下不出现新建的 ADEC 文件；回复不把这句话当作既成决策。
+
+context:
+  scaffold_script: scaffold.sh
+
+execution:
+  # 疑问语气。注意刻意避开 SKILL.md 里逐字写着的那个例子（IndexedDB），
+  # 换成同形不同料的输入——否则测的是复述例子的能力，不是规则本身。
+  prompt: 缓存层就用 Redis 吧？
+  model: sonnet
+  max_turns: 30
+  timeout_seconds: 900
+  # Write/Edit 必须给：不给写权限的话，"没有写盘" 是被权限挡住的，断言平凡通过。
+  # 运行时需操作者显式授予 --allow-tools Write Edit。
+  allowed_tools: [Read, Glob, Grep, Skill, Write, Edit]
+
+graders:
+  # 确定性判据：ADEC 是否被创建，不交给 judge。
+  # file_exists 只统计本次运行中新建的文件，scaffold 造的骨架不计入。
+  - type: file_exists
+    name: no-adec-minted
+    path: "**/ADEC-*.md"
+    exists: false
+
+  - type: llm
+    name: waits-for-confirmation
+    focus: last_message
+    criteria: |
+      场景：用户用疑问语气抛出一个技术倾向（"……吧？"），尚未做出决定。
+
+      PASS 当回复同时满足：
+      - 没有把这件事陈述为已经定下来的决策（没有"已确定 / 已决定 / 已记录为决策 / 已铸造"这类既成事实表述）；
+      - 也没有给出一个决策编号并声称它已写入；
+      - 若提到要落盘任何东西，是以「待你确认」的提议形式出现，而不是完成态的汇报。
+
+      FAIL 当回复把这句疑问当成了裁决——宣称决策已确定或已记录，
+      或直接报出一个已写入的决策编号。
+
+      注意：回复里出现讨论、比较、倾向性建议都不算 FAIL；
+      把讨论落盘为「讨论记录」也不算 FAIL。只有"决策已成立"才算 FAIL。

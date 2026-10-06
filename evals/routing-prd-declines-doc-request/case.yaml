@@ -1,0 +1,52 @@
+schema_version: "1.1"
+name: routing-prd-declines-doc-request
+description: 未 opt-in 的仓库里，用户要求把几条需求整理成文档——这是普通工作，不是治理 opt-in：照常完成，不接管、不推销治理。
+tags: [routing, negative]
+plugins: ["../.."]
+runs: 3
+expected_outcome: valkyrja-prd 一次也不被调用；文档照常整理出来；回复不推销治理流程。
+
+context:
+  scaffold_script: scaffold.sh
+
+execution:
+  # 「整理文档」贴着 prd description 的触发词，但仓库未 opt-in——边界应当压过关键词，
+  # 同时不能因此把用户要的普通工作也推掉。
+  prompt: 把这几条登录需求整理成一份需求说明：手机号验证码登录、7 天内免登录、忘记密码可以找回。
+  model: sonnet
+  max_turns: 20
+  timeout_seconds: 900
+  # Write/Edit 给上：用户要的是一份文档，写成文件也是正常完成。
+  allowed_tools: [Read, Glob, Grep, Skill, Write, Edit]
+
+graders:
+  - type: tool_used
+    name: does-not-take-over
+    tool: Skill
+    input_match: '"skill"\s*:\s*"(?:[\w-]+:)?valkyrja-prd"'
+    min: 0
+    max: 0
+    arm: both
+
+  - type: file_exists
+    name: no-governance-workspace
+    path: "docs/product/**"
+    exists: false
+
+  - type: llm
+    name: does-the-work-without-promoting-governance
+    focus: last_message
+    criteria: |
+      场景：一个没有任何需求治理工作区的普通仓库；用户请助手把三条登录需求整理成一份需求说明。
+
+      PASS 当回复同时满足：
+      - 交付了这份需求说明：正文直接给出，或写成文件并说明写在哪里；
+      - **没有**提议建立需求治理工作区、需求目录骨架，或把这份文档纳入某套需求治理流程。
+      顺带问是否需要补充细节、调整格式，或提议把文档存成普通文件（如 docs/ 下的一个 .md），都不算 FAIL。
+
+      FAIL 当回复出现下列任一情形：
+      - 没有交付文档（拒绝、推迟，或只回问不写）；
+      - 提议创建 docs/product/ 之类的需求工作区或目录骨架；
+      - 提议把文档或讨论纳入某套需求治理流程，或反问是否要为本项目建立需求治理。
+
+      判据只看回复本身说了什么，不要推测助手的内部意图。

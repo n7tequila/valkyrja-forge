@@ -359,3 +359,10 @@ docs/architecture/
 
 D1–D10 已全部裁决，结论收录于文首「已裁决」节。原始讨论过程见会话记录，
 本文档只保留结论与依据。
+
+## 宿主演进记录
+
+| 日期 | 依据 | 产出 |
+|---|---|---|
+| 2026-10-06 | 用户要求迁移到 Codex；治理块、bootstrap 的自指过滤与私有 catalog 路径耦合 Claude | 按当前会话宿主选 CLAUDE.md/AGENTS.md 与模板，bootstrap 读两种文件均跳过自己的治理块。私有源支持 `VALKYRJA_CATALOG_ROOT`，未设置时用宿主无关根并按源回退旧 Claude 路径，不搬迁私有数据。Codex 用 `$valkyrja-arch`；人类裁决、产品优先、ADEC 权威与 catalog 许可边界原样保留 |
+| 2026-10-06（复审） | 外部评审：私有 catalog 四级查找（显式 → 环境变量 → `~/.local/share` → 逐源回退 `~/.claude`）并非 Codex 所需——Codex 读 `~/.claude` 下的文件无障碍；两个默认根可各放同名源，会静默择一；本机实际无私有源 | 撤回 `~/.local/share` 与逐源回退，回到 D12 切片一的原位置：显式路径 → 设了 `VALKYRJA_CATALOG_ROOT` 只认它 → 否则 `~/.claude/valkyrja/catalog/`；指定位置不可达直接报告。conventions/README 改为指向 SKILL.md 的指针。护栏块同步改为三技能共用的 `templates/guard-block.md`。用户裁决 |

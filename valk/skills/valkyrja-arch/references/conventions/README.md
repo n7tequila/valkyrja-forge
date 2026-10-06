@@ -13,9 +13,9 @@
 文件命名：`conv-<主题>[-<stack>].md`，通用条目省略 stack 段
 （如 `conv-idempotency.md`、`conv-db-relational-postgres.md`）。
 
-**多源**：本目录是**内置源**。私有源放 `~/.claude/valkyrja/catalog/<源名>/`
-（每个子目录一个源，条目格式同构；私有 catalog 仓 clone/软链到此，
-不受 skill 升级覆盖）。私有源是 `local-only` 条目全文的家——公开仓只放 stub，
+**多源**：本目录是**内置源**。私有源放在哪、按什么顺序找，以 SKILL.md 的
+catalog 节为准（唯一权威，此处不复述）。每个子目录一个源，条目格式同构，
+不受 skill 升级覆盖。私有源是 `local-only` 条目全文的家——公开仓只放 stub，
 全文在私有源，许可允许时可 adopt 入私有项目仓（`license-unknown` 仍不得
 adopt 入任何仓）。私有源副本的指纹带源标识：
 `adopted-from: <条目id>@<版本> (source: <源名>)`；无 source 段即内置源。

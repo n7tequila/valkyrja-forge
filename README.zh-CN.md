@@ -2,7 +2,7 @@
 
 [English](README.md) | **简体中文**
 
-把「松散的需求讨论」变成「可追溯的 AI 编码」的一套 Claude Code 技能：
+把「松散的需求讨论」变成「可追溯的 AI 编码」的一套 Codex / Claude Code 共用技能：
 产品契约（PRD）、技术契约（架构）、可验证交付（OpenSpec）三层治理。
 
 核心主张：**AI 全程参与需求整理与代码实现，但每一步都可追溯、可审计，且不被 AI 悄悄篡改语义。**
@@ -128,7 +128,19 @@ ADEC。产物落 `docs/architecture/`（决策 / 已采纳约定副本 / 版本�
 
 ---
 
-## 斜杠命令
+## 调起入口
+
+Codex 没有命令层，按技能注册名调用（也可由遵守 opt-in 边界的 description 路由自然语言）。
+用 plugin 安装时，注册名带 plugin 前缀：
+
+```text
+$valk:valkyrja-prd   我们聊聊录像暂停
+$valk:valkyrja-arch  看看技术地基
+$valk:valkyrja-spec  这个 change 能归档吗
+```
+
+用复制式安装脚本时是不带前缀的 `$valkyrja-prd`、`$valkyrja-arch`、`$valkyrja-spec`。
+实际注册了什么以 `/skills` 列出的为准。协议与确认门禁和 Claude Code 完全相同。
 
 三个入口，用命名空间做内聚：
 
@@ -152,16 +164,41 @@ ADEC。产物落 `docs/architecture/`（决策 / 已采纳约定副本 / 版本�
    → 路由到 trace
 ```
 
-> **斜杠命令是 Claude Code 专属的**，属于手感增强，不是运行机制。
-> 三个技能本来就按自然语言自动路由。`SKILL.md` 是纯 Markdown + YAML frontmatter，
-> 格式在其他 harness（如 Codex 的 `.agents/skills`）上**可移植但未实测**——
-> 本仓目前只承诺 Claude Code；Codex 适配是 roadmap 的首个跨 harness 目标。
+> `/valk:*` 短入口仍是 Claude Code 专属。Codex 读取同一份 `SKILL.md`、引用、模板
+> 与 trace 脚本，不复制第二棵技能源码。首次落盘治理文件后，技能会为当前宿主
+> 实际会读的指令文件提议写入治理块：Codex 是 `AGENTS.md`；Claude Code 是 `CLAUDE.md`，
+> 仓库没有 `CLAUDE.md` 时是 `AGENTS.md`（这时 Claude Code 读的就是它，不会新建
+> `CLAUDE.md`）。你确认后才写；块正文两个宿主相同，块外的原有内容一字不动。
 
 ---
 
 ## 安装
 
-### 主路径：Claude Code plugin（推荐）
+### Codex
+
+本地开发先显式注册 checkout，再安装所需 plugin：
+
+```bash
+codex plugin marketplace add /absolute/path/to/valkyrja-forge
+codex plugin add valk@valkyrja-forge
+codex plugin add valk-tools@valkyrja-forge  # 可选，独立工具箱
+```
+
+marketplace 仍与 Claude Code 共用；两个 plugin 各有 portable 根 `plugin.json`。
+本地 marketplace 安装是 CLI 路径，不等于发布到公共目录。安装或升级后开新会话。
+
+离线或只想装到**消费产品仓**时：
+
+```bash
+scripts/install-skills.sh --harness codex --project /path/to/your-product-repo
+scripts/install-skills.sh --harness codex --plugin valk-tools --system
+```
+
+Codex 复制式安装落 `<项目>/.agents/skills/` 或 `~/.agents/skills/`，不写命令文件。
+同一宿主请选择 plugin 或复制式安装之一，避免双注册悄悄读到旧版。既有 Claude
+安装保持原样；不搬迁私有 catalog 或项目文档。
+
+### Claude Code plugin
 
 本仓即 plugin marketplace（`.claude-plugin/`）。在 Claude Code 里：
 
@@ -177,7 +214,7 @@ ADEC。产物落 `docs/architecture/`（决策 / 已采纳约定副本 / 版本�
 #### 第二个 plugin：`valk-tools`
 
 本 marketplace 托管**两个互相独立的 plugin**。`valk-tools` 是个人工作方式工具箱——
-上下文交接、跨 forge 开 PR、只审不改的重构审查——跟人走，不跟项目走：
+上下文交接、Claude ↔ Codex 工作交接、跨 forge 开 PR、只审不改的重构审查——跟人走，不跟项目走：
 
 ```
 /plugin install valk-tools
@@ -185,15 +222,16 @@ ADEC。产物落 `docs/architecture/`（决策 / 已采纳约定副本 / 版本�
 
 它有自己的版本，独立安装、升级与卸载；与 `valk` 只共享本仓的 git 历史，
 不共享发版节奏，两者互无依赖。它**只带技能、不设命令层**——直接以
-`/valk-tools:context-handoff`、`/valk-tools:merge-pr`、`/valk-tools:refactor-review` 调起。
+`/valk-tools:context-handoff`、`/valk-tools:host-handoff`、`/valk-tools:merge-pr`、`/valk-tools:refactor-review` 调起。
 详见 [valk-tools/README.md](valk-tools/README.md)。
 
-下面的兜底安装脚本**只覆盖 `valk` 的技能**——`valk-tools` 按设计只走 plugin。
+兜底脚本可安装两个 plugin，用 `--plugin valk-tools` 选工具箱；默认仍是 Claude Code
+的 `valk`，保持原有用法兼容。
 
 ### 兜底路径：复制式安装脚本（离线 / 无 git 场景）
 
 技能安装到**目标产品仓库**，本仓库只是技能源码仓。下列示例默认
-**cwd 在 forge 仓根**——照抄第一条会装进 forge 仓自身，装目标仓请用
+**cwd 在 forge 仓根**——省略 `--project` 的目录参数会装进 forge 仓自身，装目标仓请用
 `--project <目标仓路径>`，或先 `cd` 到目标仓再以绝对路径调本脚本：
 
 ```bash
@@ -206,7 +244,7 @@ cd /path/to/your-product-repo && /path/to/valkyrja-forge/scripts/install-skills.
 # 装到本机全局（~/.claude/，对所有项目生效）
 scripts/install-skills.sh --system
 
-# 覆盖升级（自动备份旧版本到 .backup/；--no-backup 跳过备份）
+# 覆盖升级（自动备份旧版本；--no-backup 跳过备份）
 scripts/install-skills.sh --system --force
 
 # 只装指定技能（此模式下不装斜杠命令，
@@ -217,6 +255,9 @@ scripts/install-skills.sh --project /path/to/your-product-repo valkyrja-prd
 scripts/install-skills.sh --system --dry-run
 scripts/install-skills.sh --system --list
 ```
+
+以上命令加 `--harness codex` 即切换宿主。Codex 技能备份在
+`.agents/.valkyrja-backup/skills/`，不进入技能发现树。
 
 安装前会校验每个技能：`SKILL.md` 必须存在，且 frontmatter 含 `name` 与 `description`。
 不合格的跳过并报错，不影响其余技能。脚本不提供版本追踪与卸载——那些是
@@ -236,10 +277,15 @@ bash（安装脚本）、python3 ≥ 3.7（trace.py 门禁）、OpenSpec CLI（�
 ```bash
 npm install -g @fission-ai/openspec
 openspec init --tools claude    # 在目标产品仓库内执行
+# Codex 改用：
+openspec init --tools codex
 ```
 
-`openspec init` 会按当前 profile 生成官方 workflow 技能。注意官方 `core` profile
-**不含 `verify`**，而完整闭环需要它——技能的前提检测会提示这一点。
+`openspec init` 按当前 profile 生成官方 workflow 技能。官方 `core` profile **不含
+`verify`**；完整闭环请用 `openspec config profile` 选择包含 propose、apply、verify、
+sync、archive 的自定义工作流集合，再在产品仓运行 `openspec update`。这是用户显式
+配置选择，技能不静默修改全局 profile。宿主路径与调用映射见
+[OpenSpec 兼容说明](valk/skills/valkyrja-spec/references/openspec-compatibility.md)。
 
 ---
 
@@ -266,18 +312,22 @@ openspec init --tools claude    # 在目标产品仓库内执行
 ```
 valkyrja-forge/
 ├── README.md / README.zh-CN.md / NOTICE.md（指针；权威声明随 catalog 分发）
-├── CLAUDE.md                      # 本仓自身的编辑纪律（三载体同源、提交前必跑、脱敏门禁）
-├── .claude-plugin/                # plugin.json + marketplace.json（plugin 主安装路径）
-├── commands/                      # 斜杠命令（平铺；plugin 名或安装目录提供 /valk: 命名空间）
+├── AGENTS.md                      # Codex 入口，指向共用仓库编辑规则
+├── CLAUDE.md                      # 编辑规则唯一权威（不是消费仓治理块）
+├── .claude-plugin/marketplace.json # 共用 marketplace；Codex CLI 显式注册
 ├── docs/design/                   # 三技能设计定稿与演进记录（含 D 系列裁决台账）
 ├── scripts/install-skills.sh      # 兜底安装脚本（离线/无 git；主路径是 plugin）
 ├── scripts/check-sanitization.sh # D6 脱敏机检门禁（词表私有，建议接 pre-push/CI）
-├── tests/                         # trace.py 回归夹具（forge 开发资产，不随技能分发）
-└── skills/
-    ├── valkyrja-prd/              # SKILL.md + templates/
-    ├── valkyrja-arch/             # SKILL.md + templates/ + references/conventions/（catalog + NOTICE.md）
-    └── valkyrja-spec/             # SKILL.md + templates/ + references/
-                                   #   + tools/trace.py（确定性 trace，随技能安装分发，退出码可作 CI 门禁）
+├── tests/                         # trace、安装与打包回归（不分发）
+├── evals/                         # 模型行为检查（不分发）
+├── valk/
+│   ├── plugin.json / .claude-plugin/plugin.json # portable / Claude 清单
+│   ├── commands/                 # Claude 专属短入口
+│   └── skills/
+│       ├── valkyrja-prd/          # SKILL.md + templates/
+│       ├── valkyrja-arch/         # SKILL.md + templates/ + 约定目录
+│       └── valkyrja-spec/         # SKILL.md + templates/ + references/ + tools/trace.py
+└── valk-tools/                    # 独立清单 + 四个个人工作方式技能
 ```
 
 ---
@@ -297,7 +347,9 @@ valkyrja-forge/
 - [ ] 把纯确定性检查（追溯校验、集合对账）下沉为脚本与 CI
 - [ ] CI 禁止修改已发布的 `prd/releases/**`
 - [x] Plugin 化（`.claude-plugin/`，v0.9.0）：版本/升级/卸载走官方机制，install.sh 降为兜底
-- [ ] 首个跨 harness 适配：Codex `.agents/skills`（skills-only，无命令文件），实测后再宣称支持
+- [x] Codex 适配：共用技能、两宿主通用的一份治理块、按宿主区分的 OpenSpec 调用、portable 清单、已测复制安装器；行为检查用 `claude plugin eval` 与 `evals/run_codex.py`。行为运行只是证据，不等于 Codex 产品生命周期全链路验收。
+
+本次证据与剩余缺口见 [Codex 迁移评估](docs/design/codex-migration.md)。
 
 ---
 

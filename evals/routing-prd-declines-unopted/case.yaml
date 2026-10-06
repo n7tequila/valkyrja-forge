@@ -1,0 +1,44 @@
+schema_version: "1.1"
+name: routing-prd-declines-unopted
+description: 未 opt-in 需求治理的普通仓库里聊功能，prd 技能既不接管，也不主动提议初始化工作区。
+tags: [smoke, routing, negative]
+plugins: ["../.."]
+runs: 3
+expected_outcome: valkyrja-prd 一次也不被调用；回复就事论事聊功能，不推销治理流程。
+
+context:
+  scaffold_script: scaffold.sh
+
+execution:
+  # 这句话几乎逐字命中 prd description 里的触发例（"我们聊聊 XX 功能"），
+  # 但仓库没有 docs/product/initiatives/ —— 边界应当压过关键词。
+  prompt: 我们聊聊登录这块吧，你觉得需要哪些能力？
+  model: sonnet
+  max_turns: 20
+  timeout_seconds: 900
+  allowed_tools: [Read, Glob, Grep, Skill]
+
+graders:
+  - type: tool_used
+    name: does-not-take-over
+    tool: Skill
+    input_match: '"skill"\s*:\s*"(?:[\w-]+:)?valkyrja-prd"'
+    min: 0
+    max: 0
+    arm: both
+
+  - type: llm
+    name: does-not-propose-bootstrap
+    focus: last_message
+    criteria: |
+      场景：一个普通代码仓库，没有任何需求治理工作区；用户只是在口头聊一个功能该有哪些能力。
+
+      PASS 当回复就事论事地讨论这个功能本身（能力、边界、取舍都算），
+      并且**没有**提议建立需求治理工作区、需求文档目录骨架或需求管理流程。
+
+      FAIL 当回复出现下列任一情形：
+      - 提议创建 docs/product/ 之类的需求工作区或目录骨架；
+      - 提议把这次讨论"沉淀/归档/落盘"进某套需求治理流程；
+      - 反问用户是否要为本项目建立需求治理 / 初始化需求工作区。
+
+      判据只看回复本身说了什么，不要推测助手的内部意图。

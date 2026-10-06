@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
-# install-skills.sh — 将本仓库 valk/skills/ 下的 Claude Code skill 批量安装到
-# 系统级（~/.claude/skills/）或项目级（<project-root>/.claude/skills/）目录。
+# install-skills.sh — 将本仓库 valk 或 valk-tools 的 skills 安装到 Claude / Codex。
+# Claude 目标为 .claude/skills/，Codex 目标为 .agents/skills/。
 #
 # 定位：**离线/无 git 场景的兜底安装路径**。主路径是官方 plugin 体系——
 #   /plugin marketplace add n7tequila/valkyrja-forge && /plugin install valk
@@ -11,13 +11,15 @@
 #   scripts/install-skills.sh [目标] [选项] [skill-name ...]
 #
 # 目标（二选一，默认 --project）:
-#   --project [DIR]   安装到项目级 .claude/skills/（DIR 默认当前目录——注意：
+#   --project [DIR]   安装到项目级技能目录（DIR 默认当前目录——注意：
 #                      在 forge 仓根照抄示例会装进 forge 仓自身；目标是产品仓，
 #                      用 --project <目标仓路径> 或先 cd 到目标仓再调本脚本）
-#   --system          安装到系统级 ~/.claude/skills/（对本机所有项目生效）
+#   --system          安装到用户级技能目录（对本机所有项目生效）
 #
 # 选项:
-#   --all             安装 valk/skills/ 下全部 skill（未指定 skill-name 时的默认行为）
+#   --harness NAME    claude（默认）或 codex；Codex 只安装技能，不安装斜杠命令
+#   --plugin NAME     valk（默认）或 valk-tools
+#   --all             安装所选 plugin 的全部 skill（未指定 skill-name 时的默认行为）
 #   --force           已存在同名 skill 时覆盖安装（不加此项遇到已安装则跳过并提示）
 #   --no-backup       覆盖时不做备份（默认会备份，见下）
 #   --dry-run         只打印将要执行的操作，不实际写入
@@ -25,12 +27,14 @@
 #   -h, --help        显示本帮助
 #
 # 参数:
-#   skill-name ...    只安装指定的一个或多个 skill（对应 valk/skills/<name>/ 目录名）
+#   skill-name ...    只安装指定技能（所选 plugin 下的直接子目录名，禁止路径）
 #                      不指定则等同 --all
 #
 # 覆盖安装行为:
 #   --force 且目标已存在同名 skill 时，先将旧版本整体复制到
-#   <目标skills目录>/.backup/<name>-<时间戳>/ 再覆盖，不静默丢失旧版本。
+#   Claude: <目标skills目录>/.backup/<name>-<时间戳>-<随机后缀>/
+#   Codex:  <目标.agents目录>/.valkyrja-backup/skills/<name>-<时间戳>-<随机后缀>/
+#   Codex 备份位于 skills 扫描树外，避免旧版 SKILL.md 被再次发现。
 #   未加 --force 时，已存在的同名 skill 会被跳过并给出提示，不会报错中断。
 #
 # 校验:
@@ -43,6 +47,8 @@
 #   scripts/install-skills.sh --project valkyrja-prd     # 只装指定 skill 到当前项目
 #   scripts/install-skills.sh --system --list             # 查看系统级已装了哪些 skill
 #   scripts/install-skills.sh --project --dry-run --force # 预览覆盖安装会做什么
+#   scripts/install-skills.sh --harness codex --project <产品仓路径>
+#   scripts/install-skills.sh --harness codex --plugin valk-tools --system
 
 set -euo pipefail
 
@@ -50,13 +56,12 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
-SKILLS_SRC_DIR="${REPO_ROOT}/valk/skills"
 
 # 斜杠命令命名空间：仓内命令平铺于 commands/<名>.md（plugin 形态由 plugin 名
 # 提供命名空间 /valk:<名>）；本脚本安装到 <dest>/commands/<NS>/<名>.md，
 # 由目录提供同名命名空间——两条安装路径产出同一命令名。
-COMMAND_NS="valk"
-COMMANDS_SRC_DIR="${REPO_ROOT}/valk/commands"
+HARNESS="claude"
+PLUGIN="valk"
 
 TARGET_MODE=""            # project | system
 PROJECT_ROOT="$(pwd)"
@@ -77,7 +82,7 @@ c_step()  { printf '\n\033[1m%s\033[0m\n' "$*"; }
 die() { c_err "$*"; exit 1; }
 
 # 从工作树 cp -r 会带上 git 排除不了的垃圾（.DS_Store、__pycache__/*.pyc）——
-# 项目级安装的 .claude/ 随消费仓提交，垃圾会进入其 git 历史，装后清一遍。
+# 项目级安装目录随消费仓提交，垃圾会进入其 git 历史，装后清一遍。
 scrub_junk() {
   find "$1" -name '.DS_Store' -type f -delete 2>/dev/null || true
   find "$1" -name '*.pyc' -type f -delete 2>/dev/null || true
@@ -95,6 +100,18 @@ print_help() {
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
+    --harness)
+      [[ $# -ge 2 ]] || die "--harness 需要 claude 或 codex"
+      HARNESS="$2"
+      case "$HARNESS" in claude|codex) ;; *) die "未知 harness：${HARNESS}" ;; esac
+      shift 2
+      ;;
+    --plugin)
+      [[ $# -ge 2 ]] || die "--plugin 需要 valk 或 valk-tools"
+      PLUGIN="$2"
+      case "$PLUGIN" in valk|valk-tools) ;; *) die "未知 plugin：${PLUGIN}" ;; esac
+      shift 2
+      ;;
     --project)
       TARGET_MODE="project"
       shift
@@ -135,6 +152,7 @@ while [[ $# -gt 0 ]]; do
       die "未知选项：$1（--help 查看用法）"
       ;;
     *)
+      [[ "$1" =~ ^[a-zA-Z0-9][a-zA-Z0-9_-]*$ ]] || die "非法 skill 名称：$1（只接受直接子目录名，禁止路径）"
       REQUESTED_SKILLS+=("$1")
       shift
       ;;
@@ -143,21 +161,36 @@ done
 
 [[ -z "$TARGET_MODE" ]] && TARGET_MODE="project"
 
-if [[ "$TARGET_MODE" == "system" ]]; then
-  CLAUDE_ROOT="${HOME}/.claude"
+SKILLS_SRC_DIR="${REPO_ROOT}/${PLUGIN}/skills"
+COMMAND_NS="$PLUGIN"
+COMMANDS_SRC_DIR="${REPO_ROOT}/${PLUGIN}/commands"
+
+if [[ "$HARNESS" == "codex" ]]; then
+  HARNESS_DIR=".agents"
 else
-  CLAUDE_ROOT="${PROJECT_ROOT}/.claude"
+  HARNESS_DIR=".claude"
 fi
 
-SKILLS_DEST_DIR="${CLAUDE_ROOT}/skills"
-COMMANDS_DEST_DIR="${CLAUDE_ROOT}/commands/${COMMAND_NS}"
+if [[ "$TARGET_MODE" == "system" ]]; then
+  HARNESS_ROOT="${HOME}/${HARNESS_DIR}"
+else
+  HARNESS_ROOT="${PROJECT_ROOT}/${HARNESS_DIR}"
+fi
+
+SKILLS_DEST_DIR="${HARNESS_ROOT}/skills"
+COMMANDS_DEST_DIR="${HARNESS_ROOT}/commands/${COMMAND_NS}"
+if [[ "$HARNESS" == "codex" ]]; then
+  SKILLS_BACKUP_DIR="${HARNESS_ROOT}/.valkyrja-backup/skills"
+else
+  SKILLS_BACKUP_DIR="${SKILLS_DEST_DIR}/.backup"
+fi
 
 # 命令备份必须放在 commands/ 树之外。
 # Claude Code 把 commands/ 下**每一层子目录都当命名空间递归扫描**，
 # 所以 commands/<NS>/.backup/prd-<时间戳>.md 会被注册成一个幽灵命令
 # /<NS>:.backup:prd-<时间戳>，且每次 --force 都新增两个、不断累积。
 # （技能侧无此问题：技能加载器要求 <目录>/SKILL.md，.backup/ 本身没有，故不被识别。）
-COMMANDS_BACKUP_DIR="${CLAUDE_ROOT}/.valkyrja-backup/commands"
+COMMANDS_BACKUP_DIR="${HARNESS_ROOT}/.valkyrja-backup/commands"
 
 # ---------- --list 模式 ----------
 
@@ -183,6 +216,7 @@ if [[ $LIST_MODE -eq 1 ]]; then
     [[ $found -eq 0 ]] && c_info "（空）"
   fi
 
+  [[ "$HARNESS" == "codex" ]] && exit 0
   c_step "已安装的斜杠命令（${COMMANDS_DEST_DIR}）"
   if [[ ! -d "$COMMANDS_DEST_DIR" ]]; then
     c_info "目录不存在，尚未安装任何命令。"
@@ -207,7 +241,9 @@ fi
 declare -a ALL_AVAILABLE=()
 for d in "$SKILLS_SRC_DIR"/*/; do
   [[ -d "$d" ]] || continue
-  ALL_AVAILABLE+=("$(basename "$d")")
+  name="$(basename "$d")"
+  [[ "$name" =~ ^[a-zA-Z0-9][a-zA-Z0-9_-]*$ ]] || die "非法源 skill 名称：${name}"
+  ALL_AVAILABLE+=("$name")
 done
 [[ ${#ALL_AVAILABLE[@]} -eq 0 ]] && die "源目录下没有任何 skill：${SKILLS_SRC_DIR}"
 
@@ -242,7 +278,7 @@ validate_skill() {
 
 # ---------- 安装主流程 ----------
 
-c_step "安装目标：${TARGET_MODE}（${SKILLS_DEST_DIR}）"
+c_step "安装目标：${HARNESS} / ${PLUGIN} / ${TARGET_MODE}（${SKILLS_DEST_DIR}）"
 [[ $DRY_RUN -eq 1 ]] && c_warn "dry-run 模式：只打印操作，不实际写入"
 
 if [[ $DRY_RUN -eq 0 ]]; then
@@ -270,12 +306,13 @@ for name in "${TO_INSTALL[@]}"; do
     fi
 
     if [[ $NO_BACKUP -eq 0 ]]; then
-      backup_dir="${SKILLS_DEST_DIR}/.backup/${name}-$(date +%Y%m%d%H%M%S)"
+      backup_template="${SKILLS_BACKUP_DIR}/${name}-$(date +%Y%m%d%H%M%S)-XXXXXX"
       if [[ $DRY_RUN -eq 1 ]]; then
-        c_info "[dry-run] 将备份旧版本 ${name} → ${backup_dir}"
+        c_info "[dry-run] 将备份旧版本 ${name} → ${backup_template}"
       else
-        mkdir -p "$(dirname "$backup_dir")"
-        cp -r "$dest" "$backup_dir"
+        mkdir -p "$SKILLS_BACKUP_DIR"
+        backup_dir="$(mktemp -d "$backup_template")"
+        cp -r "$dest/." "$backup_dir/"
         c_info "${name}：旧版本已备份至 ${backup_dir}"
       fi
     fi
@@ -309,7 +346,7 @@ done
 cmd_installed=0
 cmd_skipped=0
 
-if [[ ${#REQUESTED_SKILLS[@]} -eq 0 && -d "$COMMANDS_SRC_DIR" ]]; then
+if [[ "$HARNESS" == "claude" && ${#REQUESTED_SKILLS[@]} -eq 0 && -d "$COMMANDS_SRC_DIR" ]]; then
   c_step "斜杠命令：/${COMMAND_NS}:*（${COMMANDS_DEST_DIR}）"
 
   # 迁移：早期版本把命令备份错误地放在 commands/<NS>/.backup/ 下，

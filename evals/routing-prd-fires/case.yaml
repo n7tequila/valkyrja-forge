@@ -1,0 +1,26 @@
+schema_version: "1.1"
+name: routing-prd-fires
+description: 已有需求治理工作区的仓库里聊功能，必须路由到 valkyrja-prd——与 routing-prd-declines-unopted 同一句话，只差工作区在不在。
+tags: [smoke, routing]
+plugins: ["../.."]
+runs: 3
+expected_outcome: 技能被调用；本用例只判是否路由，不判路由后做得对不对。
+
+context:
+  scaffold_script: scaffold.sh
+
+execution:
+  # 与 routing-prd-declines-unopted 逐字相同；准入只看工作区，不看措辞。
+  prompt: 我们聊聊登录这块吧，你觉得需要哪些能力？
+  model: sonnet
+  max_turns: 20
+  timeout_seconds: 900
+  allowed_tools: [Read, Glob, Grep, Skill]
+
+graders:
+  # 全部 grader 都是 with-only（Skill 类），按 harness 规则此时正常计分。
+  - type: tool_used
+    name: routes-to-valkyrja-prd
+    tool: Skill
+    input_match: '"skill"\s*:\s*"(?:[\w-]+:)?valkyrja-prd"'
+    min: 1

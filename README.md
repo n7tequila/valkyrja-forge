@@ -2,7 +2,7 @@
 
 **English** | [简体中文](README.zh-CN.md)
 
-A trio of Claude Code skills that turn loose requirement discussions into traceable AI-written code — three governance layers: product contracts (PRD), technical contracts (architecture), and verifiable delivery (OpenSpec).
+A trio of shared Codex and Claude Code skills that turn loose requirement discussions into traceable AI-written code — three governance layers: product contracts (PRD), technical contracts (architecture), and verifiable delivery (OpenSpec).
 
 The core claim: **AI participates in the whole loop — from gathering requirements to writing code — but every step stays auditable, and product semantics never get quietly rewritten.**
 
@@ -113,7 +113,21 @@ The four verbs (propose / apply / verify / archive) run as a **shell**: gates fi
 
 ---
 
-## Slash commands
+## Entry points
+
+Codex has no command layer: invoke a skill by its registered name (or let the
+opt-in-aware descriptions route natural language). With the plugin install the
+names carry the plugin prefix:
+
+```text
+$valk:valkyrja-prd   let's talk about pausing the recording
+$valk:valkyrja-arch  review the technical foundation
+$valk:valkyrja-spec  can this change be archived?
+```
+
+With the copy installer the names are bare: `$valkyrja-prd`, `$valkyrja-arch`,
+`$valkyrja-spec`. `/skills` lists what is actually registered. The protocol and all
+confirmation gates are the same as in Claude Code.
 
 Three entry points, namespaced for cohesion:
 
@@ -136,17 +150,45 @@ They are deliberately thin — pure delegation with no routing logic of their ow
    → routes to trace
 ```
 
-> **Slash commands are Claude Code-specific.** They are a convenience layer, not the mechanism.
-> The skills route on natural language by design. `SKILL.md` is plain Markdown with YAML
-> frontmatter — a format that is **portable but untested** on other harnesses (e.g. Codex's
-> `.agents/skills`). This repo currently commits to Claude Code only; a Codex adapter is the
-> first concrete multi-harness target on the roadmap.
+> The short `/valk:*` aliases remain Claude Code-specific. Codex consumes the same
+> `SKILL.md`, references, templates and trace script, with no duplicate skill tree.
+> After the first governance files land, the skill proposes a guard block for the
+> instruction file the active host actually reads — `AGENTS.md` for Codex; `CLAUDE.md`
+> for Claude Code, or `AGENTS.md` when the repo has no `CLAUDE.md` (Claude Code then
+> reads `AGENTS.md`, so no `CLAUDE.md` is created) — and writes it only after you
+> confirm. The block text is the same for both hosts; everything outside it is untouched.
 
 ---
 
 ## Installation
 
-### Primary path: Claude Code plugin (recommended)
+### Codex
+
+For local development, register this checkout explicitly and install either plugin:
+
+```bash
+codex plugin marketplace add /absolute/path/to/valkyrja-forge
+codex plugin add valk@valkyrja-forge
+codex plugin add valk-tools@valkyrja-forge  # optional, independent toolbox
+```
+
+The marketplace remains shared with Claude Code; each plugin also has a portable
+root `plugin.json`. Local marketplace installation is a CLI path, not publication
+to the public directory. Start a new session after installation or an upgrade.
+
+For an offline, project-scoped installation into a **consuming product repo**:
+
+```bash
+scripts/install-skills.sh --harness codex --project /path/to/your-product-repo
+scripts/install-skills.sh --harness codex --plugin valk-tools --system
+```
+
+Codex copies go to `<project>/.agents/skills/` or `~/.agents/skills/`, with no
+command files. Pick either plugin installation or copies for a given host, not
+both: duplicate registrations can silently select a stale version. An existing
+Claude installation is left intact; no private catalog or project documents move.
+
+### Claude Code plugin
 
 This repo is a plugin marketplace (`.claude-plugin/`). Inside Claude Code:
 
@@ -162,7 +204,7 @@ from the official plugin mechanism. Under the plugin, skill names are namespaced
 #### Second plugin: `valk-tools`
 
 This marketplace hosts **two independent plugins**. `valk-tools` is a personal-workflow
-toolbox — context handoff, cross-forge PR drafting and a review-only refactoring gate —
+toolbox — context handoff, Claude ↔ Codex work handoff, cross-forge PR drafting and a review-only refactoring gate —
 that travels with the person rather than with the project:
 
 ```
@@ -172,18 +214,18 @@ that travels with the person rather than with the project:
 It carries its own version and installs, upgrades and uninstalls separately; it shares
 this repo's git history with `valk` but not its release cadence, and the two have no
 dependency on each other. It ships **skills only, no command layer** — invoke them
-directly as `/valk-tools:context-handoff`, `/valk-tools:merge-pr` and
+directly as `/valk-tools:context-handoff`, `/valk-tools:host-handoff`, `/valk-tools:merge-pr` and
 `/valk-tools:refactor-review`.
 See [valk-tools/README.md](valk-tools/README.md).
 
-The fallback installer below covers the **`valk` skills only** — `valk-tools` is
-plugin-only by design.
+The fallback installer covers either plugin; select the toolbox with
+`--plugin valk-tools`. The default remains `valk` on Claude Code for compatibility.
 
 ### Fallback path: copy-based installer (offline / no-git scenarios)
 
 Skills install into your **target product repository** — this repo is only the source.
-The examples below assume **cwd is the forge repo root** — copying the first line verbatim
-would install into the forge repo itself; to target a product repo, pass
+The examples below assume **cwd is the forge repo root** — omitting the directory
+argument to `--project` would install into the forge itself; to target a product repo, pass
 `--project <path>` or `cd` there first and call this script by absolute path:
 
 ```bash
@@ -196,7 +238,7 @@ cd /path/to/your-product-repo && /path/to/valkyrja-forge/scripts/install-skills.
 # Install machine-wide (~/.claude/, applies to every project)
 scripts/install-skills.sh --system
 
-# Upgrade in place (old version backed up to .backup/; --no-backup skips it)
+# Upgrade in place (old version backed up; --no-backup skips it)
 scripts/install-skills.sh --system --force
 
 # Install one skill only (slash commands are skipped in this mode,
@@ -207,6 +249,9 @@ scripts/install-skills.sh --project /path/to/your-product-repo valkyrja-prd
 scripts/install-skills.sh --system --dry-run
 scripts/install-skills.sh --system --list
 ```
+
+Add `--harness codex` to these commands for Codex. Codex skill backups live under
+`.agents/.valkyrja-backup/skills/`, outside the skill discovery tree.
 
 Before installing, each skill is validated: `SKILL.md` must exist and its frontmatter must carry `name` and `description`. Anything failing that is skipped with an error, without affecting the rest. The script deliberately has no version tracking or uninstall — those are the plugin path's job, and the fallback does not re-invent them.
 
@@ -224,9 +269,11 @@ The installer and workflow are validated on macOS/Linux only; Windows users shou
 ```bash
 npm install -g @fission-ai/openspec
 openspec init --tools claude    # run inside the target product repo
+# Codex instead:
+openspec init --tools codex
 ```
 
-`openspec init` generates the official workflow skills according to your current profile. Note the official `core` profile **does not include `verify`** — and the full loop needs it. The skill's preflight check will tell you.
+`openspec init` generates the official workflow skills according to your current profile. The official `core` profile **does not include `verify`**. For the full loop, use `openspec config profile` to select a custom workflow set including propose, apply, verify, sync, and archive, then run `openspec update` in the product repo. This is an explicit user configuration choice; the skill never silently changes a global profile. See [OpenSpec compatibility](valk/skills/valkyrja-spec/references/openspec-compatibility.md) for host-specific paths and calls.
 
 ---
 
@@ -248,18 +295,22 @@ These run through all three skills and explain every tradeoff in the design:
 ```
 valkyrja-forge/
 ├── README.md / README.zh-CN.md / NOTICE.md (pointer; the authoritative notices ship with the catalog)
-├── CLAUDE.md                      # editing discipline for this repo (single-authority rule, pre-commit checks, sanitization gate)
-├── .claude-plugin/                # plugin.json + marketplace.json (primary install path)
-├── commands/                      # slash commands (flat; the plugin name or the install dir provides the /valk: namespace)
+├── AGENTS.md                      # Codex pointer to the shared repository editing rules
+├── CLAUDE.md                      # single authority for those rules (not a consumer guard)
+├── .claude-plugin/marketplace.json # shared marketplace; register explicitly in Codex CLI
 ├── docs/design/                   # design records & evolution logs for all three skills (D-series ruling ledger)
 ├── scripts/install-skills.sh      # fallback installer (offline / no-git; the plugin is the primary path)
-├── tests/                         # trace.py regression fixtures (forge dev asset, not shipped with the skills)
+├── tests/                         # trace, installer and packaging regressions (not distributed)
+├── evals/                         # model-backed behavior checks (not distributed)
 ├── scripts/check-sanitization.sh # D6 sanitization gate (private wordlist, pre-push/CI)
-└── skills/
-    ├── valkyrja-prd/              # SKILL.md + templates/
-    ├── valkyrja-arch/             # SKILL.md + templates/ + references/conventions/ (catalog + NOTICE.md)
-    └── valkyrja-spec/             # SKILL.md + templates/ + references/
-                                   #   + tools/trace.py (deterministic trace, ships with the skill; CI-gate exit code)
+├── valk/
+│   ├── plugin.json / .claude-plugin/plugin.json # portable / Claude manifests
+│   ├── commands/                 # Claude-only short aliases
+│   └── skills/
+│       ├── valkyrja-prd/          # SKILL.md + templates/
+│       ├── valkyrja-arch/         # SKILL.md + templates/ + convention catalog
+│       └── valkyrja-spec/         # SKILL.md + templates/ + references/ + tools/trace.py
+└── valk-tools/                    # independent manifests + four personal-workflow skills
 ```
 
 ---
@@ -276,7 +327,9 @@ Planned:
 - [ ] Push the purely deterministic checks (traceability, set reconciliation) down into scripts and CI
 - [ ] CI rule forbidding edits to already-released `prd/releases/**`
 - [x] Plugin-ized (`.claude-plugin/`, v0.9.0): versioning/upgrade/uninstall via the official mechanism, install.sh demoted to fallback
-- [ ] First cross-harness adapter: Codex `.agents/skills` (skills-only, no command files) — claim support only after a real test
+- [x] Codex adapter: shared skills, one host-neutral guard block, host-specific OpenSpec calls, portable manifests, tested copy installer; behavior checks via `claude plugin eval` and `evals/run_codex.py`. Behavior runs are evidence, not proof of a full Codex product lifecycle.
+
+Current migration evidence and remaining gaps: [Codex migration assessment](docs/design/codex-migration.md).
 
 ---
 

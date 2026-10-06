@@ -1,0 +1,29 @@
+schema_version: "1.1"
+name: routing-spec-declines-openspec-only
+description: 只有 openspec/ 工作区、没有 valkyrja 基线的仓库（独立使用 OpenSpec 官方流程），spec 技能不得接管。
+tags: [smoke, routing, negative]
+plugins: ["../.."]
+runs: 3
+expected_outcome: valkyrja-spec 一次也不被调用；助手就事论事地聊 change 拆分。
+
+context:
+  scaffold_script: scaffold.sh
+
+execution:
+  # 话题贴着 spec 技能的关键词（"这版拆成几个 change"），但项目不在其管辖内。
+  prompt: 这个 change 有点大，想再拆细一点，帮我看看该怎么拆。
+  model: sonnet
+  max_turns: 25
+  timeout_seconds: 900
+  allowed_tools: [Read, Glob, Grep, Skill]
+
+graders:
+  # arm: both 是必须的——不写的话 Skill 类 grader 默认 with-only，会被排除出计分。
+  # "不得调用" 在有插件和无插件两臂里都成立，所以两臂都该判。
+  - type: tool_used
+    name: does-not-take-over
+    tool: Skill
+    input_match: '"skill"\s*:\s*"(?:[\w-]+:)?valkyrja-spec"'
+    min: 0
+    max: 0
+    arm: both

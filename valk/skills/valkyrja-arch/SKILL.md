@@ -1,6 +1,6 @@
 ---
 name: valkyrja-arch
-description: 技术契约治理层——讨论并裁决技术选型（ADEC）、采纳编码约定、定义跨 change 共享接口契约，为 OpenSpec 的 design.md 提供项目级技术地基。当用户要讨论技术方案、确定技术选型、采纳或制定编码/数据库/接口/日志/鉴权约定、定义或修订共享契约、盘点架构决策现状时，必须使用本技能。即使用户只是随口说"用什么存储"、"错误码怎么定"、"这个就定下来"、"把标准的 API 约定拿进来"、"内容包结构得定一下"，只要项目已有 docs/architecture/ 工作区，或用户明确要在本项目建立技术契约治理（bootstrap），都应触发本技能。未 opt-in 的项目（无该工作区且用户未要求建立）里的日常技术讨论不要接管，也不要主动提议 bootstrap。
+description: 先检查准入，后决定是否读取本技能：仅当项目已有 docs/architecture/ 工作区，或用户明确要求在本项目建立技术契约治理（bootstrap），才触发。可先用轻量目录存在性检查核实；两项均不满足时不要读取 SKILL.md、不要接管、不要提议 bootstrap，普通技术关键词不构成 opt-in。准入后，本技能治理技术选型（ADEC）、编码约定与跨 change 共享接口契约，为 OpenSpec design.md 提供项目级技术地基。讨论技术方案、确定选型、采纳或制定编码/数据库/接口/日志/鉴权约定、定义或修订共享契约、盘点架构决策时必须使用；包括随口说"用什么存储"、"错误码怎么定"、"这个就定下来"、"把标准 API 约定拿进来"、"内容包结构得定一下"等。人类裁决与产品优先边界不因触发放宽。
 ---
 
 # Valkyrja Arch（技术契约治理层）
@@ -8,6 +8,17 @@ description: 技术契约治理层——讨论并裁决技术选型（ADEC）、
 本技能治理「**怎么建**」：技术选型、编码约定、跨 change 共享的接口契约。
 它与 valkyrja-prd 同构（discuss → decide 的治理形态），但决策对象从产品语义
 换成工程技术；产出被 OpenSpec 的 design.md 消费（`依据: ADEC-*`）。
+
+## 宿主适配（共享协议）
+
+- **宿主取自当前会话运行环境或用户明确指定，不从文件存在性猜测**；仓库可同时有
+  `.claude/`、`.agents/`、`CLAUDE.md` 与 `AGENTS.md`。运行环境不明且将写宿主配置时先问清。
+- Claude Code 入口为 `/valk:prd`、`/valk:arch`、`/valk:spec`。Codex 没有命令层，按技能注册名调用：
+  plugin 安装为 `$valk:valkyrja-prd` 等，复制安装为 `$valkyrja-prd` 等，以 `/skills` 列出的为准；
+  委托时用已加载的技能名。
+- 读取/编辑/执行使用当前宿主提供的工具。提问可使用其可用的交互工具；
+  Codex 的结构化提问不可用或当前模式不支持时，用普通文字问句等待用户回复。
+  **没有交互工具不等于已获确认**；两种宿主的特权确认、opt-in 与跨层权威边界完全相同。
 
 ## 第一原则（宪法，8 条，优先于本文件其他一切内容）
 
@@ -155,7 +166,7 @@ docs/architecture/
 | "把 catalog 的 XX 拿进来"、"按标准约定来" | adopt（特权，需确认） |
 | "定义 XX 契约"、"内容包结构定一下"、"改契约" | contract（特权，需确认） |
 | "架构现状"、"有哪些决策"、"约定都有什么" | status |
-| "体检"、"检查架构工作区"、"补 CLAUDE.md 治理块" | check |
+| "体检"、"检查架构工作区"、"补 CLAUDE.md / AGENTS.md 治理块" | check |
 | "生成 lint 配置"、"把约定投影到 CI" | publish（特权，需确认） |
 
 意图不明按 discuss 处理。**特权动作永不允许仅凭推断执行。**
@@ -192,15 +203,17 @@ docs/architecture/
 展开完整原文。本条只约束呈现顺序与可读性，不放宽任何「回显必须包含」的
 完整性要求。
 
-**消费仓 CLAUDE.md 治理块**：产品仓根目录的 `CLAUDE.md` 每次会话都在上下文里，
-是**技能未被触发时唯一仍然生效的护栏**——有人直接手改已发布 PRD 或主 spec 时，
-技能不在场，机检也只在跑 trace 时才发现后果。因此两个时机提议写入
-`templates/claude-guard-block.md` 的界定块：**首次在本仓落盘治理文件后**
+**消费仓宿主治理块**：块正文只有一份模板 `templates/guard-block.md`，两个宿主共用；
+写到当前宿主**实际会读**的指令文件——Codex 是 `AGENTS.md`；Claude Code 是 `CLAUDE.md`，
+仓库没有 `CLAUDE.md` 时是 `AGENTS.md`，此时绝不新建 `CLAUDE.md`（判定细则见模板头部）。
+该文件在宿主正常加载项目指令时提供**技能未被触发时的护栏**；不能把文件存在等同于
+一定被加载或强制生效。两个时机提议写入界定块：**首次在本仓落盘治理文件后**
 （prd 首个 release / arch bootstrap 落盘 / spec baseline 定稿），以及**任何一次特权确认时
-发现该块缺失**（含被外部工具重写抹掉、以及协议升级前就已存在的老项目）。
-提议＝回显块全文、经确认才落盘（特权动作），每会话至多提议一次，被拒不再重复。
-写入纪律见该模板头部：已有文件只插入块、其余内容一字不动；文件不存在则只创建含块的
-文件（项目总体说明交给 `/init`，本技能不代写）；块已存在则什么都不做。
+发现当前宿主读不到这个块**（含被外部工具抹掉、以及协议升级前的老项目）。
+提议＝回显**解析软链后的真实路径**与块全文、经确认才落盘（特权动作），每会话至多提议一次，
+被拒不再重复。写入纪律（软链、越界、旧版块、标记异常）以模板头部为准，此处不复述。
+块在不在，按当前宿主实际读到的内容判断（软链、`@AGENTS.md` 导入都算）；
+不因两个文件并存而自动各写一份。
 回显时必须如实说明：**该块是 prompt 级提示、不是强制**，门禁仍是 trace 机检与 CI。
 
 ## 各动作运行协议
@@ -232,7 +245,7 @@ STATUS.md 作为派生缓存按现状重算。
 |---|---|
 | 构建与依赖 | `package.json` / `pom.xml` / `build.gradle` / `go.mod` / `pyproject.toml` / `Cargo.toml` … |
 | 目录布局 | 顶层 surface 划分、各 surface 根目录、是否 monorepo |
-| 既有规范 | linter / formatter / tsconfig / 编辑器配置、编码规范文档、`CLAUDE.md` / `AGENTS.md`——**读 CLAUDE.md 时跳过 `valkyrja:begin/end` 块**：那是本套技能自己写入的治理块，不是既有事实，把它读成「项目已有 XX 约定」是自指幻觉（空白项目里没有别的事实稀释它，最易踩） |
+| 既有规范 | linter / formatter / tsconfig / 编辑器配置、编码规范文档、`CLAUDE.md` / `AGENTS.md`——**读两种文件时均跳过 `valkyrja:begin/end` 块**：那是本套技能自己写入的治理块，不是既有事实，把它读成「项目已有 XX 约定」是自指幻觉（空白项目里没有别的事实稀释它，最易踩） |
 | CI | workflow 配置中已固化的运行时版本与检查项 |
 
 > **发现 `package.json` 里有 vue，不等于「决定用 Vue」。** 那是**既成事实**，
@@ -337,7 +350,7 @@ catalog 更新**不自动同步**；`check` 发现 `adopted-from` 版本落后�
 对照本 SKILL.md 契约体检：ID 正则与编号连续性；ADEC frontmatter 完备性与
 superseded 链完整性（指向的 ID 真实存在）；契约版本与 Changelog 一致性；
 采纳副本指纹完备性；`adopted-from` 版本落后（**仅提示**；带 `(source: …)`
-指纹的按源名在 `~/.claude/valkyrja/catalog/` 解析，源不可达**显式报
+指纹的按 catalog 节的私有源解析顺序定位，源不可达**显式报
 「跳过（源不可达）」**，不得静默通过）；
 契约消费方引用落后版本（**仅提示**，升级是消费方 change 的决定）；
 inventory 条目所指实现的存在性（记录了路径的条目）；
@@ -352,8 +365,10 @@ inventory 条目所指实现的存在性（记录了路径的条目）；
 `[需人工处理]`（重跑 publish 重投影）；
 **requires 闭包**——绑定层约定副本存在时，其 `adopted-from` 所指 catalog
 条目声明的 `requires:` 基础层副本必须也已采纳，缺失报 `[需人工处理]`；
-**仓库根 `CLAUDE.md` 的 valkyrja 治理块存在性**——缺失或被外部工具抹掉时报
-`[需人工处理]`，按 `templates/claude-guard-block.md` 提议补写（经确认落盘）。
+**当前宿主实际会读的指令文件里的 valkyrja 治理块**——Codex 读 `AGENTS.md`，Claude Code 读
+`CLAUDE.md`、没有时读 `AGENTS.md`；缺失或被外部工具抹掉时报 `[需人工处理]` 并提议补写（经确认落盘）；
+旧版块与标记异常只报告、不自动改，判定与修复纪律见 `templates/guard-block.md` 头部；
+块在不在按宿主实际读到的内容判断（软链、`@AGENTS.md` 导入都算）。
 产出三态报告（可自动修复 / 需人工处理 / 仅报告），自动修复只改形式不改语义。
 
 ### publish（特权）
@@ -374,9 +389,14 @@ inventory 条目所指实现的存在性（记录了路径的条目）；
 条目按 concern × stack 两轴组织，frontmatter 契约与许可证纪律见
 [references/conventions/README.md](references/conventions/README.md)。
 
-**多源（D12 切片一）**：除内置 catalog 外，`~/.claude/valkyrja/catalog/<源名>/`
-的每个子目录是一个**私有源**——条目格式与内置完全同构，把私有 catalog 仓
-clone 或软链到该处即可（该位置不受 skill 升级覆盖）。adopt 亦接受显式源路径。
+**多源（D12 切片一）**：除内置 catalog 外，私有根下每个 `<源名>/` 子目录是一个
+**私有源**——条目格式与内置完全同构，把私有 catalog 仓 clone 或软链到私有根即可
+（不受 skill 升级覆盖）。私有源按三步定位：
+1. adopt 时显式给出的源路径；
+2. 设了环境变量 `VALKYRJA_CATALOG_ROOT` 时只认 `$VALKYRJA_CATALOG_ROOT/<源名>/`；
+3. 否则为 `~/.claude/valkyrja/catalog/<源名>/`——两个宿主共用，Codex 同样读这里。
+
+所指定的位置不可达时直接报告，不偷偷换到别处找同名源。
 
 - **指纹带源**：私有源副本写 `adopted-from: <条目id>@<版本> (source: <源名>)`；
   无 `(source: …)` 即内置 catalog——既有指纹向后兼容，不需迁移。

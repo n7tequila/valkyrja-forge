@@ -1,6 +1,6 @@
 # valkyrja-forge
 
-**这是协议 / 技能源码仓，不是应用仓。** 主产出是三个 Claude Code 技能
+**这是协议 / 技能源码仓，不是应用仓。** 主产出是三个 Codex / Claude Code 共用技能
 （`valkyrja-prd` / `valkyrja-arch` / `valkyrja-spec`）与一个确定性门禁脚本
 `trace.py`，安装到**别的**产品仓库里使用。本仓没有应用代码，也不消费自己的协议。
 
@@ -30,10 +30,12 @@ valk-tools 的纪律见 `valk-tools/README.md`。
 
 ```bash
 python3 tests/run_tests.py            # trace.py 回归，期望末行「失败 0」
+python3 -m unittest discover -s tests -p 'test_*.py'  # 安装与跨宿主打包回归
 bash scripts/check-sanitization.sh    # D6 脱敏门禁，期望「0 命中」
 ```
 
 动了 `.claude-plugin/` 或准备发版时另加 `claude plugin validate .`。
+Codex 行为冒烟见 `evals/README.md`；模型行为检查不等于确定性 trace 全覆盖。
 
 ## 这是公开 MIT 仓：脱敏是硬门禁
 
@@ -50,22 +52,27 @@ bash scripts/check-sanitization.sh    # D6 脱敏门禁，期望「0 命中」
 | `valk/skills/**` | valkyrja 的唯一真相源，随安装分发 | `SKILL.md` 每次调用全量进上下文——控制篇幅，判定细则进 `references/` |
 | `valk/skills/*/templates/` | 落盘格式的权威 | 模板注释与 SKILL.md 曾经互相矛盾（交接单预存 Authority 块），改任一侧都要对账另一侧 |
 | `valk/commands/*.md` | 斜杠入口，薄转接 | 只转发意图，**不复述特权与确认规则**——那是 SKILL.md 的唯一权威 |
-| `tests/` | trace.py 回归夹具 | **不随技能分发**（forge 开发资产）；新增检查分支就补场景 |
+| `tests/` | trace.py 回归夹具，以及安装、打包、交接脚本的单测 | **不随技能分发**（forge 开发资产）；新增检查分支就补场景 |
+| `evals/` | 模型行为回归（Claude 用 `claude plugin eval`，Codex 用 `run_codex.py`） | **不随技能分发**；grader 只断言可观察后果、不复述规则，跑法见 `evals/README.md` |
 | `docs/design/` | 设计定稿与演进记录 | 每次协议修订追加一行演进记录，注明来源：纸面推演 / 外部评审 / 真实运行 |
-| `valk/` | valkyrja 协议的 plugin 根 | 目录名 = plugin 名；`plugin.json` 在其 `.claude-plugin/` 下 |
+| `valk/` | valkyrja 协议的 plugin 根 | 根 `plugin.json` 是 portable 清单；`.claude-plugin/plugin.json` 保留 Claude 兼容 |
 | `valk-tools/` | 第二个 plugin，与协议无关 | 自成一体：改它**只抬它自己的版本**，不动 `valk` 的；不受三载体同源纪律约束 |
-| `.claude-plugin/` | **只剩 marketplace 清单**（列 `valk` 与 `valk-tools` 两个 plugin）；各自的 `plugin.json` 已下沉到 `valk/` 与 `valk-tools/` | **两个 plugin 各有一对 `version`**（`plugin.json` 与 marketplace 中对应条目），**每对内部必须一致，两对之间互不相干**；改了谁的内容就抬谁的版本，否则 `/plugin update` 认不出新版 |
+| `.claude-plugin/` | 共用 marketplace 清单（列 `valk` 与 `valk-tools`）；由两宿主显式注册 | 每个 plugin 的根清单、Claude 兼容清单、marketplace 条目三处 `version` 必须一致；两个 plugin 仍独立版本，改了谁的内容就抬谁的版本 |
 
 ## 本地验证
 
-技能改完不会自动生效。用兜底安装脚本装到系统级，然后**开新会话**验证：
+技能改完不会自动生效。优先在临时消费仓验证，然后**开新会话**。
+需要个人安装时用兜底脚本（不要与同一宿主的 plugin 安装并存）：
 
 ```bash
 scripts/install-skills.sh --system --force
+scripts/install-skills.sh --harness codex --system --force
 ```
 
 plugin 是分发主路径，但每次改动都要 `/plugin marketplace update` 且需重启，
 调试期不适用。**两种形态不要同时装**——会双注册（同一技能出现两次）。
+Codex 的本地 marketplace 安装是按版本号缓存的副本，改了源码不会自动生效：
+重跑 `codex plugin add valk@valkyrja-forge`（或 `valk-tools@valkyrja-forge`）刷新缓存，再开新会话。
 
 ## 语言与机读常量
 

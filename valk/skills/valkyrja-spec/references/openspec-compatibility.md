@@ -1,21 +1,40 @@
 # OpenSpec 兼容性与官方 skill 冲突缓释（详版）
 
-> **何时读本文件**：会话启动的前提检测发现缺 workflow、准备归档、
-> 写 `openspec/config.yaml` 注入、或遇到官方 skill 行为与本技能门禁冲突时。
+> **何时读本文件**：会话启动的前提检测发现缺 workflow 或宿主入口来源不明、准备归档、
+> 写 `openspec/config.yaml` 注入、宿主没给出技能路径而要定位 trace.py、
+> 或遇到官方 skill 行为与本技能门禁冲突时。
 > SKILL.md 只保留检测清单与结论；条件分支与理由在这里。
 >
 > 以下行为均为对 OpenSpec **v1.9.0 实测确认**，非文档推断；
 > 标注 (1.10.0) 的条目在 v1.10.0 上补测。trace.py 的 V1.1 以
 > **[1.9, 1.10] 为已实测验证区间**：高于区间只 WARNING 不拦，
 > 但升级后应回到本文件逐条复验第六节的依赖行为再抬区间上界。
+>
+> **Codex 适配依据（2026-10-06）**：宿主目录、skills-only 与调用名来自
+> [OpenSpec 官方支持工具表](https://github.com/Fission-AI/OpenSpec/blob/main/docs/supported-tools.md)
+> 与本机 v1.10.0 CLI/安装源码核对；workflow 名与 profile 来自
+> [官方命令说明](https://github.com/Fission-AI/OpenSpec/blob/main/docs/commands.md)。
+> 这些是安装契约依据，不等于 Codex 模型行为已完成真实项目端到端验证。
 
 ## 一、环境前提的条件分支
 
 ### `openspec init` 的副作用
 
-会按**当前 profile 与 delivery 设置**在 `.claude/` 下生成对应的 workflow skills
-与 `/opsx:*` 命令——**数量随 profile 而变，不要向用户断言固定数量**。
+宿主由当前会话或用户显式指定，不由仓库里的目录推断。Claude 用
+`openspec init --tools claude`，按**当前 profile 与 delivery 设置**在 `.claude/`
+生成 workflow skills 与 `/opsx:*` 命令；Codex 用 `openspec init --tools codex`，
+在 `.agents/skills/openspec-*/SKILL.md` 安装 **skills-only**，使用 `$openspec-*`。
+Codex 即使 delivery=commands 也写 skills，不生成 `.codex/prompts/` 命令。
+**数量随 profile 而变，不要向用户断言固定数量**。
 本技能代跑前须回显完整命令行与将创建的文件清单，经人确认。
+
+root 已存在而当前宿主未配置时，以对应 init 补配置；另一个宿主的产物不算本宿主可用。
+旧 Codex `.codex/skills/` 交给官方 init/update 协调：官方只在替代品写入后清理可识别的
+受管旧产物，保留自定义和已偏离内容；不手工扫掉整个目录。
+`.agents/skills/` 可能由 `agents` 或其他宿主维护，仅有目录不代表已按 Codex 配置；
+有 `.agents/skills/.openspec-target` 时读取宿主标识，旧无标识产物读生成的调用语法
+（`$openspec-*` 为 Codex，只有 `/openspec-*` 则为通用宿主）。
+需要转为 Codex 时先回显影响，再显式 `openspec init --tools codex`。
 
 ### 缺 workflow 时的补救：先判 profile，再决定手段
 
@@ -25,15 +44,25 @@
 ```
 openspec config get workflows
      │
-     ├── 含目标 workflow，但 skill 文件缺失
-     │      → 安装产物过期。项目内跑 `openspec update`（只动本项目，无需改全局）
+     ├── 含目标 workflow，但当前宿主的 SKILL.md 缺失或不可读
+     │      → 宿主未配置则经确认 init 对应宿主；否则是安装产物过期，
+     │        经确认项目内跑 `openspec update`（不改全局，可能刷新已配置的多个宿主）
      │
      └── 不含目标 workflow（如 profile=custom 且排除了它）
             → `openspec update` 是空操作，跑了也不会装上。
-              唯一出口是改 profile：`openspec config profile core`
+              改 profile：sync 可用 `openspec config profile core`；
+              verify 必须通过 `openspec config profile` 选择包含 verify 的 custom 集。
+              **core 不含 verify，切回 core 不能补装 verify。**
               **这修改全局 ~/.config/openspec/config.json，影响本机所有项目**，
-              属特权动作，必须经人确认，不得代跑。
+              属特权动作，必须经人确认后才执行；选择后在项目运行 update。
 ```
+
+检测以当前宿主根下完整 `SKILL.md` 为准：Claude `.claude/skills/`、Codex
+`.agents/skills/`。profile 含 workflow 但 Claude delivery=commands 时技能可能未生成；
+可使用已存在的官方 `/opsx:*` 命令委托，或经确认调整 delivery，不能仅靠 update 凭空补技能。
+Codex 没有这个 commands-only 分支。propose/apply/verify 委托前分别检测实际入口，
+其 Codex 名为 `$openspec-propose`、`$openspec-apply-change`、`$openspec-verify-change`，
+sync 为 `$openspec-sync-specs`；不要把 `/opsx:apply` 写成不存在的 `$openspec-apply`。
 
 若同时提示 CLI 有新版本，先建议升级 CLI 再 `openspec update`——新版本可能带来新 workflow。
 
@@ -50,6 +79,18 @@ sync / archive），因此一个刚 `openspec init` 的标准项目**大概率�
 > **verify 缺失比 sync 缺失严重**：本技能的 trace 只管 PRD ↔ spec，
 > 不做「代码 ↔ artifacts」这件事，缺了它就没有任何替代方案，闭环会缺一段。
 > 缺失时必须显式告知用户这一后果，而不是一句「可补装」带过。
+
+### 宿主没给出技能路径时定位 trace.py
+
+正常情况下两个宿主都会给出已加载技能的路径（Claude 给技能基目录，Codex 的技能清单带文件路径），
+SKILL.md 直接按它定位 `tools/trace.py`。只有宿主没给出时，才按当前宿主查安装位置并核对版本：
+
+- Codex：`.agents/skills/valkyrja-spec/`、`~/.agents/skills/valkyrja-spec/`，或已安装 plugin 的缓存目录
+- Claude：`.claude/skills/valkyrja-spec/`、`~/.claude/skills/valkyrja-spec/`，或 plugin 目录；
+  命令或 hook 上下文提供了 `${CLAUDE_PLUGIN_ROOT}` 时可据此定位（Codex 不依赖该变量）
+
+找到多份且无法确认哪份与当前加载的技能同版时报告歧义，不挑一份用；一份都没有时报工具故障。
+两种情况都不得冒称 trace 已通过。
 
 ## 二、归档路径的选择
 
@@ -109,7 +150,8 @@ openspec instructions specs --change <任一change> --json
 
 ### 已知治理缺口（诚实写明）
 
-若用户直接调用 `/opsx:apply`、`/opsx:archive` 或 `openspec archive`，
+若用户直接调用 Claude `/opsx:apply`、`/opsx:archive`，Codex
+`$openspec-apply-change`、`$openspec-archive-change` 或 `openspec archive`，
 本技能**无法拦截**——官方 archive skill 的原则是「警告不阻塞」，
 且它不会执行本技能的门禁。本技能只能保证：**经由本技能执行的 apply 与归档，
 一定先跑过 trace**。绕过路径只能靠约定与未来的 CI 兜底。

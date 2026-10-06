@@ -10,3 +10,6 @@
 .omx/
 __pycache__/
 *.pyc
+
+# plugin eval 的运行产物（aggregate-result.json / report.html，每次跑都新增一个时间戳目录）
+evals/results/

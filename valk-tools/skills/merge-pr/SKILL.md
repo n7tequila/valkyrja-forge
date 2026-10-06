@@ -26,7 +26,7 @@ Draft (and, when possible, actually create) a PR/MR that merges a source branch 
   2. A branch literally named `main` on `origin`
   3. A branch literally named `master` on `origin`
   4. Repo docs: check root `CLAUDE.md` / `AGENTS.md` / `README.md` for an explicit "main branch" note (this codebase's own `CLAUDE.md` says so directly — respect it over guessing)
-  5. If still ambiguous, use **AskUserQuestion** listing the candidate branches — do not guess silently.
+  5. If still ambiguous, ask the user with the candidate branches. Use the host's available question tool (Claude `AskUserQuestion`, Codex structured input when available); otherwise ask in plain text and wait for a reply — do not guess silently.
 - Confirm both branches exist on `origin`: `git ls-remote --heads origin <branch>`. If either is missing, stop and report — do not create a branch or push one into existence as a side effect.
 
 ### 2. Safety checks (never skip)
@@ -117,7 +117,7 @@ This skill drafts/opens the PR. It never merges it, never approves it, and never
 ## Guardrails
 
 - Never fabricate commit content — every bullet in the summary must trace back to an actual commit subject/body or diffstat in the resolved range.
-- Never guess source/target when genuinely ambiguous — ask via **AskUserQuestion**.
+- Never guess source/target when genuinely ambiguous — use the available host question tool or a plain-text question and wait for the user's answer.
 - Never push, force-push, create, delete, or merge branches as a side effect of drafting a PR.
 - Never pull credentials out of credential stores to call a forge API on the user's behalf unless they explicitly hand you a token for that purpose in the conversation.
 - Match the repository's actual commit-message language/format — don't impose English on a Chinese-convention repo or vice versa.

@@ -1,6 +1,6 @@
 ---
 name: valkyrja-spec
-description: OpenSpec 开发治理层——把已发布 PRD 转为 requirement baseline，裁决 change 划分，校验 PRD↔spec 双向追溯，并为归档把关。当用户要基于已发布 PRD 开始开发、建立需求基线、拆分 OpenSpec change、检查需求覆盖与追溯、开始实现某个 change、或准备归档某个 change 时，必须使用本技能。即使用户只是随口说"PRD 定稿了可以开工了"、"这版需求拆成几个 change"、"看看哪些需求还没做"、"开始开发这个 change"、"这个 change 能归档吗"、"实现有没有跑偏需求"，只要项目已有 valkyrja 基线（docs/product/baselines/）或用户明确要基于 Released PRD 开工建立基线，都应触发本技能。注意：仅有 openspec/ 工作区、无 valkyrja 基线且用户未提及 PRD 的项目（独立使用 OpenSpec 官方流程）不在本技能管辖内，不要接管。
+description: 先检查准入，后决定是否读取本技能：仅当项目已有 valkyrja 基线工作区 docs/product/baselines/，或用户明确要求基于 Released PRD 开工建立基线，才触发。可先用轻量目录存在性检查核实；两项均不满足时不要读取 SKILL.md、不要接管、不要提议初始化。仅有 openspec/ 或普通开发/change/归档关键词不构成 opt-in，独立使用官方 OpenSpec 流程的项目不在本技能管辖内。准入后，本技能把已发布 PRD 转为 requirement baseline，裁决 change 划分，校验 PRD↔spec 双向追溯并把关归档；建立或更新基线、拆分 change、检查需求覆盖、开始实现、准备归档时必须使用，包括"PRD 定稿了可以开工了"、"这版需求拆成几个 change"、"哪些需求还没做"、"这个 change 能归档吗"、"实现有没有跑偏需求"等。人类确认与需求权威边界不因触发放宽。
 ---
 
 # Valkyrja Spec（OpenSpec 开发治理层）
@@ -8,6 +8,17 @@ description: OpenSpec 开发治理层——把已发布 PRD 转为 requirement b
 本技能把**已发布 PRD** 转为可追溯的 OpenSpec 开发流。
 它是一个**治理编排层**：标准的 propose / apply / archive 由官方 OpenSpec skill 与 CLI 承担，
 本技能只负责它们不做、也不该做的事——需求基线、change 划分裁决、追溯闭环、归档门禁。
+
+## 宿主适配（共享协议）
+
+- **宿主取自当前会话运行环境或用户明确指定，不从文件存在性猜测**；仓库可同时有
+  `.claude/`、`.agents/`、`CLAUDE.md` 与 `AGENTS.md`。运行环境不明且将写宿主配置时先问清。
+- Claude Code 入口为 `/valk:prd`、`/valk:arch`、`/valk:spec`。Codex 没有命令层，按技能注册名调用：
+  plugin 安装为 `$valk:valkyrja-prd` 等，复制安装为 `$valkyrja-prd` 等，以 `/skills` 列出的为准；
+  委托时用已加载的技能名。
+- 读取/编辑/执行使用当前宿主提供的工具。提问可使用其可用的交互工具；
+  Codex 的结构化提问不可用或当前模式不支持时，用普通文字问句等待用户回复。
+  **没有交互工具不等于已获确认**；两种宿主的特权确认、opt-in 与跨层权威边界完全相同。
 
 ## 第一原则（宪法，8 条，优先于本文件其他一切内容）
 
@@ -83,17 +94,22 @@ change，其 `Covered-FRIDs` 即这些 deprecated FRID。故一个 change 的 `C
 
 每次会话首次进入本技能时，按顺序检测并把结果并入状态复述：
 
+0. **当前宿主**：按宿主适配节确定，随后只检测该宿主的官方入口：Claude 为
+   `.claude/skills/openspec-*/SKILL.md`（`/opsx:*`），Codex 为
+   `.agents/skills/openspec-*/SKILL.md`（`$openspec-*`），文件须存在且可读。
+   另一个宿主的安装不能代替本宿主；只装了命令、缺宿主标识或来源不明时，
+   按 openspec-compatibility.md 第一节判定。
 1. **CLI 可用性**：`openspec --version` ≥ 1.9.0（高于已实测区间上界——当前 1.10——
    时不拦，但提示核对 openspec-compatibility.md 第六节后再抬区间）。缺失则给出
    `npm install -g @fission-ai/openspec` 并停止——本技能的全部动作都依赖它。
 2. **`openspec/` 根**：`openspec context --json` 是否返回有效 root。
    缺失则**回显将执行的命令与将生成的文件清单，经人确认后**代跑
-   `openspec init --tools claude`。须提前说明：该命令会按**当前 profile 与 delivery 设置**
-   在 `.claude/` 下生成对应的 workflow skills 与 `/opsx:*` 命令
-   （数量随 profile 而变，不要向用户断言固定数量）。
-3. **官方 sync workflow**：`.claude/skills/openspec-sync-specs/` 是否存在。
+   `openspec init --tools claude` 或 `openspec init --tools codex`（按当前宿主）；
+   root 已存在但当前宿主未配置时同样经确认补跑。两个宿主生成的东西不同、
+   数量随 profile 而变，不向用户断言固定数量（见 openspec-compatibility.md 第一节）。
+3. **官方 sync workflow**：当前宿主 skill 根下 `openspec-sync-specs/SKILL.md` 是否可读。
    缺失**不阻塞**——归档走 CLI 有确定性替代（见「归档路径的选择」）。
-4. **官方 verify workflow**：`.claude/skills/openspec-verify-change/` 是否存在。
+4. **官方 verify workflow**：当前宿主 skill 根下 `openspec-verify-change/SKILL.md` 是否可读。
    **verify 不在官方 `core` profile 内**，刚 init 的项目大概率没有。
    **缺失比 sync 严重**：本技能的 trace 只管 PRD ↔ spec，不做「代码 ↔ artifacts」，
    缺了它闭环少一段且**无任何替代**——必须显式告知后果，不可一句「可补装」带过。
@@ -102,6 +118,11 @@ change，其 `Covered-FRIDs` 即这些 deprecated FRID。故一个 change 的 `C
    > 是「产物过期」还是「profile 未启用」——手段完全不同，且后者要改全局配置
    > （特权动作）。完整条件分支见
    > [references/openspec-compatibility.md](references/openspec-compatibility.md)。
+
+   propose / apply 委托前也分别检查 `openspec-propose/SKILL.md` 与
+   `openspec-apply-change/SKILL.md`，缺失时走同一补救分支，不凭空声称已调用官方技能。
+   Codex 委托名：`$openspec-propose`、`$openspec-apply-change`、`$openspec-verify-change`、
+   `$openspec-sync-specs`；归档仍优先 CLI。
 
 5. **基线**：`docs/product/baselines/` 下该 DOMAIN 的最新基线是否存在且 `status: active`。
 
@@ -206,7 +227,7 @@ REMOVED / RENAMED 从主 spec 同名（或 FROM 所指）Requirement 的 Sources
 | "verify"、"核对实现" | **verify 壳**：委托官方 verify（只读，无需确认）→ V4.9 源码依据完整性 + 治理核对清单 → 衔接 trace（pre-archive） |
 | "能归档吗"、"检查这个 change"、"追溯对不对" | **归档壳**：trace（pre-archive）→ 确认回显 → 代跑 CLI → V6 |
 | "现在什么进度"、"哪些需求还没做" | status |
-| "检查工作区"、"体检"、"skill 更新了"、"补 CLAUDE.md 治理块" | check |
+| "检查工作区"、"体检"、"skill 更新了"、"补 CLAUDE.md / AGENTS.md 治理块" | check |
 | "PRD 出新版了"、"v1.1 发布了" | rebaseline（特权，需确认） |
 
 意图不明时按 status 处理（只读、无副作用）。
@@ -243,8 +264,9 @@ pre-archive 本次现跑通过           → 归档确认回显，确认后代�
 存在且绿（token 断言、单位禁令、样式清单核对等，执行力属仓库工具链，
 宪法 8/技术正确性边界不破）、apply 新增公共对象已登记 arch inventory。
 壳不改官方任何产物语义、不代写 proposal/design/代码，官方 skill 的
-中途提问与 planning boundary 原样透传。诚实边界：`/opsx:*` 侧门依旧存在（explore 是合法用途，
-`openspec update` 也会重新生成官方命令），壳是**约定级收口**——
+中途提问与 planning boundary 原样透传。诚实边界：Claude `/opsx:*` 与 Codex
+`$openspec-*` 侧门依旧存在（explore 是合法用途，`openspec update` 会重生成官方入口），
+壳是**约定级收口**——
 把正道变成唯一顺手的路径，不是强制拦截；终审始终是 trace 机检与 CI。
 
 ## 特权动作确认
@@ -259,7 +281,7 @@ pre-archive 本次现跑通过           → 归档确认回显，确认后代�
 | decompose 裁决 | planned change 列表（名称/capability/覆盖 FRID/顺序依赖）；未被任何 change 覆盖的 `included` FRID（**必须为空**）；与磁盘既有 change 的冲突 |
 | rebaseline 采纳 | 五态分类结果（NEW/UNCHANGED/CHANGED/DEPRECATED/DISAPPEARED）；**每条 CHANGED 的逐行 diff**；受影响的既有 change 清单；旧基线将被标 superseded |
 | **归档放行** | trace V1–V5 **逐条**结果；将合并进主 spec 的 delta 摘要；**是否触发 capability 退休删除**；change 将被移动到的归档路径 |
-| 代跑 `openspec init` | 完整命令行；将创建的文件清单；是否覆盖已有 `.claude/` 文件 |
+| 代跑 `openspec init` | 当前宿主与完整命令行；将创建的文件清单；是否覆盖其 `.claude/` 或 `.agents/` 文件；旧 Codex 安装是否涉及官方迁移 |
 | 写 `openspec/config.yaml` | 将写入的 context/rules 全文；对官方 propose 行为的影响说明 |
 | 改 profile 补装 workflow | **这修改全局 `~/.config/openspec/config.json`，影响本机所有项目** |
 
@@ -277,15 +299,17 @@ spec.md（工作树不可恢复，只能靠 git）**。回显必须逐条出示 
 展开完整原文。本条只约束呈现顺序与可读性，不放宽任何「回显必须包含」的
 完整性要求。
 
-**消费仓 CLAUDE.md 治理块**：产品仓根目录的 `CLAUDE.md` 每次会话都在上下文里，
-是**技能未被触发时唯一仍然生效的护栏**——有人直接手改已发布 PRD 或主 spec 时，
-技能不在场，机检也只在跑 trace 时才发现后果。因此两个时机提议写入
-`templates/claude-guard-block.md` 的界定块：**首次在本仓落盘治理文件后**
+**消费仓宿主治理块**：块正文只有一份模板 `templates/guard-block.md`，两个宿主共用；
+写到当前宿主**实际会读**的指令文件——Codex 是 `AGENTS.md`；Claude Code 是 `CLAUDE.md`，
+仓库没有 `CLAUDE.md` 时是 `AGENTS.md`，此时绝不新建 `CLAUDE.md`（判定细则见模板头部）。
+该文件在宿主正常加载项目指令时提供**技能未被触发时的护栏**；不能把文件存在等同于
+一定被加载或强制生效。两个时机提议写入界定块：**首次在本仓落盘治理文件后**
 （prd 首个 release / arch bootstrap 落盘 / spec baseline 定稿），以及**任何一次特权确认时
-发现该块缺失**（含被外部工具重写抹掉、以及协议升级前就已存在的老项目）。
-提议＝回显块全文、经确认才落盘（特权动作），每会话至多提议一次，被拒不再重复。
-写入纪律见该模板头部：已有文件只插入块、其余内容一字不动；文件不存在则只创建含块的
-文件（项目总体说明交给 `/init`，本技能不代写）；块已存在则什么都不做。
+发现当前宿主读不到这个块**（含被外部工具抹掉、以及协议升级前的老项目）。
+提议＝回显**解析软链后的真实路径**与块全文、经确认才落盘（特权动作），每会话至多提议一次，
+被拒不再重复。写入纪律（软链、越界、旧版块、标记异常）以模板头部为准，此处不复述。
+块在不在，按当前宿主实际读到的内容判断（软链、`@AGENTS.md` 导入都算）；
+不因两个文件并存而自动各写一份。
 回显时必须如实说明：**该块是 prompt 级提示、不是强制**，门禁仍是 trace 机检与 CI。
 
 ## 各动作运行协议
@@ -455,11 +479,11 @@ propose 壳：欠账门 → 交接段现算 → 经确认委托官方 propose �
 WARNING 可带裁决放行，裁决记入回显与基线的例外记录。
 
 **确定性实现**：V1–V5（含 V4.8/V4.9）已实现为本技能 `tools/trace.py`（随技能安装分发）。
-调用路径按安装形态探测（项目级 → 系统级 → plugin）：
-项目级 `python3 .claude/skills/valkyrja-spec/tools/trace.py . <change>`；
-系统级 `python3 ~/.claude/skills/valkyrja-spec/tools/trace.py . <change>`；
-plugin 形态下脚本位于该 plugin 安装目录的 `skills/valkyrja-spec/tools/trace.py`
-（本技能文件自身所在目录即可定位；hook/命令上下文可用 `${CLAUDE_PLUGIN_ROOT}`）。
+**从当前已加载 `SKILL.md` 所在目录定位 `tools/trace.py`**，用完整路径执行：
+`python3 "<当前技能目录>/tools/trace.py" . <change>`——项目根 `.` 是当前消费仓，
+含空格的路径要加引号。不按项目/用户目录优先级另找副本：那可能调用不同版本的门禁。
+宿主没给出技能路径时，查找顺序见 openspec-compatibility.md 第一节；
+多副本无法确认一致时报告歧义，脚本不存在时报工具故障，不冒称 trace 通过。
 执行前先确认 `python3` 可用（Windows 无此别名时改用 `python` / `py -3`；需 ≥3.7）。
 退出码 **0 = 放行 / 1 = 门禁 ERROR / 2 = 工具故障（输入损坏、环境缺失，门禁没跑完）**，
 0/1 可作 CI 门禁，2 须先修输入或环境；归档壳调用时加 `--stage pre-archive` 标注报告时机。
@@ -502,8 +526,10 @@ trace（pre-archive）放行后，**优先委托 CLI**：`openspec archive <chan
 `Sources:` 行格式契约（全 change 与主 spec）；`Requirement Authority` 块格式；
 FRID 类型合法性；计划外 change；基线引用完整性；
 **对已归档 change 补跑 V4/V6 类追溯检查**；
-**仓库根 `CLAUDE.md` 的 valkyrja 治理块存在性**——缺失或被外部工具抹掉时报
-`[需人工处理]`，按 `templates/claude-guard-block.md` 提议补写（经确认落盘）。
+**当前宿主实际会读的指令文件里的 valkyrja 治理块**——Codex 读 `AGENTS.md`，Claude Code 读
+`CLAUDE.md`、没有时读 `AGENTS.md`；缺失或被外部工具抹掉时报 `[需人工处理]` 并提议补写（经确认落盘）；
+旧版块与标记异常只报告、不自动改，判定与修复纪律见 `templates/guard-block.md` 头部；
+块在不在按宿主实际读到的内容判断（软链、`@AGENTS.md` 导入都算）。
 
 > **能力边界（不得含糊）**：本技能**无法**判定一个已归档 change 当初是否跑过 trace——
 > trace 只读、不写 receipt，事后没有任何状态证据。check 能做的是**重新验证归档产物
@@ -581,7 +607,8 @@ apply 或归档。**不得批量代改 Authority 块**：逐个更新迫使人�
 一律不得通过归档门禁）；`skip_specs: true` 是验证逃生口（trace 一律 ERROR，
 除非基线例外记录已有裁决）；官方 archive「警告不阻塞」。
 
-**已知治理缺口（诚实写明）**：用户直接调 `/opsx:apply`、`/opsx:archive` 或 CLI 时
+**已知治理缺口（诚实写明）**：用户直接调 Claude `/opsx:apply`、`/opsx:archive`，
+Codex `$openspec-apply-change`、`$openspec-archive-change` 或 CLI 时
 本技能**无法拦截**，也**无法事后证明**某次归档曾放行过（trace 只读、不写 receipt）。
 只能保证「经由本技能执行的 apply 与归档一定先跑过 trace」。
 **不得在任何场合作出超出此范围的承诺。**

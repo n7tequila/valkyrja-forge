@@ -81,7 +81,7 @@ grader 只断言**可观察后果**，绝不复述判定细则：
 | `routing-spec-declines-openspec-only` | **Routing 反例** | 只有 openspec/、无 valkyrja 基线 → 不得接管（description 里的管辖边界） |
 | `routing-prd-declines-unopted` | **Routing 反例** | 未 opt-in 的仓库 → 既不接管，也不主动提议初始化 |
 | `routing-prd-fires` | Capability / routing 正例 | 已有需求工作区，同一句「聊聊登录」→ 必须路由到 valkyrja-prd（与上一条只差工作区） |
-| `routing-prd-fires-explicit-optin` | Capability / routing 正例 | 未 opt-in，但用户明确要建立需求治理 → 必须路由（只判路由，不判写盘） |
+| `routing-prd-fires-explicit-optin` | Capability / routing 正例 + Constraint | 未 opt-in，但用户明确要建立需求治理 → 必须路由；首轮用户还没确认命名，不写任何文件 |
 | `routing-prd-declines-doc-request` | **Routing 反例** | 未 opt-in，用户要把几条需求整理成文档 → 照常完成、不接管、不推销治理、不建治理目录 |
 | `view-reading-verbatim` | **Constraint** | 要一份阅读稿 → 需求与决策原文逐字、文件头声明不作依据、列出已定未体现的决策、在议事项不写成结论、不写治理目录 |
 | `view-reading-current` | **Constraint** | 草稿与 release 不同、多 initiative、决策替代 → 草稿原文与待合成决策保真、废弃决定仅作历史、项目不串台 |

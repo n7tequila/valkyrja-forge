@@ -49,9 +49,10 @@ docs/product/initiatives/<slug>/
     └── releases/        # v1.0.md, v1.1.md … 发布即冻结，只增不改
 ```
 
-若用户提及的 initiative 目录不存在：先确认主题名与 DOMAIN 代号
-（如 MEETING、DEMO、PROJECT_MODULE，规则见"ID 与格式契约"），
-创建骨架目录与 STATUS.md，再进入正常流程。
+若用户提及的 initiative 目录不存在：先向用户提出主题名与 DOMAIN 代号
+（如 MEETING、DEMO、PROJECT_MODULE，规则见"ID 与格式契约"），**等用户回复确认后**
+才创建骨架目录与 STATUS.md，再进入正常流程。确认前不落盘任何目录或文件，
+`docs/product/initiatives/` 本身也不建。
 若在非规范路径发现既有工作区（如根目录下的 `product/initiatives/`）：照常使用，
 但提示用户可整体移动到规范路径——工作区内部引用均为 ID 或 initiative 相对路径，
 整树移动不破坏任何内容；此项亦纳入 check 的目录契约报告。

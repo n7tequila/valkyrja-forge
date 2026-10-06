@@ -25,7 +25,7 @@ CASES = {
     'routing-spec-declines-openspec-only': ('valkyrja-spec', False, 'read-only'),
     'routing-prd-declines-unopted': ('valkyrja-prd', False, 'read-only'),
     'routing-prd-fires': ('valkyrja-prd', True, 'any'),
-    'routing-prd-fires-explicit-optin': ('valkyrja-prd', True, 'any'),
+    'routing-prd-fires-explicit-optin': ('valkyrja-prd', True, 'read-only'),
     'routing-prd-declines-doc-request': ('valkyrja-prd', False, 'no-governance'),
     'constraint-arch-question-tone': ('valkyrja-arch', True, 'no-adec'),
     'view-reading-verbatim': ('valkyrja-prd', True, 'view-only'),

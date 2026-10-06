@@ -66,7 +66,7 @@ Any requirement can be traced backward to *why it exists*, and any released requ
 
 ### valkyrja-prd
 
-Governs loose discussion into traceable product state. Nine actions: `discuss`, `decide`, `import`, `prototype`, `bootstrap`, `status`, `synthesize`, `release`, `check` — `prototype` ingests externally-made system prototypes (Figma exports, generated HTML) into a governed genre: machine-checked against the release's UI requirements, human-reviewed, then blessed as the visual baseline via a DEC. You never type an action name — the skill routes on what you say. `decide` and `release` are privileged and require explicit human confirmation.
+Governs loose discussion into traceable product state. Ten actions: `discuss`, `decide`, `import`, `prototype`, `bootstrap`, `status`, `synthesize`, `release`, `check`, `view` — `prototype` ingests externally-made system prototypes (Figma exports, generated HTML) into a governed genre: machine-checked against the release's UI requirements, human-reviewed, then blessed as the visual baseline via a DEC. You never type an action name — the skill routes on what you say. `decide` and `release` are privileged and require explicit human confirmation. `view` writes a human-readable digest — the PRD with its decisions, discussion history and open items in one file, by default `docs/product/views/<slug>.md` — on demand only; it is never a requirement source.
 
 Workspace layout:
 

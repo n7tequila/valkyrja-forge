@@ -6,7 +6,7 @@ description: 先检查准入，后决定是否读取本技能：仅当项目已�
 # Valkyrja PRD（产品需求工作坊）
 
 本技能把松散的需求讨论治理为可追溯的产品状态，并合成标准 PRD。
-它是一个**状态机 + 九个动作**，操作对象是文件系统中的 initiative 工作区。
+它是一个**状态机 + 十个动作**，操作对象是文件系统中的 initiative 工作区。
 
 ## 宿主适配（共享协议）
 
@@ -109,6 +109,7 @@ docs/product/initiatives/<slug>/
 | 新建 initiative 且已有一批存量文档、"把这些历史材料导进来" | bootstrap |
 | 拿到原型稿、"评审原型"、"背书为视觉基线"、原型大改 | prototype（背书步特权，需确认） |
 | "现在什么状态"、"还有什么没定" | status |
+| "生成阅读稿"、"出一份给人看的 PRD"、"把 PRD 和讨论合成一份看看" | view（只读导出） |
 | "检查工作区"、"格式体检"、"skill 更新了，看看有什么影响"、"补 CLAUDE.md / AGENTS.md 治理块" | check |
 | "整理一版 PRD"、"更新 PRD" | synthesize-draft |
 | "发布"、"这版定稿为 vX.Y" | release（特权，需确认） |
@@ -299,6 +300,21 @@ delta 注明 format migration only，走正常 release 流程）。
 Session Resume 时若读盘发现明显不合当前契约的内容，应建议执行 check，不自动执行。
 本节检查清单同时是未来治理脚本（CI 化）的行为规范草案。
 
+### view（阅读稿，只读导出）
+
+把 PRD 与支撑它的决策、讨论、原始需求合成一份**给人看**的阅读稿。它是派生导出物，
+**不是需求依据**：本技能任何动作都不读回它；不改任何治理文件，也不刷新 STATUS（不是状态变化）。
+只在用户主动要时生成，不随其他动作刷新。
+
+1. **选底**（现场比对文件，不看 STATUS）：`prd/current.md` 正文（去掉文件头）与最新 release
+   不同 → 以 current 为底，标「未发布草稿」；相同或没有 current → 以最新 release 为底；
+   只有 current → 首版草稿；都没有 → 只汇总已定决策与在议话题，标「尚无 PRD」。
+2. **已定未体现的决策**：口径同 status 的发版欠账；以 current 为底时再剔除其中已被引用的。
+3. **按 `templates/reading-view.md` 生成**：章节、文件头声明与逐字/摘要界线以模板为准。
+   默认写到 `docs/product/views/<slug>.md`（覆盖旧稿）；用户指定路径则从之，但不得落在
+   `docs/product/initiatives/` 或 `docs/product/baselines/` 之内。
+4. **自检后返回路径**：需求正文与 Decision 段逐字比对来源，有出入就改回原文。
+
 ### synthesize（draft）
 
 **需求进入 PRD 的路由规则（核心）**：
@@ -365,6 +381,7 @@ STATUS.md 是全系统**唯一被豁免的派生缓存**，仅为加速 Resume �
 ## 下游接口（对 valkyrja-spec 的承诺）
 
 - 本 initiative 对下游的**唯一 API 是 `prd/releases/vX.Y.md`**。
+- view 生成的阅读稿（默认 `docs/product/views/`）是给人看的导出物，下游与本技能都不得消费。
 - `prd/current.md` 与五类源目录是内部实现，下游禁止直接消费；
   下游仅可沿 PRD 中 `Sources:` 链接显式回溯。**PRD Requirement 的权威来源
   只允许 RN 与 DEC；TM 是 supporting evidence，通过 DEC 的 Sources 链继续回溯**——

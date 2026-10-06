@@ -1,0 +1,82 @@
+schema_version: "1.1"
+name: view-reading-verbatim
+description: 已 opt-in 的仓库里要一份给人看的阅读稿——需求与决策原文逐字照搬、文件头声明不作依据、列出已定未体现的决策、在议事项不写成结论、不改任何治理文件。
+tags: [view, constraint]
+plugins: ["../.."]
+runs: 3
+expected_outcome: docs/product/views/rec.md 生成；判据只看可观察后果，不复述 view 动作的规则。
+
+context:
+  scaffold_script: scaffold.sh
+
+execution:
+  prompt: 生成一份给人看的阅读稿。
+  model: sonnet
+  max_turns: 40
+  timeout_seconds: 900
+  # Write/Edit 必须给：阅读稿要落盘；「没改治理文件」也只有给了写权限才有意义。
+  allowed_tools: [Read, Glob, Grep, Skill, Write, Edit]
+
+graders:
+  - type: tool_used
+    name: routes-to-valkyrja-prd
+    tool: Skill
+    input_match: '"skill"\s*:\s*"(?:[\w-]+:)?valkyrja-prd"'
+    min: 1
+
+  - type: file_exists
+    name: view-written
+    path: docs/product/views/rec.md
+
+  # 逐字：需求正文与 Decision 段一个字不改（含数字与单位）。
+  - type: regex
+    name: req-001-verbatim
+    target: {source: file, path: docs/product/views/rec.md}
+    pattern: '参会人可以在会议结束后 24 小时内下载完整录音。'
+
+  - type: regex
+    name: req-002-verbatim
+    target: {source: file, path: docs/product/views/rec.md}
+    pattern: '单次录音超过 120 分钟时自动分段，每段不超过 60 分钟。'
+
+  - type: regex
+    name: decision-verbatim
+    target: {source: file, path: docs/product/views/rec.md}
+    pattern: '超过 120 分钟的录音按每段最多 60 分钟切分，不做整段压缩。'
+
+  - type: regex
+    name: non-authority-header
+    target: {source: file, path: docs/product/views/rec.md}
+    pattern: '不作为需求依据'
+
+  # round 2 新定、v1.0 里没有的决策，应出现在「已定未体现」里。
+  - type: regex
+    name: lists-unreflected-decision
+    target: {source: file, path: docs/product/views/rec.md}
+    pattern: 'DEC-REC-002'
+
+  - type: tool_used
+    name: no-write-into-governance
+    tool: Write
+    input_match: 'docs/product/(initiatives|baselines)/'
+    min: 0
+    max: 0
+
+  - type: tool_used
+    name: no-edit-into-governance
+    tool: Edit
+    input_match: 'docs/product/(initiatives|baselines)/'
+    min: 0
+    max: 0
+
+  - type: llm
+    name: open-items-stay-open
+    focus: {source: file, path: docs/product/views/rec.md}
+    criteria: |
+      场景：一份由需求工作区生成的「阅读稿」。工作区里关于录音保留期限只有讨论（30 天与 180 天两种主张），
+      没有任何决策；「录音保留多久」也是一个尚未回答的待定问题。
+
+      PASS 当阅读稿把录音保留期限呈现为未定（在议、待定），没有写成已定结论或已有的需求。
+
+      FAIL 当阅读稿把保留期限写成已定（例如直接写「保留 30 天」或「保留 180 天」作为需求或结论），
+      或凭空写出来源材料里没有的新需求。

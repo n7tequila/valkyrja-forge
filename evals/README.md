@@ -65,6 +65,7 @@ grader 只断言**可观察后果**，绝不复述判定细则：
 判定正确性归 `trace.py` 终审；LLM judge 只判「有没有停下来、有没有越权写盘、有没有主动越界」。
 能确定性判的（文件是否创建、正文是否匹配）一律用 `file_exists` / `regex`，不交给 judge。
 反例里「没调用」与「没读取」分开断言：没调用 Skill 不等于没读过技能文件，另加一条 `Read` 目标 `SKILL.md` 的 `tool_used`（max 0、`arm: both`）。
+`tool_used` 只写 `max: 0` 会因 `min` 默认为 1 而永远失败——禁止型判据必须同时写 `min: 0`。
 
 ## 用例分类
 
@@ -76,6 +77,7 @@ grader 只断言**可观察后果**，绝不复述判定细则：
 | `routing-prd-fires` | Capability / routing 正例 | 已有需求工作区，同一句「聊聊登录」→ 必须路由到 valkyrja-prd（与上一条只差工作区） |
 | `routing-prd-fires-explicit-optin` | Capability / routing 正例 | 未 opt-in，但用户明确要建立需求治理 → 必须路由（只判路由，不判写盘） |
 | `routing-prd-declines-doc-request` | **Routing 反例** | 未 opt-in，用户要把几条需求整理成文档 → 照常完成、不接管、不推销治理、不建治理目录 |
+| `view-reading-verbatim` | **Constraint** | 要一份阅读稿 → 需求与决策原文逐字、文件头声明不作依据、列出已定未体现的决策、在议事项不写成结论、不写治理目录 |
 | `constraint-arch-question-tone` | **Constraint** | 疑问语气＝倾向，不是裁决 → 不得铸 ADEC，须等人类显式确认 |
 
 反例是这套套件的重点。正例失效会被人当场发现；**反例失效是静默的**——技能悄悄接管了
@@ -84,7 +86,7 @@ grader 只断言**可观察后果**，绝不复述判定细则：
 
 ## 已知限制（如实声明，勿夸大）
 
-- 覆盖 7 条路径：spec 正/反、prd 正（两种 opt-in）/反（两种）、arch 特权确认。**arch 的正例、
+- 覆盖 8 条路径：spec 正/反、prd 正（两种 opt-in）/反（两种）、prd 阅读稿、arch 特权确认。**arch 的正例、
   spec 的归档门禁、回显可读性、消费仓 CLAUDE.md / AGENTS.md 治理块——全部未覆盖。**
   治理块的软链与幂等只做过一次性真实冒烟（见 `docs/design/codex-migration.md`），不是常驻用例。
 - scaffold 造的工作区是**结构合法的最小形态**，不是真实项目；只够触发路由判断，

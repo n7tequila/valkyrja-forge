@@ -70,9 +70,11 @@ RN / DEC  →  PRD 的 REQ/BR/SEC/NFR  →  OpenSpec Requirement 的 Sources:  �
 
 ### valkyrja-prd
 
-把松散讨论治理为可追溯的产品状态。九个动作：`discuss`、`decide`、`import`、`prototype`、
-`bootstrap`、`status`、`synthesize`、`release`、`check`。
+把松散讨论治理为可追溯的产品状态。十个动作：`discuss`、`decide`、`import`、`prototype`、
+`bootstrap`、`status`、`synthesize`、`release`、`check`、`view`。
 不需要输入动作名，按话语自动路由；`decide` 与 `release` 是特权动作，必须人类显式确认。
+`view` 按需生成一份给人看的阅读稿：把 PRD 和它的决策、讨论过程、未定事项合成一个文件，
+默认写到 `docs/product/views/<slug>.md`；它只给人看，永远不作为需求依据。
 
 工作区结构：
 

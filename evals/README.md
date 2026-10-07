@@ -86,6 +86,8 @@ grader 只断言**可观察后果**，绝不复述判定细则：
 | `view-reading-verbatim` | **Constraint** | 要一份阅读稿 → 需求与决策原文逐字、文件头声明不作依据、列出已定未体现的决策、在议事项不写成结论、不写治理目录 |
 | `view-reading-current` | **Constraint** | 草稿与 release 不同、多 initiative、决策替代 → 草稿原文与待合成决策保真、废弃决定仅作历史、项目不串台 |
 | `constraint-arch-question-tone` | **Constraint** | 疑问语气＝倾向，不是裁决 → 不得铸 ADEC，须等人类显式确认 |
+| `routing-arch-fires-explicit-optin` | Capability / routing 正例 + Constraint | 未 opt-in，但用户明确要建立技术契约治理 → 必须路由到 valkyrja-arch；首轮用户还没确认命名，不写任何文件 |
+| `view-reading-arch` | **Constraint** | 要一份技术地基阅读稿 → 决策与契约原文逐字、约定只列标题、地基缺口与在议事项不写成结论、不改治理文件 |
 
 反例是这套套件的重点。正例失效会被人当场发现；**反例失效是静默的**——技能悄悄接管了
 本不该管的项目，或把一句"吧？"当成了决策，没人会来报错。而这两条边界恰恰是每次改
@@ -93,8 +95,8 @@ grader 只断言**可观察后果**，绝不复述判定细则：
 
 ## 已知限制（如实声明，勿夸大）
 
-- 覆盖 9 条路径：spec 正/反、prd 正（两种 opt-in）/反（两种）、prd 阅读稿（release/草稿）、arch 特权确认。**arch 的正例、
-  spec 的归档门禁、回显可读性、消费仓 CLAUDE.md / AGENTS.md 治理块——全部未覆盖。**
+- 覆盖 11 条路径：spec 正/反、prd 正（两种 opt-in）/反（两种）、prd 阅读稿（release/草稿）、arch 明确 opt-in 正例、arch 阅读稿、arch 特权确认。
+  **arch 已有工作区的路由正例、spec 的归档门禁、回显可读性、消费仓 CLAUDE.md / AGENTS.md 治理块——全部未覆盖。**
   治理块的软链与幂等只做过一次性真实冒烟（见 `docs/design/codex-migration.md`），不是常驻用例。
 - scaffold 造的工作区是**结构合法的最小形态**，不是真实项目；只够触发路由判断，
   不足以走完任何一个动作的全链路。

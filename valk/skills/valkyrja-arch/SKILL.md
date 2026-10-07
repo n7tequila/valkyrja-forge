@@ -36,7 +36,8 @@ description: 先检查准入，后决定是否读取本技能：仅当项目已�
 5. **历史不删除。** ADEC 一经铸造不可变，推翻用 `superseded-by` 链；
    契约版本只增不改；catalog 采纳的偏离记录在 ADEC 中，永不静默。
 6. **派生值不落盘。** 决策计数、契约消费方清单、采纳数量等一律现算；
-   STATUS.md 是唯一豁免的派生缓存。
+   STATUS.md 是唯一豁免的派生缓存。`views/` 下的阅读稿是给人看的导出物，
+   任何动作不读回，不算缓存（见 view）。
 7. **执行靠既有工具链，本技能不造 checker。** 约定的强制力来自
    linter / 类型检查 / 架构测试（ArchUnit 等）/ CI；`publish` 至多生成起步配置，
    不接管执行。valkyrja-spec 的 trace 只做**引用完整性**检查（V4.8），不做技术正确性。
@@ -97,11 +98,13 @@ docs/architecture/
 ├── conventions/         # 已采纳约定的自包含副本
 ├── contracts/           # 共享接口契约，逐份版本化
 ├── inventory.md         # 公共对象清单
-└── backlog.md           # 规则候选（带触发条件）
+├── backlog.md           # 规则候选（带触发条件）
+└── views/               # 阅读稿：给人看的派生导出物，任何动作不读回（见 view）
 ```
 
-工作区不存在时：确认系统名与**架构 DOMAIN**（见下），创建骨架与 STATUS.md，
-并主动提议 `bootstrap`（骨架只是空目录，不构成任何决策）。
+工作区不存在时：先向用户提出系统名与**架构 DOMAIN**（见下），**等用户回复确认后**
+才创建骨架与 STATUS.md，并主动提议 `bootstrap`（骨架只是空目录，不构成任何决策）。
+确认前不落盘任何目录或文件，`docs/architecture/` 本身也不建。
 
 ## ID 与格式契约
 
@@ -166,6 +169,7 @@ docs/architecture/
 | "把 catalog 的 XX 拿进来"、"按标准约定来" | adopt（特权，需确认） |
 | "定义 XX 契约"、"内容包结构定一下"、"改契约" | contract（特权，需确认） |
 | "架构现状"、"有哪些决策"、"约定都有什么" | status |
+| "生成一份给人看的阅读稿"、"把技术地基整理成文档给人看" | view（只读导出） |
 | "体检"、"检查架构工作区"、"补 CLAUDE.md / AGENTS.md 治理块" | check |
 | "生成 lint 配置"、"把约定投影到 CI" | publish（特权，需确认） |
 
@@ -344,6 +348,25 @@ catalog 更新**不自动同步**；`check` 发现 `adopted-from` 版本落后�
 及其 adopted-from 版本、backlog 中触发条件已成立的项、
 **引用完整性摘要**（ADEC 互引、契约消费方引用的版本是否落后）。
 
+### view（阅读稿，只读导出）
+把技术地基合成一份**给人看**的阅读稿。它是派生导出物，**不是技术依据**：本技能任何动作
+都不读回它；不改任何治理文件，也不刷新 STATUS（不是状态变化）。只在用户主动要时生成。
+
+1. **现场扫描**（不看 STATUS）：decisions/、conventions/、contracts/、inventory.md、
+   backlog.md、discussions/。
+2. **还没定的只收四样**：没有 accepted 且带 `foundational: stack` / `layout` 的 ADEC
+   （地基缺口）；没被任何 accepted ADEC 引用过的 ADISC（在议，只写摘要）；ADISC 中
+   「应回流上游」的条目；backlog 全部候选（不判断触发条件是否已成立）。
+   版本落后、投影一致性等体检结论不收，归 check。
+3. **按 `templates/reading-view.md` 生成**：分节、各节收什么与逐字/摘要界线以模板为准。
+   默认写到 `docs/architecture/views/architecture.md`（覆盖旧稿）；用户指定安全路径则从之。
+   **写入前**解析输出文件及父目录中的软链与 `..`，按真实目标比对：不得落在
+   `docs/architecture/` 中 `views/` 以外的位置或产品侧工作区（`docs/product/initiatives/`、
+   `docs/product/baselines/`），也不得覆盖本次读取的任何源文件。目标冲突就停止并请用户换路径。
+4. **落盘后用工具自检，再返回路径**（不凭记忆比对）：用检索工具在生成稿里按来源原文逐条
+   精确查找 ADEC 的 Decision 段与契约的兼容规则；再查汉字旁的半角标点（正则如
+   `\p{Han}[,:;()]|[,:;()]\p{Han}`），来源那里是全角的改回全角。有出入就改回原文，改完再查一遍。
+
 ### check（体检；报告只读，自动修复项另经确认执行）
 对照本 SKILL.md 契约体检：ID 正则与编号连续性；ADEC frontmatter 完备性与
 superseded 链完整性（指向的 ID 真实存在）；契约版本与 Changelog 一致性；
@@ -436,3 +459,4 @@ inventory 条目所指实现的存在性（记录了路径的条目）；
 - [inventory.md](templates/inventory.md) — 公共对象清单
 - [backlog.md](templates/backlog.md) — 规则候选 backlog
 - [status.md](templates/status.md) — STATUS.md 结构
+- [reading-view.md](templates/reading-view.md) — 阅读稿（view 动作）

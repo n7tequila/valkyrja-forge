@@ -1,0 +1,108 @@
+schema_version: "1.1"
+name: view-reading-arch
+description: 已有技术契约工作区，要一份给人看的阅读稿——决策与契约原文逐字、约定只列标题、地基缺口与在议事项不写成结论、不改任何治理文件。
+tags: [view, constraint]
+plugins: ["../.."]
+runs: 3
+expected_outcome: docs/architecture/views/architecture.md 生成；判据只看可观察后果，不复述 view 动作的规则。
+
+context:
+  scaffold_script: scaffold.sh
+
+execution:
+  prompt: 把技术地基整理成一份给人看的阅读稿。
+  model: sonnet
+  max_turns: 40
+  timeout_seconds: 900
+  # Write/Edit 必须给：阅读稿要落盘；「没改治理文件」也只有给了写权限才有意义。
+  allowed_tools: [Read, Glob, Grep, Skill, Write, Edit]
+
+graders:
+  - type: tool_used
+    name: routes-to-valkyrja-arch
+    tool: Skill
+    input_match: '"skill"\s*:\s*"(?:[\w-]+:)?valkyrja-arch"'
+    min: 1
+
+  - type: file_exists
+    name: view-written
+    path: docs/architecture/views/architecture.md
+
+  # 逐字：决策与契约原文一个字不改（含全角标点；「demo:」本来就是半角，不得改成全角）。
+  - type: regex
+    name: stack-decision-verbatim
+    target: {source: file, path: docs/architecture/views/architecture.md}
+    pattern: '后端使用 Python 3\.12 与 FastAPI，前端使用 TypeScript 与 Vite，测试统一用 pytest 与 Vitest。'
+
+  - type: regex
+    name: cache-decision-verbatim
+    target: {source: file, path: docs/architecture/views/architecture.md}
+    pattern: '缓存层改用 Redis 7，键统一加 demo: 前缀，默认过期 30 分钟。'
+
+  - type: regex
+    name: adoption-decision-verbatim
+    target: {source: file, path: docs/architecture/views/architecture.md}
+    pattern: '采纳 catalog 的 conv-api-envelope 作为接口返回约定，错误码前缀改为 DEMO_，其余不改。'
+
+  - type: regex
+    name: contract-decision-verbatim
+    target: {source: file, path: docs/architecture/views/architecture.md}
+    pattern: '内容包导入接口按 content-package 契约传输，契约文件为 contracts/content-package\.md。'
+
+  - type: regex
+    name: contract-compat-verbatim
+    target: {source: file, path: docs/architecture/views/architecture.md}
+    pattern: '新增可选字段不算破坏性变更；消费方必须忽略未知字段。'
+
+  - type: regex
+    name: contract-field-verbatim
+    target: {source: file, path: docs/architecture/views/architecture.md}
+    pattern: '内容包唯一标识，导入后不可修改'
+
+  - type: regex
+    name: convention-heading-verbatim
+    target: {source: file, path: docs/architecture/views/architecture.md}
+    pattern: '状态码与业务失败'
+
+  - type: regex
+    name: upstream-item-verbatim
+    target: {source: file, path: docs/architecture/views/architecture.md}
+    pattern: '上传文件的保留期限对用户可见，属于产品侧问题，需回流上游确定。'
+
+  - type: regex
+    name: backlog-trigger-verbatim
+    target: {source: file, path: docs/architecture/views/architecture.md}
+    pattern: '第二个对外开放的接口上线时'
+
+  - type: regex
+    name: non-authority-header
+    target: {source: file, path: docs/architecture/views/architecture.md}
+    pattern: '不作为技术依据'
+
+  - type: tool_used
+    name: no-write-into-governance
+    tool: Write
+    input_match: 'docs/architecture/(decisions|conventions|contracts|discussions)/|docs/architecture/(STATUS|inventory|backlog)\.md'
+    min: 0
+    max: 0
+
+  - type: tool_used
+    name: no-edit-into-governance
+    tool: Edit
+    input_match: 'docs/architecture/(decisions|conventions|contracts|discussions)/|docs/architecture/(STATUS|inventory|backlog)\.md'
+    min: 0
+    max: 0
+
+  - type: llm
+    name: open-items-stay-open
+    focus: {source: file, path: docs/architecture/views/architecture.md}
+    criteria: |
+      场景：一份由技术契约工作区生成的「阅读稿」。工作区里技术栈有决策，仓库布局没有任何决策；
+      上传文件存哪里只有讨论（倾向对象存储，未定）；缓存最初定为进程内 LRU，后被 Redis 取代；
+      backlog 里有一条「统一限流」候选，只写了触发条件。
+
+      PASS 当阅读稿把仓库布局呈现为尚未决定（没有据代码推断出布局结论），把上传文件存储呈现为
+      在议（对象存储只是倾向），把进程内 LRU 只呈现为已被取代的历史，且没有把限流候选写成已定规则
+      或已触发。
+
+      FAIL 当阅读稿出现以上任一被写成已定结论的情况，或凭空写出来源材料里没有的决策或规则。

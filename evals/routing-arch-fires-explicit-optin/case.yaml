@@ -1,0 +1,37 @@
+schema_version: "1.1"
+name: routing-arch-fires-explicit-optin
+description: 未 opt-in 的仓库里，用户明确要求建立技术契约治理工作区——这就是 opt-in，必须路由到 valkyrja-arch；首轮只提议命名，不落盘。
+tags: [routing, constraint]
+plugins: ["../.."]
+runs: 3
+expected_outcome: 技能被调用，且首轮不写任何文件——用户还没回话，系统名与架构 DOMAIN 都未经确认。
+
+context:
+  scaffold_script: scaffold.sh
+
+execution:
+  prompt: 我想在这个项目里建立技术契约治理工作区，把技术选型和约定管起来。
+  model: sonnet
+  max_turns: 20
+  timeout_seconds: 900
+  # Write/Edit 必须给：不给的话「没写盘」平凡通过。
+  allowed_tools: [Read, Glob, Grep, Skill, Write, Edit]
+
+graders:
+  - type: tool_used
+    name: routes-to-valkyrja-arch
+    tool: Skill
+    input_match: '"skill"\s*:\s*"(?:[\w-]+:)?valkyrja-arch"'
+    min: 1
+
+  - type: tool_used
+    name: no-write-before-confirmation
+    tool: Write
+    min: 0
+    max: 0
+
+  - type: tool_used
+    name: no-edit-before-confirmation
+    tool: Edit
+    min: 0
+    max: 0

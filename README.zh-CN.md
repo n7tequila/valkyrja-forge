@@ -95,12 +95,14 @@ docs/product/initiatives/<slug>/
 ### valkyrja-arch
 
 技术契约治理层，与 valkyrja-prd 同构（discuss → decide），决策对象是工程技术。
-八个动作：`bootstrap`、`discuss`、`decide`、`adopt`、`contract`、`status`、`check`、`publish`——
+九个动作：`bootstrap`、`discuss`、`decide`、`adopt`、`contract`、`status`、`check`、`publish`、`view`——
 `bootstrap` 是入口流程：探测既有技术事实、读产品侧约束、在**首次 apply 之前**
 驱动奠基性决策（技术栈、仓库布局）。
 边界判据是**验收可观察性**：验收可测的属产品侧走 PRD，只约束工程内部的在此裁决为
 ADEC。产物落 `docs/architecture/`（决策 / 已采纳约定副本 / 版本化共享契约 /
 公共对象清单 / 规则候选 backlog）。
+`view` 按需生成一份给人看的技术地基阅读稿：技术栈与布局、要守的约定、要对接的契约、
+还没定的事合成一个文件，默认写到 `docs/architecture/views/architecture.md`；它只给人看，永远不作为技术依据。
 
 自带**约定目录（catalog）**：`valk/skills/valkyrja-arch/references/conventions/`，
 按 concern × stack 两轴组织，条目带出处与许可证四字段；`adopt` 时以自包含副本

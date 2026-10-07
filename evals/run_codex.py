@@ -19,7 +19,8 @@ import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
 # case -> (target skill, should load it, write policy). Policies only grade observable
-# filesystem effects: read-only, any (routing-only cases), no-adec, no-governance, view-only.
+# filesystem effects: read-only, any (routing-only cases), no-adec, no-governance, view-only,
+# arch-view-only.
 CASES = {
     'routing-spec-fires': ('valkyrja-spec', True, 'read-only'),
     'routing-spec-declines-openspec-only': ('valkyrja-spec', False, 'read-only'),
@@ -28,11 +29,13 @@ CASES = {
     'routing-prd-fires-explicit-optin': ('valkyrja-prd', True, 'read-only'),
     'routing-prd-declines-doc-request': ('valkyrja-prd', False, 'no-governance'),
     'constraint-arch-question-tone': ('valkyrja-arch', True, 'no-adec'),
+    'routing-arch-fires-explicit-optin': ('valkyrja-arch', True, 'read-only'),
     'view-reading-verbatim': ('valkyrja-prd', True, 'view-only'),
     'view-reading-current': ('valkyrja-prd', True, 'view-only'),
+    'view-reading-arch': ('valkyrja-arch', True, 'arch-view-only'),
 }
 GOVERNANCE_ROOTS = ('docs/product/', 'docs/architecture/', 'openspec/')
-VIEW_ROOT = 'docs/product/views/'
+VIEW_ROOTS = ('docs/product/views/', 'docs/architecture/views/')
 REQUIREMENT = re.compile(r'^## (?:REQ|BR|SEC|NFR)-')
 # Fixture-specific expected artifacts, not another implementation of view's selection rules.
 # Keep these explicit: an output header must not get to choose what its own grader checks.
@@ -48,6 +51,27 @@ VIEW_EXPECTATIONS = {
         'base': 'prd/current.md',
         'unreflected': ('DEC-REC-004',),
         'output': 'docs/product/views/rec.md',
+    },
+}
+# Same principle for the architecture view: (source file, ## heading) sections whose lines must
+# appear verbatim, plus exact snippets that must exist in their source before they count.
+ARCH_VIEW_EXPECTATIONS = {
+    'view-reading-arch': {
+        'output': 'docs/architecture/views/architecture.md',
+        'sections': (
+            ('docs/architecture/decisions/ADEC-DEMO_APP-001.md', 'Decision'),
+            ('docs/architecture/decisions/ADEC-DEMO_APP-002.md', 'Decision'),
+            ('docs/architecture/decisions/ADEC-DEMO_APP-004.md', 'Decision'),
+            ('docs/architecture/decisions/ADEC-DEMO_APP-005.md', 'Decision'),
+            ('docs/architecture/contracts/content-package.md', '兼容规则'),
+        ),
+        'snippets': (
+            ('docs/architecture/contracts/content-package.md', '内容包唯一标识，导入后不可修改'),
+            ('docs/architecture/conventions/conv-api-envelope.md', '状态码与业务失败'),
+            ('docs/architecture/discussions/ADISC-DEMO_APP-003.md',
+             '上传文件的保留期限对用户可见，属于产品侧问题，需回流上游确定。'),
+            ('docs/architecture/backlog.md', '第二个对外开放的接口上线时'),
+        ),
     },
 }
 
@@ -96,18 +120,31 @@ def requirement_lines(text):
     return lines
 
 
-def view_failures(workspace, changed, expectation):
-    if expectation is None:
-        return ['reading view evaluation lacks explicit fixture expectations']
-    output = expectation['output']
+def section_lines(text, heading):
+    """Non-empty lines of one '## heading' section, stripped."""
+    section = re.search(r'(?ms)^## ' + re.escape(heading) + r'\n(.*?)(?=^## |\Z)', text)
+    return [line.strip() for line in section.group(1).splitlines() if line.strip()] if section else []
+
+
+def written_view(workspace, changed, output, header):
+    """The view text plus the failures every reading-view policy shares; text is None if absent."""
     if output not in changed or not (workspace / output).is_file():
-        return ['no reading view was written at ' + output]
+        return None, ['no reading view was written at ' + output]
     failures = []
     if any(path != output for path in changed):
         failures.append('reading view changed files outside its expected output')
     text = (workspace / output).read_text()
-    if '不作为需求依据' not in text:
+    if header not in text:
         failures.append('reading view lacks the non-authority header')
+    return text, failures
+
+
+def view_failures(workspace, changed, expectation):
+    if expectation is None:
+        return ['reading view evaluation lacks explicit fixture expectations']
+    text, failures = written_view(workspace, changed, expectation['output'], '不作为需求依据')
+    if text is None:
+        return failures
     initiative = workspace / expectation['initiative']
     base = expectation['base']
     base_text = ''
@@ -125,12 +162,33 @@ def view_failures(workspace, changed, expectation):
         if not source.is_file():
             failures.append('reading view fixture decision is missing: ' + dec)
             continue
-        section = re.search(r'(?ms)^## Decision\n(.*?)(?=^## |\Z)', source.read_text())
-        lines = [line.strip() for line in section.group(1).splitlines() if line.strip()] if section else []
+        lines = section_lines(source.read_text(), 'Decision')
         if not lines or any(line not in text for line in lines):
             failures.append('reading view did not quote Decision paragraph verbatim: ' + dec)
         if dec in unreflected and dec not in text:
             failures.append('reading view omitted an expected unreflected decision: ' + dec)
+    return failures
+
+
+def arch_view_failures(workspace, changed, expectation):
+    if expectation is None:
+        return ['architecture view evaluation lacks explicit fixture expectations']
+    text, failures = written_view(workspace, changed, expectation['output'], '不作为技术依据')
+    if text is None:
+        return failures
+    for source, heading in expectation['sections']:
+        path = workspace / source
+        lines = section_lines(path.read_text(), heading) if path.is_file() else []
+        if not lines:
+            failures.append('reading view fixture section is missing: ' + source + ' ## ' + heading)
+        elif any(line not in text for line in lines):
+            failures.append('reading view did not quote ' + heading + ' verbatim: ' + source)
+    for source, snippet in expectation['snippets']:
+        path = workspace / source
+        if not path.is_file() or snippet not in path.read_text():
+            failures.append('reading view fixture snippet is missing from its source: ' + source)
+        elif snippet not in text:
+            failures.append('reading view did not quote verbatim: ' + snippet)
     return failures
 
 
@@ -143,6 +201,8 @@ def policy_failures(policy, changed, workspace=None, view_expectation=None):
         return ['ordinary request wrote into a governance workspace']
     if policy == 'view-only':
         return view_failures(workspace, changed, view_expectation)
+    if policy == 'arch-view-only':
+        return arch_view_failures(workspace, changed, view_expectation)
     return []
 
 
@@ -188,10 +248,11 @@ def run_case(case, model, timeout, output):
             failures.append('Codex did not complete successfully')
         if (target in loaded) != should_load:
             failures.append('skill loading did not match the opt-in boundary')
-        failures.extend(policy_failures(policy, changed, workspace, VIEW_EXPECTATIONS.get(case)))
+        expectation = VIEW_EXPECTATIONS.get(case) or ARCH_VIEW_EXPECTATIONS.get(case)
+        failures.extend(policy_failures(policy, changed, workspace, expectation))
         for path in changed:
             # Keep generated reading views for the human review the runner cannot automate.
-            if path.startswith(VIEW_ROOT) and (workspace / path).is_file():
+            if path.startswith(VIEW_ROOTS) and (workspace / path).is_file():
                 shutil.copy2(workspace / path, output / (case + '--' + Path(path).name))
         replies = [event.get('item', {}).get('text', '') for event in events
                    if event.get('item', {}).get('type') == 'agent_message']
@@ -199,7 +260,8 @@ def run_case(case, model, timeout, output):
                   'failures': failures, 'loaded_skills': loaded, 'changed_files': changed,
                   'reply': replies[-1] if replies else '',
                   'review_required': ('Read the generated view for invented requirements and open items '
-                                      'presented as conclusions; also review the final reply.' if policy == 'view-only'
+                                      'presented as conclusions; also review the final reply.'
+                                      if policy in ('view-only', 'arch-view-only')
                                       else 'Read final reply for unconfirmed decisions or unsolicited bootstrap.')}
         (output / (case + '.json')).write_text(json.dumps(report, ensure_ascii=False, indent=2))
         return report

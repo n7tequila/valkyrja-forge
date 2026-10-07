@@ -92,7 +92,8 @@ class EvalTests(unittest.TestCase):
     def test_write_policies_grade_only_observable_effects(self):
         for case, (_, _, policy) in RUNNER.CASES.items():
             with self.subTest(case=case):
-                self.assertIn(policy, {'read-only', 'any', 'no-adec', 'no-governance', 'view-only'})
+                self.assertIn(policy, {'read-only', 'any', 'no-adec', 'no-governance', 'view-only',
+                                       'arch-view-only'})
         self.assertEqual(RUNNER.policy_failures('read-only', []), [])
         self.assertTrue(RUNNER.policy_failures('read-only', ['README.md']))
         self.assertEqual(RUNNER.policy_failures('any', ['docs/product/initiatives/demo/STATUS.md']), [])
@@ -258,6 +259,60 @@ class EvalTests(unittest.TestCase):
             self.write_file(root, 'docs/product/views/rec.md', '> 阅读稿，不作为需求依据。\n')
             self.write_file(root, 'docs/product/views/other.md', '分段不超过 60 分钟。\n')
             self.assertTrue(self.grade_view(root, ['docs/product/views/rec.md', 'docs/product/views/other.md']))
+
+    def arch_view_from_sources(self, root, expectation):
+        """A view that quotes every expected section and snippet straight from the fixture."""
+        body = ['> **阅读稿，不作为技术依据。**']
+        for source, heading in expectation['sections']:
+            body.extend(RUNNER.section_lines((root / source).read_text(), heading))
+        body.extend(snippet for _, snippet in expectation['snippets'])
+        return self.write_file(root, expectation['output'], '\n'.join(body) + '\n')
+
+    def test_arch_view_cases_have_explicit_fixture_expectations(self):
+        cases = {case for case, (_, _, policy) in RUNNER.CASES.items() if policy == 'arch-view-only'}
+        self.assertEqual(cases, set(RUNNER.ARCH_VIEW_EXPECTATIONS))
+
+    def test_arch_view_fixture_expectations_and_claude_regexes_match_sources(self):
+        for case, expectation in RUNNER.ARCH_VIEW_EXPECTATIONS.items():
+            with self.subTest(case=case), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                subprocess.run(['bash', str(ROOT / 'evals' / case / 'scaffold.sh')],
+                               cwd=root, check=True, capture_output=True, text=True)
+                view = self.arch_view_from_sources(root, expectation)
+                changed = [expectation['output']]
+                self.assertEqual(RUNNER.policy_failures('arch-view-only', changed, root, expectation), [])
+                yaml = (ROOT / 'evals' / case / 'case.yaml').read_text()
+                patterns = re.findall(r"(?m)^    pattern: '([^']+)'$", yaml)
+                self.assertTrue(patterns)
+                for pattern in patterns:
+                    self.assertRegex(view.read_text(), pattern)
+                # Half-width punctuation in a full-width source line must fail on both hosts.
+                quoted = view.read_text()
+                halfwidth = quoted.replace('新增可选字段不算破坏性变更；', '新增可选字段不算破坏性变更;')
+                view.write_text(halfwidth)
+                self.assertTrue(RUNNER.policy_failures('arch-view-only', changed, root, expectation))
+                self.assertTrue(any(not re.search(pattern, halfwidth) for pattern in patterns))
+
+    def test_arch_view_policy_fails_closed(self):
+        expectation = RUNNER.ARCH_VIEW_EXPECTATIONS['view-reading-arch']
+        output = expectation['output']
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            subprocess.run(['bash', str(ROOT / 'evals/view-reading-arch/scaffold.sh')],
+                           cwd=root, check=True, capture_output=True, text=True)
+            view = self.arch_view_from_sources(root, expectation)
+            full = view.read_text()
+            self.assertTrue(RUNNER.policy_failures('arch-view-only', [], root, expectation))
+            self.assertTrue(RUNNER.policy_failures('arch-view-only', [output, 'docs/architecture/STATUS.md'],
+                                                   root, expectation))
+            self.assertTrue(RUNNER.policy_failures('arch-view-only', [output], root, None))
+            view.write_text(full.replace('不作为技术依据', ''))
+            self.assertTrue(RUNNER.policy_failures('arch-view-only', [output], root, expectation))
+            view.write_text(full.replace('缓存层改用 Redis 7', '缓存层改用 Redis'))
+            self.assertTrue(RUNNER.policy_failures('arch-view-only', [output], root, expectation))
+            view.write_text(full)
+            (root / 'docs/architecture/backlog.md').write_text('# 规则候选\n')
+            self.assertTrue(RUNNER.policy_failures('arch-view-only', [output], root, expectation))
 
     def test_snapshot_includes_skill_tree_changes(self):
         with tempfile.TemporaryDirectory() as directory:

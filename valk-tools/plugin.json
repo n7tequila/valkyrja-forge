@@ -1,7 +1,7 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "valk-tools",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "个人工作方式工具箱：上下文交接、Claude ↔ Codex 换宿主工作交接、跨 forge 开 PR/MR、只审不改的重构审查。支持 Codex 与 Claude Code，与 valk 治理协议互不依赖。",
   "author": {"name": "n7tequila", "url": "https://github.com/n7tequila"},
   "repository": "https://github.com/n7tequila/valkyrja-forge",

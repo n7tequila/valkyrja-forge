@@ -1,6 +1,6 @@
 {
   "name": "valk-tools",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "个人工作方式工具箱：context-handoff（会话交接）、host-handoff（Claude ↔ Codex 工作交接）、merge-pr（跨 forge 开 PR/MR）、refactor-review（只审不改的重构审查）。跟人走，与 valk 治理协议互不依赖。",
   "author": {
     "name": "n7tequila",

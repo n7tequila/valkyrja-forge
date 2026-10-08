@@ -12,10 +12,15 @@ import sys
 
 
 LOCAL_STATE = {".git", ".claude", ".codex"}
+INSTRUCTION_PATHS = ("CLAUDE.md", "AGENTS.md")
+# Claude Code loads project instructions from here; the rest of .claude/ stays agent-local.
+AGENT_DIR_INSTRUCTIONS = {".claude/CLAUDE.md"}
 HEX = re.compile(r"^[0-9a-f]{64}$")
 
 
 def sensitive(path):
+    if path in AGENT_DIR_INSTRUCTIONS:
+        return False
     parts = PurePosixPath(path).parts
     name = parts[-1].lower()
     return (any(part.lower() in LOCAL_STATE for part in parts)
@@ -190,7 +195,8 @@ def validate_snapshot(root, snapshot):
         if not isinstance(item, dict) or set(item) != {"path", "reason"} or not isinstance(item["reason"], str):
             raise ValueError("invalid omitted-path metadata")
         safe_path(root, item["path"], allow_sensitive=True)
-        if not sensitive(item["path"]):
+        # Older snapshots omitted .claude/CLAUDE.md; they stay verifiable and report it as changed.
+        if not sensitive(item["path"]) and item["path"] not in AGENT_DIR_INSTRUCTIONS:
             raise ValueError("non-sensitive path cannot be omitted")
     identity = snapshot["git"]
     if identity is not None:
@@ -228,7 +234,7 @@ def main():
         if not root.is_dir():
             raise ValueError("workspace root is not a directory")
         if args.command == "snapshot":
-            requested = sorted(set(safe_path(root, p) for p in args.path))
+            requested = sorted(set(safe_path(root, p) for p in (*INSTRUCTION_PATHS, *args.path)))
             exclusions = sorted(set(safe_path(root, p, allow_sensitive=True) for p in args.exclude))
             if any(excluded(p, exclusions) for p in requested):
                 raise ValueError("requested path is also excluded")

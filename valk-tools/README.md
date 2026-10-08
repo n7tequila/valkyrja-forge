@@ -16,7 +16,7 @@
 | 技能 | 做什么 |
 |---|---|
 | `context-handoff` | 上下文将满时固化现场、清空、再无损接上；也用于新会话恢复现场。同一宿主内换会话 |
-| `host-handoff` | 在 Claude Code 与 Codex 之间换宿主：交出方导出交接包，接手方核验 Git/文件状态后接续，保留半完成工作与待确认边界 |
+| `host-handoff` | 在 Claude Code 与 Codex 之间换宿主：交接包、Git/文件核验与项目指令更新确认，保留半完成工作与待确认边界 |
 | `merge-pr` | 开 PR/MR，GitHub 走 gh CLI，自建 forge 降级为标题正文 + compare URL |
 | `refactor-review` | 重构审查，只审不改：按局部→结构→模式三级阶梯判断哪里值得重构、哪里不该动，结论含 KEEP / REJECT / TESTS_FIRST / REWRITE，按级别分层确认；审完留重构台账，下次先对账 |
 

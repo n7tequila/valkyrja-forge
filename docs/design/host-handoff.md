@@ -100,4 +100,90 @@ helper 只读采集 Git HEAD、分支、index 元数据指纹、dirty 文件和�
 非 Git 项目明确标 limited。状态匹配不证明实现正确、测试仍绿或新的操作获得授权。
 不能恢复源会话中未提供/已丢失的内容，不能自动把另一机器缺失的未提交代码变出来。
 两个方向都只在隔离夹具上单次实测，尚未宣称真实产品仓的全生命周期验收；
-plugin 安装形态下的端到端交接未实测（注册名已离线实测）。
+Codex plugin 安装形态下的端到端交接未实测（注册名已离线实测）；Claude plugin 形态
+见下文 2026-10-08 实测（`--plugin-dir`，不是 marketplace 安装缓存）。
+
+## 项目指令更新确认（2026-10-08，0.5.1）
+
+来源：用户明确要求换宿主时检查 `CLAUDE.md` ↔ `AGENTS.md` 的承接，并由用户裁决
+是否更新。采用人工确认拦截，而非自动双向复制：两份文件可能有意保留宿主差异，
+更新需求不能由文本或哈希不相等直接推出。完整边界以
+[技能的项目指令预检与确认](../../valk-tools/skills/host-handoff/SKILL.md#项目指令预检与确认双向)
+为唯一权威；模板只增加本次检查与用户选择的记录字段。
+
+helper 新快照默认监测根两份指令（包括 missing、ignored），不把用户确认与语义一致性
+冒充成哈希检查结果。旧 JSON 仍按原范围核验，不静默扩范围；其他适用指令及权威来源
+依旧需要显式选取或披露覆盖限制。只升 `valk-tools` 三处版本为 0.5.1，不动 `valk`。
+
+验证：
+
+- 四项新增状态用例先 RED（干净/缺失/ignored 指令未采集、可被排除），最小改动后 GREEN；
+  另补旧 JSON 范围兼容回归。全量 74 项单测、22 个 trace 场景、技能/清单校验、AST、
+  diff 空白与脱敏检查通过。
+- Codex 原生子代理在两个隔离消费仓模拟双向导出：只有源宿主指令、没有目标入口时，
+  均展示权威指针方案并等待用户选择，没有修改文件或交付就绪包。
+- 模拟后续选择：正向保持现状后，仅生成包与 JSON，AGENTS.md 仍缺失、CLAUDE.md 不变；
+  反向明确批准后，仅补 CLAUDE.md 权威指针，不复制规则、AGENTS.md 不变，之后采集新快照。
+  主代理独立核验两份 JSON 均退出 0。源码和测试缺失的夹具事实没有被包装成业务验证通过。
+- 不继承导出对话的接收代理独立核验两包均退出 0：正向保留已确认的现状并读取 CLAUDE.md，
+  反向沿新指针读取 AGENTS.md，没有重复索要同一选择，也没有擅自补建缺失实现。
+- 独立只读审查未发现具体阻断问题。以上是模拟宿主的隔离演练，不是此版本的真实
+  Claude CLI 或 plugin 端到端评测；个人安装缓存未刷新。
+
+### 真实 CLI 端到端与宿主加载规则（2026-10-08，0.5.1）
+
+来源：真实运行 + 用户裁决。用户要求在真实宿主上跑端到端；首轮暴露反向缺口后，
+用户同意把两宿主的加载差异写进技能并重跑。
+
+夹具：临时 git 仓，正数格式化与测试已提交，负数分支只有未提交的占位，另有未跟踪的
+个人笔记；根目录只放一份指令，含四条共享约定（其一为「每完成一项在 CHANGELOG 末尾追加」）。
+Claude Code 2.1.292（claude-opus-5-5）经 `--plugin-dir valk-tools` 加载工作树技能
+（`/valk-tools:host-handoff`）并限 `--setting-sources project,local`；Codex CLI 0.160.1
+（gpt-6.1-sol）复制安装（`$host-handoff`），`--ignore-user-config`，stdin 关闭。
+多轮用 `claude -p --resume` / `codex exec resume`。各情形单次运行，是行为证据，不是确定性保证。
+
+首轮（修订前）：
+
+- 正向（只有 CLAUDE.md）：Claude 导出先暂停，列出证据、拟写内容与三个选项；回复
+  「按建议更新」后先建只含文字指针的 AGENTS.md 再采快照，CLAUDE.md 不变，独立 verify 0。
+  Codex 接收：verify 0，未重复询问，先写测试再实现，全绿，追加 CHANGELOG，未暂存或提交。
+- 导出后改 CLAUDE.md（同一现场的副本）：Codex verify 1 即停，未写任何文件，
+  并指出新规则与交接中约定的格式冲突。
+- 反向（只有 AGENTS.md）：Codex 把缺 CLAUDE.md 当缺口，建议新建 CLAUDE.md 指向 AGENTS.md；
+  回复「保持现状」后导出与 Claude 接收均正常。
+
+缺口：在 2.1.292 复验，与 [codex-migration](codex-migration.md) 的 2.1.289 记录一致——
+只有 AGENTS.md 时 Claude 自动加载它；CLAUDE.md 只写文字指针时 AGENTS.md 不再加载；
+写 `@AGENTS.md` 导入时加载。照首轮建议更新，之后的普通 Claude 会话会看不到 AGENTS.md
+的规则（交接会话本身因技能要求两份都读而不受影响）。
+
+修订：SKILL 预检段写明两宿主实际加载哪份根指令，以及指针写法（Claude 侧用 `@AGENTS.md`，
+Codex 侧只能写文字指针）。0.5.1 尚未发布，不另升版本。
+
+重跑（修订后）：
+
+- 只有 AGENTS.md：Codex 一轮导出，不再拦截，包内记录「Claude 无 CLAUDE.md 时读取
+  AGENTS.md，约束已承接」；Claude 接收 verify 0，同样判定无需改指令，完成任务且未提交。
+- CLAUDE.md 只有 Claude 专属内容、共享约定在 AGENTS.md：Codex 暂停，建议保留原文并追加
+  `@AGENTS.md`；批准后只追加这一行，AGENTS.md 不变，verify 0；不带工具的 Claude 会话
+  能复述 AGENTS.md 中的规则原文。
+- 正向回归（只有 CLAUDE.md）：仍暂停，但推荐从「AGENTS.md 写文字指针」变为「约定移入
+  AGENTS.md、CLAUDE.md 改为 `@AGENTS.md`」，文字指针降为备选（理由：文字指针要靠 Codex
+  主动去读）。不违反协议，三个选项齐全，但改动更大，由用户在预检时裁决。
+- 用户裁决收回：交接是临时动作，不该顺手重组用户的主指令文件。SKILL 改为建议取改动最小
+  的写法（在目标侧补指针），把规则迁到另一份文件只作「调整方案」的备选，不作推荐。
+  复跑：正向两次都推荐只建文字指针的 AGENTS.md、CLAUDE.md 不动，迁移或复制列为不推荐的
+  备选；混合布局一次仍建议追加 `@AGENTS.md` 并保留专属内容；三次均未写任何文件。
+
+审查修正（同日，代码审查发现）：`.claude/CLAUDE.md` 是 Claude Code 的项目指令位置，
+但 helper 把整个 `.claude/` 当宿主私有，`--path .claude/CLAUDE.md` 直接退出 2，与 SKILL
+「其他项目内指令按实际路径补入」矛盾。实测（haiku，无工具复述口令）：Claude 会加载
+`.claude/CLAUDE.md`，且它存在时即使根目录没有 CLAUDE.md 也不再读 AGENTS.md；其中的导入
+路径相对该文件，`@../AGENTS.md` 生效、`@AGENTS.md` 不生效。修正：helper 单独放行
+`.claude/CLAUDE.md`，`.claude/` 其余内容仍不读；旧 JSON 若把它列为 omitted 仍可核验，
+报告为该路径变化。SKILL 的加载规则与导入写法按实测改写。先补两项 helper 用例（RED），
+修正后通过。Codex 端到端一次：只有 `.claude/CLAUDE.md`（宿主专属）与 AGENTS.md（共享）
+时暂停并建议追加 `@../AGENTS.md`；批准后只追加这一行，快照覆盖该文件，独立 verify 0。
+
+限制：CHANGELOG 那条约定也被两份交接包复述，不能单独证明接手方是从指令文件读到的。
+Codex plugin 形态仍未实测。Claude 侧花费：首轮三次约 $0.96，重跑两次约 $0.61，收回后复跑两次约 $0.44。

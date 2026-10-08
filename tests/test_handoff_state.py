@@ -63,6 +63,87 @@ class HandoffStateTests(unittest.TestCase):
         (self.root / "tracked.txt").write_text("two")
         self.assertEqual(self.verify(snapshot)[0], 1)
 
+    def test_clean_host_instructions_are_captured_by_default(self):
+        self.init()
+        for name in ("CLAUDE.md", "AGENTS.md"):
+            (self.root / name).write_text("Read docs/project-guide.md before editing.\n")
+        self.git("add", "CLAUDE.md", "AGENTS.md")
+        self.git("commit", "-qm", "instruction baseline")
+        snapshot = self.snapshot()
+        for name in ("CLAUDE.md", "AGENTS.md"):
+            with self.subTest(name=name):
+                self.assertIn(name, snapshot["requested"])
+                self.assertEqual(snapshot["paths"][name]["kind"], "file")
+                (self.root / name).write_text("changed instruction\n")
+                code, result = self.verify(snapshot)
+                self.assertEqual(code, 1)
+                self.assertIn(name, result["changed_paths"])
+
+    def test_missing_host_instructions_are_monitored_without_creating_them(self):
+        self.init()
+        snapshot = self.snapshot()
+        for name in ("CLAUDE.md", "AGENTS.md"):
+            with self.subTest(name=name):
+                self.assertEqual(snapshot["paths"][name], {"kind": "missing"})
+                self.assertFalse((self.root / name).exists())
+                (self.root / name).write_text("created after export\n")
+                code, result = self.verify(snapshot)
+                self.assertEqual(code, 1)
+                self.assertIn(name, result["changed_paths"])
+
+    def test_ignored_host_instructions_are_still_captured(self):
+        self.init()
+        (self.root / ".git/info/exclude").write_text("CLAUDE.md\nAGENTS.md\n")
+        for name in ("CLAUDE.md", "AGENTS.md"):
+            (self.root / name).write_text("local project instruction\n")
+        snapshot = self.snapshot()
+        for name in ("CLAUDE.md", "AGENTS.md"):
+            with self.subTest(name=name):
+                self.assertEqual(snapshot["paths"][name]["kind"], "file")
+                (self.root / name).write_text("changed local project instruction\n")
+                code, result = self.verify(snapshot)
+                self.assertEqual(code, 1)
+                self.assertIn(name, result["changed_paths"])
+
+    def test_claude_instruction_under_agent_dir_is_selectable(self):
+        self.init()
+        (self.root / ".claude").mkdir()
+        (self.root / ".claude/CLAUDE.md").write_text("Read docs/project-guide.md before editing.\n")
+        (self.root / ".claude/settings.json").write_text('{"token": "must not appear"}')
+        snapshot = self.snapshot(".claude/CLAUDE.md")
+        self.assertEqual(snapshot["paths"][".claude/CLAUDE.md"]["kind"], "file")
+        self.assertEqual([item["path"] for item in snapshot["omitted"]], [".claude/settings.json"])
+        self.assertNotIn("must not appear", json.dumps(snapshot))
+        self.assertEqual(self.verify(snapshot)[0], 0)
+        (self.root / ".claude/CLAUDE.md").write_text("changed instruction\n")
+        code, result = self.verify(snapshot)
+        self.assertEqual(code, 1)
+        self.assertIn(".claude/CLAUDE.md", result["changed_paths"])
+
+    def test_legacy_snapshot_that_omitted_claude_instruction_reports_drift(self):
+        self.init()
+        (self.root / ".claude").mkdir()
+        (self.root / ".claude/CLAUDE.md").write_text("local project instruction\n")
+        snapshot = self.snapshot()
+        del snapshot["paths"][".claude/CLAUDE.md"]
+        snapshot["omitted"] = [{"path": ".claude/CLAUDE.md", "reason": "sensitive or agent-local; contents not inspected"}]
+        code, result = self.verify(snapshot)
+        self.assertEqual(code, 1, result)
+        self.assertIn(".claude/CLAUDE.md", result["changed_paths"])
+
+    def test_host_instruction_defaults_cannot_be_excluded(self):
+        for name in ("CLAUDE.md", "AGENTS.md"):
+            with self.subTest(name=name):
+                self.assertEqual(self.call("snapshot", self.root, "--exclude", name)[0], 2)
+
+    def test_legacy_snapshot_keeps_its_original_scope(self):
+        self.init()
+        snapshot = self.snapshot("tracked.txt")
+        for name in ("CLAUDE.md", "AGENTS.md"):
+            snapshot["requested"].remove(name)
+            del snapshot["paths"][name]
+        self.assertEqual(self.verify(snapshot)[0], 0)
+
     def test_staging_only_change(self):
         self.init()
         (self.root / "tracked.txt").write_text("staged")

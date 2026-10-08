@@ -101,7 +101,7 @@
 
 ### 要回到产品侧定的事
 
-- <「应回流上游」条目原文>（ADISC-<DOMAIN>-NNN）——需到 valkyrja-prd 讨论与裁决
+- <view 动作筛出的待回流条目原文>（ADISC-<DOMAIN>-NNN）——需到 valkyrja-prd 讨论与裁决
 
 ### 候选规则（未沉淀）
 

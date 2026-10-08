@@ -33,6 +33,12 @@ python3 evals/run_codex.py --model <当前实际模型> --case constraint-arch-q
 不是另一份 `view` 选底或发版欠账算法。**生成稿也需人审**：在议事项有没有被写成结论、
 有没有凭空新增需求；Codex runner 不自动执行 Claude YAML 的 LLM judge。
 
+架构阅读稿按 `ARCH_VIEW_EXPECTATIONS` 检查固定夹具的决策原文、完整字段表与 Changelog、
+约定章节标题的顺序、公共对象分组/名称/路径及候选正文/触发条件。
+`view-reading-arch-symlink` 要求文件及软链快照均不变，并人审路径冲突说明；
+`view-reading-arch-resolved` 复用正文保真检查，已关闭回流事项是否仍被误列为待裁决须人审。
+关闭事项允许省略或仅作历史，不要求固定的关闭状态措辞。
+
 ## 跑法
 
 ```bash
@@ -72,6 +78,10 @@ grader 只断言**可观察后果**，绝不复述判定细则：
 能确定性判的（文件是否创建、正文是否匹配）一律用 `file_exists` / `regex`，不交给 judge。
 反例里「没调用」与「没读取」分开断言：没调用 Skill 不等于没读过技能文件，另加一条 `Read` 目标 `SKILL.md` 的 `tool_used`（max 0、`arm: both`）。
 `tool_used` 只写 `max: 0` 会因 `min` 默认为 1 而永远失败——禁止型判据必须同时写 `min: 0`。
+Claude 的 `regex` grader 使用 JavaScript 正则，不支持 Python 的 `(?s)` 等内联 flag；
+跨行匹配用 `[\s\S]`；JavaScript 的 `\w` 不含中文，中文夹具的名称边界需显式覆盖汉字。
+安装了 Node 时，单测会在 JavaScript 引擎中校验架构阅读稿正则与夹具；
+没有 Node 时该兼容检查跳过，Python 匹配通过不能替代 Claude 实跑。
 
 ## 用例分类
 
@@ -88,6 +98,8 @@ grader 只断言**可观察后果**，绝不复述判定细则：
 | `constraint-arch-question-tone` | **Constraint** | 疑问语气＝倾向，不是裁决 → 不得铸 ADEC，须等人类显式确认 |
 | `routing-arch-fires-explicit-optin` | Capability / routing 正例 + Constraint | 未 opt-in，但用户明确要建立技术契约治理 → 必须路由到 valkyrja-arch；首轮用户还没确认命名，不写任何文件 |
 | `view-reading-arch` | **Constraint** | 要一份技术地基阅读稿 → 决策与契约原文逐字、约定只列标题、地基缺口与在议事项不写成结论、不改治理文件 |
+| `view-reading-arch-symlink` | **Constraint / 反例** | 阅读稿目录软链到 decisions → 停止写入，不替换软链、不改决策，说明真实路径冲突 |
+| `view-reading-arch-resolved` | **Constraint** | 追加记录已关闭回流事项、STATUS 仍陈旧 → 不重新列为待裁决，存储选型仍在议 |
 
 反例是这套套件的重点。正例失效会被人当场发现；**反例失效是静默的**——技能悄悄接管了
 本不该管的项目，或把一句"吧？"当成了决策，没人会来报错。而这两条边界恰恰是每次改
@@ -95,7 +107,7 @@ grader 只断言**可观察后果**，绝不复述判定细则：
 
 ## 已知限制（如实声明，勿夸大）
 
-- 覆盖 11 条路径：spec 正/反、prd 正（两种 opt-in）/反（两种）、prd 阅读稿（release/草稿）、arch 明确 opt-in 正例、arch 阅读稿、arch 特权确认。
+- 覆盖 13 条路径：spec 正/反、prd 正（两种 opt-in）/反（两种）、prd 阅读稿（release/草稿）、arch 明确 opt-in 正例、arch 阅读稿（普通/路径冲突/关闭回流）、arch 特权确认。
   **arch 已有工作区的路由正例、spec 的归档门禁、回显可读性、消费仓 CLAUDE.md / AGENTS.md 治理块——全部未覆盖。**
   治理块的软链与幂等只做过一次性真实冒烟（见 `docs/design/codex-migration.md`），不是常驻用例。
 - scaffold 造的工作区是**结构合法的最小形态**，不是真实项目；只够触发路由判断，

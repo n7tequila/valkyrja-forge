@@ -55,14 +55,39 @@ graders:
     pattern: '新增可选字段不算破坏性变更；消费方必须忽略未知字段。'
 
   - type: regex
-    name: contract-field-verbatim
+    name: contract-field-table-verbatim
     target: {source: file, path: docs/architecture/views/architecture.md}
-    pattern: '内容包唯一标识，导入后不可修改'
+    pattern: '\| 字段 \| 类型 \| 必填 \| 说明 \|\n\|---\|---\|---\|---\|\n\| packageId \| string \| 是 \| 内容包唯一标识，导入后不可修改 \|\n\| items \| array \| 是 \| 内容条目列表，至少一条 \|\n\| locale \| string \| 否 \| 语言代码，缺省为 zh-CN \|'
 
   - type: regex
-    name: convention-heading-verbatim
+    name: contract-changelog-verbatim
     target: {source: file, path: docs/architecture/views/architecture.md}
-    pattern: '状态码与业务失败'
+    pattern: '\| 版本 \| 日期 \| 变更 \| 破坏性 \|\n\|---\|---\|---\|---\|\n\| 1 \| 2026-09-20 \| 初版 \| — \|\n\| 2 \| 2026-09-25 \| 新增可选字段 locale \| 否 \|'
+
+  - type: regex
+    name: convention-title-verbatim
+    target: {source: file, path: docs/architecture/views/architecture.md}
+    pattern: 'API 响应信封与语义约定'
+
+  - type: regex
+    name: convention-headings-verbatim
+    target: {source: file, path: docs/architecture/views/architecture.md}
+    pattern: '## 必须遵守的约定\n(?:(?!\n## )[\s\S])*(?<![\w\u3400-\u9fff])统一信封(?=$|[\s；、，;,。`*\]」』）)|/"”\x27’])(?:(?!\n## )[\s\S])*(?<![\w\u3400-\u9fff])状态码与业务失败(?=$|[\s；、，;,。`*\]」』）)|/"”\x27’])(?:(?!\n## )[\s\S])*(?<![\w\u3400-\u9fff])错误码(?=$|[\s；、，;,。`*\]」』）)|/"”\x27’])'
+
+  - type: regex
+    name: inventory-group-verbatim
+    target: {source: file, path: docs/architecture/views/architecture.md}
+    pattern: '共享内核'
+
+  - type: regex
+    name: inventory-name-verbatim
+    target: {source: file, path: docs/architecture/views/architecture.md}
+    pattern: '(?<![\w\u3400-\u9fff./-])PageRequest(?![\w\u3400-\u9fff./-])'
+
+  - type: regex
+    name: inventory-path-verbatim
+    target: {source: file, path: docs/architecture/views/architecture.md}
+    pattern: '(?<![\w\u3400-\u9fff./-])src/api/paging\.py(?![\w\u3400-\u9fff./-])'
 
   - type: regex
     name: upstream-item-verbatim
@@ -70,9 +95,14 @@ graders:
     pattern: '上传文件的保留期限对用户可见，属于产品侧问题，需回流上游确定。'
 
   - type: regex
+    name: backlog-candidate-verbatim
+    target: {source: file, path: docs/architecture/views/architecture.md}
+    pattern: '所有对外接口统一限流'
+
+  - type: regex
     name: backlog-trigger-verbatim
     target: {source: file, path: docs/architecture/views/architecture.md}
-    pattern: '第二个对外开放的接口上线时'
+    pattern: '第二个对外开放的接口上线时。'
 
   - type: regex
     name: non-authority-header

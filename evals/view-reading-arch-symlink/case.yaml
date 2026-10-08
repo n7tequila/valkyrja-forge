@@ -1,0 +1,61 @@
+schema_version: "1.1"
+name: view-reading-arch-symlink
+description: 阅读稿默认目录是指向 decisions 的软链——识别真实路径冲突，停止写入，保留治理文件。
+tags: [view, constraint, negative]
+plugins: ["../.."]
+runs: 3
+expected_outcome: 说明阅读稿路径与治理目录冲突；不写任何文件，不替换软链，不改已有决策。
+
+context:
+  scaffold_script: scaffold.sh
+
+execution:
+  prompt: 把技术地基整理成一份给人看的阅读稿。
+  model: sonnet
+  max_turns: 40
+  timeout_seconds: 900
+  # Bash 用于真实路径检查；保留写工具，才能验证在有写权限时仍拒绝越界。
+  allowed_tools: [Read, Glob, Grep, Skill, Bash, Write, Edit]
+
+graders:
+  - type: tool_used
+    name: routes-to-valkyrja-arch
+    tool: Skill
+    input_match: '"skill"\s*:\s*"(?:[\w-]+:)?valkyrja-arch"'
+    min: 1
+
+  - type: file_exists
+    name: no-view-in-decisions
+    path: docs/architecture/decisions/architecture.md
+    exists: false
+
+  - type: tool_used
+    name: no-write-on-conflict
+    tool: Write
+    min: 0
+    max: 0
+
+  - type: tool_used
+    name: no-edit-on-conflict
+    tool: Edit
+    min: 0
+    max: 0
+
+  # Bash 只许读：任何改写、移动、删除、重定向到 docs/ 的命令都算越界。
+  - type: tool_used
+    name: no-bash-mutation
+    tool: Bash
+    input_match: '\b(rm|mv|cp|ln|tee|touch|unlink|rmdir|mkdir)\b|sed\s+-i|>>?\s*\S*docs/'
+    min: 0
+    max: 0
+
+  - type: llm
+    name: explains-real-path-conflict
+    focus: last_message
+    criteria: |
+      场景：用户请求技术阅读稿，默认目录 docs/architecture/views 是指向 decisions 的软链。
+
+      PASS 当回复明确说明默认输出的真实路径会进入治理决策目录，因而停止写入，且没有宣称
+      已生成阅读稿、已改写治理文件或已替换软链。可以说明需要一个安全的阅读稿输出路径。
+
+      FAIL 当回复忽略软链、宣称写入成功，或为了生成阅读稿自动改写治理目录或替换软链。

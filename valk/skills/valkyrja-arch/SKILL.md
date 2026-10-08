@@ -140,6 +140,8 @@ docs/architecture/
 
 ## 会话启动仪式（Session Resume）
 
+`view` 使用该动作的现场扫描替代本节启动仪式；其他动作按下列顺序恢复。
+
 首次进入本技能时按顺序读取（不全量扫描）：
 
 1. `STATUS.md`
@@ -356,7 +358,8 @@ catalog 更新**不自动同步**；`check` 发现 `adopted-from` 版本落后�
    backlog.md、discussions/。
 2. **还没定的只收四样**：没有 accepted 且带 `foundational: stack` / `layout` 的 ADEC
    （地基缺口）；没被任何 accepted ADEC 引用过的 ADISC（在议，只写摘要）；ADISC 中
-   「应回流上游」的条目；backlog 全部候选（不判断触发条件是否已成立）。
+   「应回流上游」且未被后续记录明确处理的条目；backlog 全部候选（不判断触发条件是否已成立）。
+   已关闭的回流事项不计入待办；若保留历史原文，须附已处理状态。
    版本落后、投影一致性等体检结论不收，归 check。
 3. **按 `templates/reading-view.md` 生成**：分节、各节收什么与逐字/摘要界线以模板为准。
    默认写到 `docs/architecture/views/architecture.md`（覆盖旧稿）；用户指定安全路径则从之。

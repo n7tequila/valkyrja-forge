@@ -33,6 +33,8 @@ CASES = {
     'view-reading-verbatim': ('valkyrja-prd', True, 'view-only'),
     'view-reading-current': ('valkyrja-prd', True, 'view-only'),
     'view-reading-arch': ('valkyrja-arch', True, 'arch-view-only'),
+    'view-reading-arch-symlink': ('valkyrja-arch', True, 'read-only'),
+    'view-reading-arch-resolved': ('valkyrja-arch', True, 'arch-view-only'),
 }
 GOVERNANCE_ROOTS = ('docs/product/', 'docs/architecture/', 'openspec/')
 VIEW_ROOTS = ('docs/product/views/', 'docs/architecture/views/')
@@ -65,14 +67,34 @@ ARCH_VIEW_EXPECTATIONS = {
             ('docs/architecture/decisions/ADEC-DEMO_APP-005.md', 'Decision'),
             ('docs/architecture/contracts/content-package.md', '兼容规则'),
         ),
+        'blocks': (
+            ('docs/architecture/contracts/content-package.md', '形状'),
+            ('docs/architecture/contracts/content-package.md', 'Changelog'),
+        ),
+        'heading_lists': (
+            ('docs/architecture/conventions/conv-api-envelope.md', '必须遵守的约定',
+             ('统一信封', '状态码与业务失败', '错误码')),
+        ),
         'snippets': (
-            ('docs/architecture/contracts/content-package.md', '内容包唯一标识，导入后不可修改'),
-            ('docs/architecture/conventions/conv-api-envelope.md', '状态码与业务失败'),
+            ('docs/architecture/inventory.md', '共享内核'),
             ('docs/architecture/discussions/ADISC-DEMO_APP-003.md',
              '上传文件的保留期限对用户可见，属于产品侧问题，需回流上游确定。'),
+            ('docs/architecture/backlog.md', '所有对外接口统一限流'),
             ('docs/architecture/backlog.md', '第二个对外开放的接口上线时'),
         ),
+        'tokens': (
+            ('docs/architecture/inventory.md', 'PageRequest'),
+            ('docs/architecture/inventory.md', 'src/api/paging.py'),
+        ),
     },
+}
+# The resolved fixture shares the same foundation. Its historical upstream quotation is optional;
+# whether it is presented as closed (rather than pending) is reviewed by a human.
+ARCH_VIEW_EXPECTATIONS['view-reading-arch-resolved'] = {
+    **ARCH_VIEW_EXPECTATIONS['view-reading-arch'],
+    'snippets': tuple((source, snippet)
+                      for source, snippet in ARCH_VIEW_EXPECTATIONS['view-reading-arch']['snippets']
+                      if source != 'docs/architecture/discussions/ADISC-DEMO_APP-003.md'),
 }
 
 
@@ -85,8 +107,10 @@ def read_prompt(case):
 
 
 def snapshot(workspace):
-    return {str(path.relative_to(workspace)): hashlib.sha256(path.read_bytes()).hexdigest()
-            for path in workspace.rglob('*') if path.is_file()}
+    return {str(path.relative_to(workspace)):
+            'symlink:' + os.readlink(path) if path.is_symlink()
+            else hashlib.sha256(path.read_bytes()).hexdigest()
+            for path in workspace.rglob('*') if path.is_symlink() or path.is_file()}
 
 
 def loaded_skills(events):
@@ -183,12 +207,32 @@ def arch_view_failures(workspace, changed, expectation):
             failures.append('reading view fixture section is missing: ' + source + ' ## ' + heading)
         elif any(line not in text for line in lines):
             failures.append('reading view did not quote ' + heading + ' verbatim: ' + source)
-    for source, snippet in expectation['snippets']:
+    for source, heading in expectation.get('blocks', ()):
         path = workspace / source
-        if not path.is_file() or snippet not in path.read_text():
-            failures.append('reading view fixture snippet is missing from its source: ' + source)
-        elif snippet not in text:
-            failures.append('reading view did not quote verbatim: ' + snippet)
+        lines = section_lines(path.read_text(), heading) if path.is_file() else []
+        if not lines:
+            failures.append('reading view fixture block is missing: ' + source + ' ## ' + heading)
+        elif '\n'.join(lines) not in text:
+            failures.append('reading view did not quote the complete ' + heading + ' block: ' + source)
+    for source, output_heading, headings in expectation.get('heading_lists', ()):
+        path = workspace / source
+        source_headings = re.findall(r'(?m)^## (.+)$', path.read_text()) if path.is_file() else []
+        block = '\n'.join(section_lines(text, output_heading))
+        if list(headings) != source_headings:
+            failures.append('reading view fixture headings differ from expectations: ' + source)
+        elif not re.search('.*?'.join(r'(?<!\w)' + re.escape(heading) + r'(?=$|[\s；、，;,。`*\]」』）)|/"”\x27’])'
+                                     for heading in headings), block, re.S):
+            failures.append('reading view omitted or reordered convention headings: ' + source)
+    for kind in ('snippets', 'tokens'):
+        for source, snippet in expectation.get(kind, ()):
+            path = workspace / source
+            pattern = re.escape(snippet)
+            if kind == 'tokens':
+                pattern = r'(?<![\w./-])' + pattern + r'(?![\w./-])'
+            if not path.is_file() or not re.search(pattern, path.read_text()):
+                failures.append('reading view fixture snippet is missing from its source: ' + source)
+            elif not re.search(pattern, text):
+                failures.append('reading view did not quote verbatim: ' + snippet)
     return failures
 
 
@@ -262,7 +306,11 @@ def run_case(case, model, timeout, output):
                   'review_required': ('Read the generated view for invented requirements and open items '
                                       'presented as conclusions; also review the final reply.'
                                       if policy in ('view-only', 'arch-view-only')
+                                      else 'Read final reply for an explained path conflict and a safe-path request.'
+                                      if case == 'view-reading-arch-symlink'
                                       else 'Read final reply for unconfirmed decisions or unsolicited bootstrap.')}
+        if case == 'view-reading-arch-resolved':
+            report['review_required'] += ' Confirm the retention-period item stays closed and storage stays open.'
         (output / (case + '.json')).write_text(json.dumps(report, ensure_ascii=False, indent=2))
         return report
 

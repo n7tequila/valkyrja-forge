@@ -1,8 +1,10 @@
 """Verify Codex event grading without making model calls."""
 
 import importlib.util
+import json
 from pathlib import Path
 import re
+import shutil
 import subprocess
 import tempfile
 import unittest
@@ -261,16 +263,152 @@ class EvalTests(unittest.TestCase):
             self.assertTrue(self.grade_view(root, ['docs/product/views/rec.md', 'docs/product/views/other.md']))
 
     def arch_view_from_sources(self, root, expectation):
-        """A view that quotes every expected section and snippet straight from the fixture."""
+        """Complete verbatim fixture content, independent of the grader's selected snippets."""
         body = ['> **阅读稿，不作为技术依据。**']
-        for source, heading in expectation['sections']:
-            body.extend(RUNNER.section_lines((root / source).read_text(), heading))
-        body.extend(snippet for _, snippet in expectation['snippets'])
+        for number in (1, 2, 4, 5):
+            source = root / f'docs/architecture/decisions/ADEC-DEMO_APP-{number:03}.md'
+            body.extend(RUNNER.section_lines(source.read_text(), 'Decision'))
+        contract = (root / 'docs/architecture/contracts/content-package.md').read_text()
+        for heading in ('形状', '兼容规则', 'Changelog'):
+            body.extend(RUNNER.section_lines(contract, heading))
+        convention = (root / 'docs/architecture/conventions/conv-api-envelope.md').read_text()
+        body.extend(['## 必须遵守的约定', 'API 响应信封与语义约定'])
+        body.extend(re.findall(r'(?m)^## (.+)$', convention))
+        body.append('## 已有的公共对象（先查这里，别重写）')
+        inventory = (root / 'docs/architecture/inventory.md').read_text()
+        body.extend(RUNNER.section_lines(inventory, '已有公共对象'))
+        discussion = (root / 'docs/architecture/discussions/ADISC-DEMO_APP-003.md').read_text()
+        body.extend(re.findall(r'(?m)^\*\*应回流上游\*\*：(.*)$', discussion))
+        backlog = (root / 'docs/architecture/backlog.md').read_text()
+        body.extend(re.findall(r'(?m)^### 1\. (.+)$', backlog))
+        body.extend(re.findall(r'(?m)^\*\*触发条件\*\*：(.*)$', backlog))
         return self.write_file(root, expectation['output'], '\n'.join(body) + '\n')
+
+    def test_arch_view_rejects_missing_or_changed_fixture_content(self):
+        expectation = RUNNER.ARCH_VIEW_EXPECTATIONS['view-reading-arch']
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            subprocess.run(['bash', str(ROOT / 'evals/view-reading-arch/scaffold.sh')],
+                           cwd=root, check=True, capture_output=True, text=True)
+            view = self.arch_view_from_sources(root, expectation)
+            full = view.read_text()
+            changes = (
+                ('missing field', '| items | array | 是 | 内容条目列表，至少一条 |', ''),
+                ('changed type', '| locale | string |', '| locale | integer |'),
+                ('changed required flag', '| items | array | 是 |', '| items | array | 否 |'),
+                ('missing version', '| 2 | 2026-09-25 | 新增可选字段 locale | 否 |', ''),
+                ('missing object', '| dataclass | PageRequest | src/api/paging.py | 分页参数 |', ''),
+                ('changed object path', 'src/api/paging.py', 'src/api/page.py'),
+                ('appended object path suffix', 'src/api/paging.py', 'src/api/paging.py.bak'),
+                ('appended object name suffix', 'PageRequest', 'PageRequestV2'),
+                ('appended Chinese object suffix', 'PageRequest', 'PageRequest新版'),
+                ('appended Chinese path suffix', 'src/api/paging.py', 'src/api/paging.py新版'),
+                ('missing group', '### 共享内核', ''),
+                ('missing convention heading', '统一信封', ''),
+                ('renamed convention heading', '统一信封', '统一信封（废弃）'),
+                ('prefixed Chinese convention heading', '统一信封', '旧统一信封'),
+                ('missing last convention heading', '\n错误码\n', '\n'),
+                ('reordered convention headings', '统一信封\n状态码与业务失败', '状态码与业务失败\n统一信封'),
+                ('reordered fields',
+                 '| items | array | 是 | 内容条目列表，至少一条 |\n| locale | string | 否 | 语言代码，缺省为 zh-CN |',
+                 '| locale | string | 否 | 语言代码，缺省为 zh-CN |\n| items | array | 是 | 内容条目列表，至少一条 |'),
+                ('missing backlog candidate', '所有对外接口统一限流', ''),
+            )
+            for label, original, replacement in changes:
+                with self.subTest(change=label):
+                    self.assertIn(original, full)
+                    view.write_text(full.replace(original, replacement))
+                    self.assertTrue(RUNNER.policy_failures(
+                        'arch-view-only', [expectation['output']], root, expectation))
+            for formatted in (
+                '`统一信封`、`状态码与业务失败`、`错误码`',
+                '「统一信封」「状态码与业务失败」「错误码」',
+                '（统一信封）（状态码与业务失败）（错误码）',
+                '|统一信封|状态码与业务失败|错误码|',
+                '统一信封/状态码与业务失败/错误码',
+                '[统一信封](../conventions/conv-api-envelope.md#统一信封)、'
+                '[状态码与业务失败](../conventions/conv-api-envelope.md#状态码与业务失败)、'
+                '[错误码](../conventions/conv-api-envelope.md#错误码)',
+            ):
+                with self.subTest(valid_format=formatted):
+                    view.write_text(full.replace('统一信封\n状态码与业务失败\n错误码', formatted))
+                    self.assertEqual(RUNNER.policy_failures(
+                        'arch-view-only', [expectation['output']], root, expectation), [])
+                    yaml = (ROOT / 'evals/view-reading-arch/case.yaml').read_text()
+                    for pattern in re.findall(r"(?m)^    pattern: '([^']+)'$", yaml):
+                        self.assertRegex(view.read_text(), pattern)
+
+    def test_arch_view_edge_fixtures_and_write_policies(self):
+        for case in ('view-reading-arch-symlink', 'view-reading-arch-resolved'):
+            with self.subTest(case=case), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                subprocess.run(['bash', str(ROOT / 'evals' / case / 'scaffold.sh')],
+                               cwd=root, check=True, capture_output=True, text=True)
+                if case.endswith('symlink'):
+                    output = root / 'docs/architecture/views/architecture.md'
+                    self.assertTrue(output.parent.is_symlink())
+                    self.assertEqual(output.resolve(), (root / 'docs/architecture/decisions/architecture.md').resolve())
+                    self.assertEqual(RUNNER.CASES[case][2], 'read-only')
+                    self.assertEqual(RUNNER.policy_failures('read-only', []), [])
+                    self.assertTrue(RUNNER.policy_failures('read-only', ['docs/architecture/decisions/architecture.md']))
+                else:
+                    discussion = (root / 'docs/architecture/discussions/ADISC-DEMO_APP-003.md').read_text()
+                    self.assertIn('**应回流上游**：', discussion)
+                    self.assertIn('该回流事项已关闭', discussion)
+                    self.assertIn('DEC-DEMO_PRODUCT-001', discussion)
+                    self.assertIn('**应回流上游**: ADISC-DEMO_APP-003',
+                                  (root / 'docs/architecture/STATUS.md').read_text())
+                    self.assertTrue((root / 'docs/product/initiatives/demo-product/decisions/DEC-DEMO_PRODUCT-001.md').is_file())
+                    expectation = RUNNER.ARCH_VIEW_EXPECTATIONS[case]
+                    view = self.arch_view_from_sources(root, expectation)
+                    # A closed historical quotation may be omitted without failing fidelity checks.
+                    view.write_text(view.read_text().replace(
+                        '上传文件的保留期限对用户可见，属于产品侧问题，需回流上游确定。', ''))
+                    self.assertEqual(RUNNER.policy_failures(
+                        'arch-view-only', [expectation['output']], root, expectation), [])
 
     def test_arch_view_cases_have_explicit_fixture_expectations(self):
         cases = {case for case, (_, _, policy) in RUNNER.CASES.items() if policy == 'arch-view-only'}
         self.assertEqual(cases, set(RUNNER.ARCH_VIEW_EXPECTATIONS))
+
+    @unittest.skipUnless(shutil.which('node'), 'Node is needed to check Claude JavaScript regexes')
+    def test_arch_view_regexes_work_in_claude_javascript_engine(self):
+        script = (
+            "const data = JSON.parse(require('fs').readFileSync(0, 'utf8'));"
+            "const regexes = data.patterns.map(pattern => new RegExp(pattern));"
+            "for (const sample of data.samples) {"
+            "if (regexes.every(regex => regex.test(sample.text)) !== sample.matches) "
+            "throw new Error('Unexpected fixture match: ' + sample.name); }"
+        )
+        for case, expectation in RUNNER.ARCH_VIEW_EXPECTATIONS.items():
+            with self.subTest(case=case), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                subprocess.run(['bash', str(ROOT / 'evals' / case / 'scaffold.sh')],
+                               cwd=root, check=True, capture_output=True, text=True)
+                full = self.arch_view_from_sources(root, expectation).read_text()
+                yaml = (ROOT / 'evals' / case / 'case.yaml').read_text()
+                patterns = re.findall(r"(?m)^    pattern: '([^']+)'$", yaml)
+                self.assertTrue(patterns)
+                linked = full.replace('统一信封\n状态码与业务失败\n错误码',
+                                      '[统一信封](#统一信封)、[状态码与业务失败](#状态码与业务失败)、[错误码](#错误码)')
+                samples = [
+                    {'name': 'verbatim', 'text': full, 'matches': True},
+                    {'name': 'linked headings', 'text': linked, 'matches': True},
+                    {'name': 'quoted headings', 'text': full.replace(
+                        '统一信封\n状态码与业务失败\n错误码', '「统一信封」「状态码与业务失败」「错误码」'), 'matches': True},
+                    {'name': 'changed punctuation', 'text': full.replace(
+                        '新增可选字段不算破坏性变更；', '新增可选字段不算破坏性变更;'), 'matches': False},
+                ]
+                if case == 'view-reading-arch':
+                    for original, changed in (('统一信封', '旧统一信封'),
+                                              ('PageRequest', 'PageRequest新版'),
+                                              ('src/api/paging.py', 'src/api/paging.py新版')):
+                        samples.append({'name': changed, 'text': full.replace(original, changed),
+                                        'matches': False})
+                result = subprocess.run(['node', '-e', script],
+                                        input=json.dumps({'patterns': patterns, 'samples': samples}),
+                                        capture_output=True, text=True)
+                self.assertEqual(result.returncode, 0, result.stderr)
 
     def test_arch_view_fixture_expectations_and_claude_regexes_match_sources(self):
         for case, expectation in RUNNER.ARCH_VIEW_EXPECTATIONS.items():
@@ -322,6 +460,21 @@ class EvalTests(unittest.TestCase):
             skill.write_text('original')
             before = RUNNER.snapshot(root)
             skill.write_text('changed')
+            self.assertNotEqual(before, RUNNER.snapshot(root))
+
+    def test_snapshot_detects_retargeted_or_replaced_directory_symlinks(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / 'decisions').mkdir()
+            (root / 'contracts').mkdir()
+            link = root / 'views'
+            link.symlink_to('decisions', target_is_directory=True)
+            before = RUNNER.snapshot(root)
+            link.unlink()
+            link.symlink_to('contracts', target_is_directory=True)
+            self.assertNotEqual(before, RUNNER.snapshot(root))
+            link.unlink()
+            link.mkdir()
             self.assertNotEqual(before, RUNNER.snapshot(root))
 
 

@@ -1,0 +1,77 @@
+schema_version: "1.1"
+name: view-reading-arch-resolved
+description: 历史回流标注仍在且 STATUS 陈旧，但讨论已追加处理结果——阅读稿不把关闭事项重新列为待裁决。
+tags: [view, constraint]
+plugins: ["../.."]
+runs: 3
+expected_outcome: 技术阅读稿生成；保留期限回流已关闭，文件存储选型仍在议；治理文件不改。
+
+context:
+  scaffold_script: scaffold.sh
+
+execution:
+  prompt: 把技术地基整理成一份给人看的阅读稿。
+  model: sonnet
+  max_turns: 40
+  timeout_seconds: 900
+  allowed_tools: [Read, Glob, Grep, Skill, Write, Edit]
+
+graders:
+  - type: tool_used
+    name: routes-to-valkyrja-arch
+    tool: Skill
+    input_match: '"skill"\s*:\s*"(?:[\w-]+:)?valkyrja-arch"'
+    min: 1
+
+  - type: file_exists
+    name: view-written
+    path: docs/architecture/views/architecture.md
+
+  - type: regex
+    name: non-authority-header
+    target: {source: file, path: docs/architecture/views/architecture.md}
+    pattern: '不作为技术依据'
+
+  - type: regex
+    name: contract-compat-verbatim
+    target: {source: file, path: docs/architecture/views/architecture.md}
+    pattern: '新增可选字段不算破坏性变更；消费方必须忽略未知字段。'
+
+  - type: regex
+    name: contract-field-table-verbatim
+    target: {source: file, path: docs/architecture/views/architecture.md}
+    pattern: '\| 字段 \| 类型 \| 必填 \| 说明 \|\n\|---\|---\|---\|---\|\n\| packageId \| string \| 是 \| 内容包唯一标识，导入后不可修改 \|\n\| items \| array \| 是 \| 内容条目列表，至少一条 \|\n\| locale \| string \| 否 \| 语言代码，缺省为 zh-CN \|'
+
+  - type: regex
+    name: contract-changelog-verbatim
+    target: {source: file, path: docs/architecture/views/architecture.md}
+    pattern: '\| 版本 \| 日期 \| 变更 \| 破坏性 \|\n\|---\|---\|---\|---\|\n\| 1 \| 2026-09-20 \| 初版 \| — \|\n\| 2 \| 2026-09-25 \| 新增可选字段 locale \| 否 \|'
+
+  - type: tool_used
+    name: no-write-into-governance
+    tool: Write
+    input_match: 'docs/architecture/(decisions|conventions|contracts|discussions)/|docs/architecture/(STATUS|inventory|backlog)\.md|docs/product/|openspec/'
+    min: 0
+    max: 0
+
+  - type: tool_used
+    name: no-edit-into-governance
+    tool: Edit
+    input_match: 'docs/architecture/(decisions|conventions|contracts|discussions)/|docs/architecture/(STATUS|inventory|backlog)\.md|docs/product/|openspec/'
+    min: 0
+    max: 0
+
+  - type: llm
+    name: resolved-upstream-item-stays-closed
+    focus: {source: file, path: docs/architecture/views/architecture.md}
+    criteria: |
+      场景：ADISC-DEMO_APP-003 的 2026-09-28 条目要求上传文件保留期限回流产品侧。
+      同一讨论的 2026-09-30 条目明确该事项已由 accepted 的 DEC-DEMO_PRODUCT-001
+      决定为 30 天，回流已关闭；原始标注未删除，STATUS 仍残留旧的「应回流上游」缓存。
+      上传文件放本地磁盘还是对象存储仍未铸 ADEC，倾向对象存储。
+
+      PASS 当阅读稿没有把保留期限重新列为待回流或待裁决，并把存储选型保留为在议。
+      保留期限可以不出现在阅读稿中；若保留历史回流内容，必须明确这是已处理的历史。
+      不要求任何固定的关闭状态措辞。
+
+      FAIL 当保留期限重新成为待办、只引旧标注而误导为未处理，或把对象存储写成已定决策。

@@ -95,11 +95,12 @@ change，其 `Covered-FRIDs` 即这些 deprecated FRID。故一个 change 的 `C
 每次会话首次进入本技能时，按顺序检测并把结果并入状态复述：
 
 0. **当前宿主**：按宿主适配节确定，随后只检测该宿主的官方入口：Claude 为
-   `.claude/skills/openspec-*/SKILL.md`（`/opsx:*`），Codex 为
+   `.claude/skills/openspec-*/SKILL.md`（`/openspec-*`；OpenSpec 2.0 起是指向
+   `.agents/skills/` 的软链，按解析后可读判定），Codex 为
    `.agents/skills/openspec-*/SKILL.md`（`$openspec-*`），文件须存在且可读。
    另一个宿主的安装不能代替本宿主；只装了命令、缺宿主标识或来源不明时，
    按 openspec-compatibility.md 第一节判定。
-1. **CLI 可用性**：`openspec --version` ≥ 1.9.0（高于已实测区间上界——当前 1.10——
+1. **CLI 可用性**：`openspec --version` ≥ 1.9.0（高于已实测区间上界——当前 2.0——
    时不拦，但提示核对 openspec-compatibility.md 第六节后再抬区间）。缺失则给出
    `npm install -g @fission-ai/openspec` 并停止——本技能的全部动作都依赖它。
 2. **`openspec/` 根**：`openspec context --json` 是否返回有效 root。
@@ -221,10 +222,13 @@ REMOVED / RENAMED 从主 spec 同名（或 FROM 所指）Requirement 的 Sources
 |---|---|
 | "PRD 定稿了"、"可以开工了"、"建立基线" | baseline（特权，需确认） |
 | "拆成几个 change"、"怎么划分" | decompose（特权，需确认） |
-| "propose <change>"、"下一个 propose"、"给我交接段" | **propose 壳**：V2.5 欠账门 → 交接段现算 → 经确认委托官方 propose → 产后自动 trace（pre-apply）。只要交接段、不委托时说一声即可 |
+| "propose <change>"、"下一个 propose"、"给我交接段" | **propose 壳**：V2.5 欠账门 → 交接段现算 → 经确认委托官方 propose → 产后自动 trace（pre-apply）+ 规划自检。只要交接段、不委托时说一声即可 |
 | "next"、"下一个"、"继续" | **next 复合路由**（见表后说明）——现算流水线位置，推进一步 |
-| "开始开发这个 change"、"可以 apply 了"、"开始实现" | **apply 壳**：查验（必要时现跑）pre-apply 放行 → 确认 → 委托官方 apply → 完成后进入 verify 壳 |
-| "verify"、"核对实现" | **verify 壳**：委托官方 verify（只读，无需确认）→ V4.9 源码依据完整性 + 治理核对清单 → 衔接 trace（pre-archive） |
+| "开始开发这个 change"、"可以 apply 了"、"开始实现" | **apply 壳**：查验（必要时现跑）pre-apply 放行 + 规划自检 → 确认（回显含「在本宿主 apply / 交给另一宿主」两选）→ 委托官方 apply → 完成后进入 verify 壳（结束语写明下一步与调用名） |
+| "交给 Codex / Claude 做"、"apply 交给另一边" | **交出 apply**：pre-apply 本次现跑放行后输出接手方提示词，不委托、不代确认（见下文「跨宿主」） |
+| "verify"、"核对实现" | **verify 壳**：委托官方 verify（只读，无需确认）→ V4.9 源码依据完整性 + 治理核对清单 → 风险信号命中：复审三选一（另一宿主 / 本宿主新会话 / 跳过），选定前不出归档回显；未命中：衔接 trace（pre-archive） |
+| "复审"、"review"、"让另一边审一下" | **review**：只读复审；复审记录（含 A 类返工）经确认追加到 tasks.md（见下文「跨宿主」） |
+| "处理这份暂停报告" | **处理暂停报告**：逐条复判 → 需裁决的经确认走 prd/arch → 输出一段合并的恢复提示词（见下文「跨宿主」） |
 | "能归档吗"、"检查这个 change"、"追溯对不对" | **归档壳**：trace（pre-archive）→ 确认回显 → 代跑 CLI → V6 |
 | "现在什么进度"、"哪些需求还没做" | status |
 | "检查工作区"、"体检"、"skill 更新了"、"补 CLAUDE.md / AGENTS.md 治理块" | check |
@@ -239,8 +243,8 @@ REMOVED / RENAMED 从主 spec 同名（或 FROM 所指）Requirement 的 Sources
 ```
 无在途 change                     → propose 壳（欠账门 → 交接段 → 经确认委托官方
                                     propose → 产后自动 pre-apply）
-已 propose、未开工（tasks 零勾选） → 现跑 trace（pre-apply）；通过则当场出示
-                                    apply 确认
+已 propose、未开工（tasks 零勾选） → 现跑 trace（pre-apply）+ 规划自检；都通过则当场
+                                    出示 apply 确认（含「交给另一宿主」选项）
 apply 进行中（tasks 部分勾选）     → 经确认续跑官方 apply
 apply 完成（tasks 全勾选）         → verify 壳：委托官方 verify（若装了）
                                     → V4.9 + 治理核对清单 → 现跑 trace
@@ -251,6 +255,10 @@ pre-archive 本次现跑通过           → 归档确认回显，确认后代�
 **全部状态由磁盘现算**（artifacts 存在性 + tasks 勾选比例 + 计划顺序）——
 不存在"上次已放行"这种可依赖的记忆：trace 只读、无 receipt，
 放行只在现跑的这一刻成立，所以每个门位都是**现跑再过**，不贵且不会说谎。
+
+verify 壳结束后若风险信号命中，给出复审三选一并附对应提示词：交另一宿主（本 change 由另一宿主交来时默认此项）、
+本宿主新会话（本 change 全程在本宿主时默认此项，注明独立性较弱；项目以前用过几个宿主不算）、跳过；选定前不出示归档回显，选跳过即进入归档壳
+（复审仍是建议，不拦归档）。同宿主子代理审查不算异宿主复审。
 
 **next 永不免去任何确认**——它把你送到每道门前，你确认后它代跑门后的
 委托，但门本身一道不少：委托官方 propose/apply、归档、基线修订等
@@ -264,7 +272,7 @@ pre-archive 本次现跑通过           → 归档确认回显，确认后代�
 存在且绿（token 断言、单位禁令、样式清单核对等，执行力属仓库工具链，
 宪法 8/技术正确性边界不破）、apply 新增公共对象已登记 arch inventory。
 壳不改官方任何产物语义、不代写 proposal/design/代码，官方 skill 的
-中途提问与 planning boundary 原样透传。诚实边界：Claude `/opsx:*` 与 Codex
+中途提问与 planning boundary 原样透传。诚实边界：Claude `/openspec-*`（OpenSpec 2.0 前为 `/opsx:*`）与 Codex
 `$openspec-*` 侧门依旧存在（explore 是合法用途，`openspec update` 会重生成官方入口），
 壳是**约定级收口**——
 把正道变成唯一顺手的路径，不是强制拦截；终审始终是 trace 机检与 CI。
@@ -280,10 +288,17 @@ pre-archive 本次现跑通过           → 归档确认回显，确认后代�
 | baseline 定稿 | PRD 版本与路径；逐条处置分布；**拆分项带 PRD 原文要点逐条对照**（保底，不可降级为提取物清单）；**延期/非软件/外部/冲突项逐条列全**（外部项须含承担系统）；混合体 FRID 的非软件与外部行为点；新增待澄清项；将写入的文件路径 |
 | decompose 裁决 | planned change 列表（名称/capability/覆盖 FRID/顺序依赖）；未被任何 change 覆盖的 `included` FRID（**必须为空**）；与磁盘既有 change 的冲突 |
 | rebaseline 采纳 | 五态分类结果（NEW/UNCHANGED/CHANGED/DEPRECATED/DISAPPEARED）；**每条 CHANGED 的逐行 diff**；受影响的既有 change 清单；旧基线将被标 superseded |
-| **归档放行** | trace V1–V5 **逐条**结果；将合并进主 spec 的 delta 摘要；**是否触发 capability 退休删除**；change 将被移动到的归档路径 |
+| 复审记录追加 | 将追加的复审组全文（范围、结论、返工任务）；目标 tasks.md 路径；每条返工对应的发现与证据（`文件:行`、FRID/Scenario） |
+| **归档放行** | trace V1–V5 **逐条**结果；将合并进主 spec 的 delta 摘要；**是否触发 capability 退休删除**；change 将被移动到的归档路径；**未完成项核对**（见下） |
 | 代跑 `openspec init` | 当前宿主与完整命令行；将创建的文件清单；是否覆盖其 `.claude/` 或 `.agents/` 文件；旧 Codex 安装是否涉及官方迁移 |
 | 写 `openspec/config.yaml` | 将写入的 context/rules 全文；对官方 propose 行为的影响说明 |
 | 改 profile 补装 workflow | **这修改全局 `~/.config/openspec/config.json`，影响本机所有项目** |
+
+**未完成项核对（归档回显必含）**：trace 只核编号覆盖，看不出「覆盖了但只做了一半」。归档前逐项列出：
+Authority 覆盖的 FRID 里明确未交付的行为点（等待中的讨论或裁决、延后的部分、官方 verify 判为 CRITICAL 的项）、
+仍待人工的验证、未勾选的任务。有未交付的行为点时**不出示归档确认**——先补完，或经 decompose / rebaseline
+把它拆到别的 change；仍待人工的验证列出命令请用户执行，用户明确接受未验证时如实记入回显
+（真实运行：入口未交付时 trace 26 项全过；人工终端验证没做，任务却被勾选后归档）。
 
 **归档放行是本技能最重的特权动作**——它触发主 spec 改写与 change 目录移动，
 且在 `.openspec.yaml` 含 `retire_capabilities: true` 时会**删除整个 capability 的
@@ -298,6 +313,8 @@ spec.md（工作树不可恢复，只能靠 git）**。回显必须逐条出示 
 为什么需要你过目」，代号与集合运算细节收进括号或次行；用户追问任一条时
 展开完整原文。本条只约束呈现顺序与可读性，不放宽任何「回显必须包含」的
 完整性要求。
+
+**回显范围（列出的才执行）**：确认回显必须列出确认后将发生的**全部**动作，包括对外动作——推送、打 tag、开 PR、写本仓之外的路径；回显没列出的动作不得借这次确认执行，需要时另行回显确认。用户先前给过的长期授权（如「以后都同步到远端」）也要在回显里写明这次会执行，不能默默执行（真实运行：归档回显只写了「提交」，实际还推送了远端）。
 
 **消费仓宿主治理块**：块正文只有一份模板 `templates/guard-block.md`，两个宿主共用；
 写到当前宿主**实际会读**的那个指令文件。写哪个文件、块算不算已在、软链与旧版块怎么处理，
@@ -434,8 +451,26 @@ rebaseline 后过期（真实事故：承袭基线的预存段仍指旧版路径
 可能忽略，粘贴段是第二道，trace 机检是终审）；实现约束提示按**当下**治理
 状态现算（覆盖 FRID 相关的 DEC 背书/降级项、基线合并提示、涉 UI 时的
 视觉基线与 token 权威、跨 change 边界注意）。生成后**默认走 propose 壳**：
-经确认委托官方 propose，产后自动 trace（pre-apply）；用户说明只要交接段
-自行去贴时，交付后即停、不代跑。
+经确认委托官方 propose，产后自动 trace（pre-apply）；此时交接段是本技能交给官方 propose 的
+内部材料，回显时标明「供官方 propose 使用，无需复制」，不以可粘贴的代码块呈现——
+它与跨宿主的交出提示词不是一回事（真实事故：用户把交接段贴进了另一宿主，险成双写者）。
+用户说明只要交接段自行去贴时，才以可复制的块交付，交付后即停、不代跑。
+
+**规划自检（propose 产后、出示 apply 确认前；只读，单宿主与跨宿主都做）**——trace 只核编号，
+看不出规划文件在语义上替产品拍板或与地基不一致，这三项由本技能逐条对照，结果并入 apply 确认回显：
+
+1. **安全与非功能对照**：Authority 覆盖的每条 SEC / NFR（及带数值、时限的 FRID），在 design / tasks 的落点；
+   design 对需求做了取舍、解释、降级或只部分满足的，列为待裁决问题（B）——design 里的说明不能代替裁决。
+2. **验收行为的来源**：design / tasks 规定的验收可观察行为（输入几次、提示文字、退出码等）必须有 PRD / DEC 依据；
+   标「无决策背书」的候选不得写成必做必测的验收行为，否则列为待裁决（B）。
+3. **可执行性**：tasks 的验证与测试命令与布局 ADEC 规定的一致，且在当前仓库能跑（只读推演，不执行有副作用的命令）；
+   不一致属「已有权威可答」，经确认用官方 update workflow 修正，不需裁决。**布局 ADEC 根本没写运行与测试命令时，
+   这本身就是技术约定空缺（C），列为待裁决**——不因无可对照而跳过（真实运行：从旧地基起步，自检放过了跑不通的测试命令，
+   最后靠复审接住）。
+
+有待裁决项时不出示 apply 确认，按 cross-host.md 第三节「暂停交回」格式报告（附可整段粘给另一宿主处理的一段），
+先按偏差归口回 valkyrja-prd / valkyrja-arch
+（真实运行：两次 apply 暂停——安全需求被 design 悄悄打折、tasks 把无背书的候选写成必测行为——都本可在这里拦住）。
 
 「已建 / 未建」状态由 `status` 现算，**不写入基线**（宪法 5）。
 
@@ -451,7 +486,7 @@ rebaseline 后过期（真实事故：承袭基线的预存段仍指旧版路径
 状态机：
 
 ```
-propose 壳：欠账门 → 交接段现算 → 经确认委托官方 propose → 自动 trace (pre-apply)
+propose 壳：欠账门 → 交接段现算 → 经确认委托官方 propose → 自动 trace (pre-apply) + 规划自检
    → apply 壳：放行查验 → 确认 → 委托官方 apply
    → verify 壳：委托官方 verify（实现 ↔ artifacts）→ V4.9 + 治理核对清单
    → 归档壳：trace (pre-archive) → 人工确认放行 → 代跑 openspec archive
@@ -466,7 +501,7 @@ propose 壳：欠账门 → 交接段现算 → 经确认委托官方 propose �
 | V1 | 前提 | CLI 版本落在已实测区间（低于下界 ERROR、高于上界 WARNING）、有效 root、**基线按 DOMAIN 定位且域内唯一 active（多 active 即 ERROR）**、技术地基已定（V1.4，WARNING 级） |
 | V2 | PRD 侧 | 防 release 被手改：blocking Q=0、Sources 合法（含 DEPRECATED 块）、无重复 FRID、**发版欠账门限（V2.5：欠账非空 → 未开工 change ERROR）** |
 | V3 | 基线对账 | 五集合互斥且全覆盖、无幽灵 ID、included 全被 planned change 覆盖、**计划外 change 分层（本 change 计划外 ERROR / 他 change 计划外 WARNING 探索态）** |
-| V4 | delta 侧 | Authority 三重自洽（含 **rebaseline↔trace 联锁**）、Sources 分场景判定（capability 按完整路径反查）、`addressed == Covered`（**蔓延未裁决 ERROR**）、skip_specs 例外、依据引用完整性（design V4.8 + 源码 V4.9，冒号全半角均收） |
+| V4 | delta 侧 | Authority 三重自洽（含 **rebaseline↔trace 联锁**）、Sources 分场景判定（capability 按完整路径反查）、`addressed == Covered`（**蔓延未裁决 ERROR**）、skip_specs 例外、依据引用完整性（design V4.8 + 源码 V4.9，冒号全半角均收）、新建 capability 的 Purpose ≥ 50 字符（V4.10）、覆盖范围外的 MODIFIED（V4.11，无例外裁决即 ERROR） |
 | V5 | 委托原生 | `openspec validate --strict` 退出 0、required artifacts 齐备 |
 | V6 | 归档后 | 主 spec 保留 Sources、`unaccounted` 八块分账（含 Planned 未建） |
 
@@ -476,7 +511,7 @@ propose 壳：欠账门 → 交接段现算 → 经确认委托官方 propose �
 **放行规则**：任一 ERROR 未清除则不得放行（apply 与归档同此标准）。
 WARNING 可带裁决放行，裁决记入回显与基线的例外记录。
 
-**确定性实现**：V1–V5（含 V4.8/V4.9）已实现为本技能 `tools/trace.py`（随技能安装分发）。
+**确定性实现**：V1–V5（含 V4.8–V4.11）已实现为本技能 `tools/trace.py`（随技能安装分发）。
 **从当前已加载 `SKILL.md` 所在目录定位 `tools/trace.py`**，用完整路径执行：
 `python3 "<当前技能目录>/tools/trace.py" . <change>`——项目根 `.` 是当前消费仓，
 含空格的路径要加引号。不按项目/用户目录优先级另找副本：那可能调用不同版本的门禁。
@@ -501,6 +536,30 @@ trace（pre-archive）放行后，**优先委托 CLI**：`openspec archive <chan
 → 失败回滚的完整实现，**不依赖 sync skill 是否安装**；且官方 archive *skill*
 的原则是「警告不阻塞」，与本技能的门禁语义相悖。
 详见 [references/openspec-compatibility.md](references/openspec-compatibility.md)。
+
+### 跨宿主：交出 apply 与 review（复审）
+
+Claude 与 Codex 可按阶段分工（例如一边规划与规格、另一边实施与测试），方向对称。
+**change 目录就是交接物**，流水线位置照旧由 `next` 现算——不另建交接包、状态文件或路由配置。
+
+- **交出 apply**：apply 确认回显增设「交给另一宿主」选项。选它时不委托官方 apply，
+  只读盘点未提交文件与仍在运行的写者，输出接手方提示词（精确调用名四选一），
+  之后本会话不再写这个 change。接手方现场重跑 pre-apply 并重新确认——**交出方的确认不随提示词转移**。
+- **分工与下一步**：实施方做 apply 与 verify 壳，复审归另一宿主（建议新会话），规划方不重做 verify。
+  每个环节结束都写明下一步；需要换宿主时直接给出用**接手方调用名**写的提示词。
+- **偏差归口**：实施或复审中发现的问题分三类——A 实施缺陷（就地修 / 返工任务）、
+  B 规格空缺（停，回 valkyrja-prd）、C 技术契约冲突或空缺（停，回 valkyrja-arch）；拿不准按 B/C 处理。
+  实施方按「暂停交回」格式报告，用户整段转贴给另一宿主「处理这份暂停报告」：逐条复判
+  （需裁决 / 已有权威可答只需修正 / 无需升级），裁决方输出合并的恢复提示词
+  （官方 update workflow 修订 design/tasks → 重跑 pre-apply → 确认后继续）。
+- **落盘与人工验证**：需要后续动作的信息在会话结束或交出前分流到既有归宿（tasks 复审组、DEC/ADEC、
+  arch backlog、prd 待澄清），不另建交接文件；只能由人做的验证不由智能体勾选。
+- **review**：只读，建议性、不是门禁。verify 壳后风险信号（覆盖 SEC/NFR、引用共享契约、
+  capability 退休）命中时给出复审三选一（另一宿主 / 本宿主新会话 / 跳过），选定前不出归档回显。**真的做了复审就经确认在 tasks.md 末尾
+  追加一个复审组**（范围与结论为普通文字，无发现也写；返工核对算新一轮）；只有 A 类返工写成
+  未勾选任务，`next` 随之现算为「apply 进行中」。没做复审不写、不补写；记录是痕迹，不是放行条件。
+
+步骤、提示词模板、风险信号与返工组格式见 [references/cross-host.md](references/cross-host.md)（执行时必读）。
 
 ### status（只读）
 
@@ -585,6 +644,8 @@ apply 或归档。**不得批量代改 Authority 块**：逐个更新迫使人�
 - 撰写 proposal.md / design.md / tasks.md 正文 → 官方 propose
   （本技能只提供 Requirement Authority 块的内容与格式要求）
 - 实现任务、勾选 tasks 复选框 → 官方 apply
+  （唯一例外：review 经确认在 tasks.md 末尾**追加**复审组——结论文字 + 未勾选的返工任务；
+  不改既有任务、不勾选任何项）
 - 判定实现代码是否匹配 artifacts → 官方 verify
 - delta 合并进 `openspec/specs/` → `openspec archive` CLI（或官方 sync）
 - 创建 change 目录 → 一律 `openspec new change`，**永不手工 mkdir**
@@ -604,7 +665,7 @@ apply 或归档。**不得批量代改 Authority 块**：逐个更新迫使人�
 一律不得通过归档门禁）；`skip_specs: true` 是验证逃生口（trace 一律 ERROR，
 除非基线例外记录已有裁决）；官方 archive「警告不阻塞」。
 
-**已知治理缺口（诚实写明）**：用户直接调 Claude `/opsx:apply`、`/opsx:archive`，
+**已知治理缺口（诚实写明）**：用户直接调 Claude `/openspec-apply-change`、`/openspec-archive-change`（2.0 前为 `/opsx:*`），
 Codex `$openspec-apply-change`、`$openspec-archive-change` 或 CLI 时
 本技能**无法拦截**，也**无法事后证明**某次归档曾放行过（trace 只读、不写 receipt）。
 只能保证「经由本技能执行的 apply 与归档一定先跑过 trace」。
@@ -616,7 +677,8 @@ Codex `$openspec-apply-change`、`$openspec-archive-change` 或 CLI 时
 ## 与 valkyrja-arch 的接口（技术地基的消费约定）
 
 - design.md 的依据标注三态：`依据: DEC-*`（产品决策强制）、`依据: ADEC-*`
-  （技术决策强制）、无依据（候选方案，须注明「无决策背书，不构成约束」）。
+  （技术决策强制）、无依据（候选方案，须注明「无决策背书，不构成约束」——指不构成项目级约束；
+  本 change 内仍是实施方照做的计划，只在与权威冲突或决定了验收可观察的行为时升级，见 cross-host.md 第三节）。
   V4.8 校验其引用完整性。
 - 共享接口契约引用格式 `契约名@版本`（如 `content-package@1`），
   契约本体在 `docs/architecture/contracts/`。
@@ -645,6 +707,8 @@ Codex `$openspec-apply-change`、`$openspec-archive-change` 或 CLI 时
 - [openspec-compatibility.md](references/openspec-compatibility.md) —
   环境前提条件分支、归档路径、config 注入、官方 skill 冲突缓释。
   **前提检测异常、准备归档、写 config 时读**
+- [cross-host.md](references/cross-host.md) — 交出 apply、偏差归口、review 与返工回流。
+  **交给另一宿主、复审、实施中遇到疑似规格空缺/契约冲突时读**
 
 **templates/**
 

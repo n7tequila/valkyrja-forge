@@ -107,6 +107,8 @@ Output lands in `docs/product/baselines/<DOMAIN>-vX.Y.md`.
 
 The four verbs (propose / apply / verify / archive) run as a **shell**: gates first, confirmation in the middle, delegation to official OpenSpec last, automatic post-checks after — saying `next` walks the pipeline one step at a time without ever skipping a privileged confirmation.
 
+Claude Code and Codex can split a change by stage — for example one plans and writes the spec, the other implements and tests. At the apply confirmation you can **hand apply to the other host**: the skill prints a ready-to-paste prompt with the receiver's exact invocation name, and the receiver re-runs the pre-apply gate and asks you to confirm again — a confirmation never travels with the prompt. Before the apply confirmation, a read-only **planning self-check** looks for what `trace` cannot see — a design that quietly weakens a security requirement, acceptance behavior with no product decision behind it, test commands that would not run — and stops for a ruling instead of handing the gap to the implementer. After verify, when the change touches security or non-functional requirements, shared contracts, or capability retirement, you choose how to **review** it: by the other host (the default when the change was handed over), in a fresh session on the same host (the default for single-host work), or skip; it is advisory, not a gate. Before archive, the confirmation lists anything still unfinished — undelivered behavior, pending manual verification, unchecked tasks — because `trace` only checks ID coverage. Every review actually performed leaves a short record at the end of `tasks.md` (scope and verdict, even when nothing is found); only implementation defects become unchecked rework tasks, so `next` resumes apply; spec gaps and contract conflicts go back to `valkyrja-prd` / `valkyrja-arch`. The change directory itself is the handoff — no extra state files.
+
 > `trace` and the official `verify` check two different kinds of consistency:
 > `trace` covers **PRD ↔ spec**, official `verify` covers **implementation code ↔ change artifacts**.
 > They complement each other; neither substitutes for the other.
@@ -319,7 +321,7 @@ valkyrja-forge/
 ## Status and next steps
 
 - `valkyrja-prd` has been validated on a real project; the PRD it produced was good enough to feed straight into development.
-- `valkyrja-spec` has been through several rounds of review and revision, and its format contracts are all empirically verified against OpenSpec (verified range [1.9, 1.10]: the `Sources:` line does not trip `validate`, survives the merge into the main spec, is machine-extractable, and nested capabilities archive under their full paths). **The full pipeline has completed its first real end-to-end run — archive, the first V6 eight-block ledger, and a full post-run review with fixes included.**
+- `valkyrja-spec` has been through several rounds of review and revision, and its format contracts are all empirically verified against OpenSpec (verified range [1.9, 2.0]: the `Sources:` line does not trip `validate`, survives the merge into the main spec, is machine-extractable, and nested capabilities archive under their full paths). **The full pipeline has completed its first real end-to-end run — archive, the first V6 eight-block ledger, and a full post-run review with fixes included.**
 
 Planned:
 

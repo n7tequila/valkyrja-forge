@@ -13,3 +13,6 @@ __pycache__/
 
 # plugin eval 的运行产物（aggregate-result.json / report.html，每次跑都新增一个时间戳目录）
 evals/results/
+
+# 外部评审材料与草稿（含未脱敏内容，不入公开仓）
+docs/others/

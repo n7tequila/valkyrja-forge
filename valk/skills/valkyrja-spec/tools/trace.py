@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""valkyrja-spec trace 检查器 —— V1–V5（含 V4.8/V4.9）的确定性实现。
+"""valkyrja-spec trace 检查器 —— V1–V5（含 V4.8–V4.11）的确定性实现。
 
 用法: trace.py <产品仓库根> <change-name> [--skip-cli] [--stage pre-apply|pre-archive]
 退出码: 0 = 放行 / 1 = 有 ERROR 不得放行 / 2 = 工具自身故障（输入损坏、环境缺失，非门禁结论）。
@@ -42,7 +42,7 @@ SRC_RE = re.compile(rf'^Sources:\s*({FRID})(\s*,\s*{FRID})*\s*$')
 # 依据标注共用正则：冒号全角/半角均可、可省略。V4.8 与 V4.9 必须同一常量，
 # 两处各写一份曾漂移出「全角冒号在 design.md 静默放行」的假通过。
 CITE_RE = re.compile(r'依据[:：]?\s*((?:A?DEC)-[A-Z][A-Z0-9_]*-\d{3})')
-VER_MIN, VER_MAX = (1, 9), (1, 10)  # OpenSpec 已实测验证区间，见 references/openspec-compatibility.md
+VER_MIN, VER_MAX = (1, 9), (2, 0)  # OpenSpec 已实测验证区间，见 references/openspec-compatibility.md
 
 E, W, OK = [], [], []
 def err(c, m): E.append(f"{c}  {m}")
@@ -382,6 +382,8 @@ v43 = []             # V4.3：ADDED 越界 / MODIFIED 删既有、沿袭出 hist
 v44a, v44b = [], []  # V4.4a REMOVED / V4.4b RENAMED
 noop_blocks = []     # 无操作小节头的散 Requirement（格式异常，按 ADDED 从严）
 multi41 = []         # V4.1 唯一性：块体内出现第二个 Sources 行
+v411 = []            # V4.11：MODIFIED 块的 addressed 为空——改的是覆盖范围外的需求
+n_mod = 0            # MODIFIED（有主 spec 对应）的块数
 ops_seen = set()
 for f in specs:
     tx = open(f, encoding='utf-8').read()
@@ -464,7 +466,11 @@ for f in specs:
                     if badn:
                         v43.append(f'{cap} MODIFIED「{nm[:30]}」新增 ID 越界: {sorted(badn)}')
                     # 契约三：historical_exempt = main_sources − Covered-FRIDs
-                    addressed |= ids - (msrc - cov_declared)
+                    blk = ids - (msrc - cov_declared)
+                    addressed |= blk
+                    n_mod += 1
+                    if not blk:
+                        v411.append(f'{cap} MODIFIED「{nm[:30]}」Sources {sorted(ids)}')
             else:  # ADDED（含无小节头的散块，从严按 ADDED 判）
                 bad = ids - (active & included)
                 if bad:
@@ -570,6 +576,48 @@ if re.search(r'^skip_specs:\s*true', MT, re.M):
     if exc_ruled(CH, 'skip_specs'): ok('V4.7', 'skip_specs 已有基线例外裁决')
     else: err('V4.7', 'skip_specs: true 但基线例外记录中无本 change 的 skip_specs 裁决（行须含 change 名与「skip_specs」）')
 else: ok('V4.7', '未使用 skip_specs')
+
+# V4.10 新建 capability 的 Purpose。archive 只在新建 capability 时读取 delta 的 ## Purpose：
+# 缺失则主 spec 落占位，过短则主 spec 的 validate --strict 报 too brief。change 级 validate 不查这一点，
+# 归档后才暴露，且已存在的 capability 只能直接改主 spec 补救（真实运行：46 个汉字过了 V5，归档后失败）。
+# 长度按 CLI 口径：去首尾空白后的 UTF-16 码元数（实测：49 个汉字失败、50 个通过，emoji 按 2 计）。
+PURPOSE_MIN = 50
+new_caps, missing_purpose, short_purpose = [], [], []
+for f in specs:
+    cap = os.path.relpath(os.path.dirname(f), os.path.join(CHDIR, 'specs')).replace(os.sep, '/')
+    if os.path.isfile(os.path.join(R, 'openspec/specs', cap, 'spec.md')):
+        continue
+    new_caps.append(cap)
+    pm = re.search(r'^##\s+Purpose[ \t]*\n(.*?)(?=^##\s|\Z)', open(f, encoding='utf-8').read(), re.M | re.S)
+    if not pm:
+        missing_purpose.append(cap)
+        continue
+    n = len(pm.group(1).strip().encode('utf-16-le')) // 2
+    if n < PURPOSE_MIN:
+        short_purpose.append(f'{cap}（{n} 字符）')
+if missing_purpose:
+    err('V4.10', f'新建 capability 的 delta 缺 ## Purpose（归档会写占位，主 spec 严格校验失败）: {missing_purpose}')
+if short_purpose:
+    err('V4.10', f'新建 capability 的 Purpose 不足 {PURPOSE_MIN} 字符（CLI 口径：去首尾空白后按 UTF-16 计）: {short_purpose}')
+if not new_caps:
+    ok('V4.10', '本 change 无新建 capability，不适用')
+elif not (missing_purpose or short_purpose):
+    ok('V4.10', f'{len(new_caps)} 个新建 capability 的 Purpose 均 ≥ {PURPOSE_MIN} 字符')
+
+# V4.11 覆盖范围外的 MODIFIED。MODIFIED 只沿用主 spec 原有 ID、且这些 ID 都不在 Covered-FRIDs 时，
+# 契约三的 historical_exempt 把它们全部豁免，该块 addressed 为空——V4.5（蔓延）与 V4.6（漏做）都看不见，
+# 但它确实改了别的 change 负责的需求的规格文字（真实运行：补「口令」的 MODIFIED 越出覆盖范围，trace 全过）。
+# 与 V4.5 同构：无裁决 ERROR，例外记录已有裁决（行含 change 名与「沿袭修改」）带警告放行；
+# 正道是经 decompose 把该 FRID 收编进本 change 的 Covered-FRIDs（基线标跨 change），收编后此项自然消失。
+if not n_mod:
+    ok('V4.11', '本 change 无 MODIFIED（有主 spec 对应的），判定不适用')
+elif not v411:
+    ok('V4.11', f'{n_mod} 个 MODIFIED 均触达本 change 覆盖范围内的需求')
+elif exc_ruled(CH, '沿袭修改'):
+    warn('V4.11', f'修改了覆盖范围外的需求 {v411} —— 基线例外记录已有裁决，带警告放行')
+else:
+    err('V4.11', f'修改了覆盖范围外的需求（addressed 计为空，V4.5/V4.6 看不见）: {v411} —— '
+                 f'经 decompose 收编进 Covered-FRIDs（基线标跨 change），或裁决后记入基线例外记录（行含 change 名与「沿袭修改」）再重跑')
 
 # ---------- V5 委托原生 ----------
 if SKIP_CLI:

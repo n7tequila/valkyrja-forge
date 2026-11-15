@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """trace.py 回归夹具跑测器。
 
-22 个场景（末位 1 个条件执行），覆盖范围（如实声明，勿夸大）：
+26 个场景（末位 1 个条件执行），覆盖范围（如实声明，勿夸大）：
   契约二/三主干全分支（ADDED/MODIFIED 历史豁免/REMOVED 两向/RENAMED/蔓延/漏做）、
   RENAMED 与 MODIFIED 同刀（新标题经 FROM/TO 反查、改名后删既有 Sources、无 RENAMED 的幽灵 MODIFIED）、
   V1.3 DOMAIN 定位与同域双 active、V3.5 计划外分层（本 change ERROR/探索备案
   消提醒/前缀名不蹭裁决）与杂散文件过滤、V4.1 块内多 Sources、V4.5 例外裁决两分支、
-  V4.8 全角冒号幽灵依据、嵌套 capability path、TOOL ERROR 退出码 2
+  V4.8 全角冒号幽灵依据、嵌套 capability path、V4.10 新建 capability 的 Purpose 两分支、V4.11 覆盖范围外 MODIFIED 两分支、TOOL ERROR 退出码 2
   （缺参/损坏输入/未预期异常经 excepthook 且管道下消息不丢）、--stage 报告头、
   CLI 未安装（V1.1，条件执行）。
 仍未覆盖：V4.0a/b/c 各失败分支、V2.2/V2.3/V2.4 失败分支、V2.5 三分支、
@@ -45,6 +45,15 @@ CASES = [
     ('repo', 'case-nested', [], 0, ['错误 0', '分场景判定全部通过'], ['主 spec 无同名']),
     ('repo', 'case-colon-full', [], 1, ['幽灵依据', 'DEC-T-999'], []),
     ('repo', 'case-v41-dup', [], 1, ['多个 Sources 行'], []),
+    # V4.10：新建 capability 的 delta Purpose 须 ≥50 字符（CLI 口径：trim 后 UTF-16 计）——
+    # change 级 validate 不查，归档后主 spec 严格校验才失败（真实运行：46 个汉字过了 V5，归档后报 too brief）
+    ('repo', 'case-newcap', [], 1, ['V4.10', '不足 50 字符', 'fresh'], []),
+    ('repo', 'case-newcap-ok', [], 0, ['错误 0', '1 个新建 capability 的 Purpose'], []),
+    # V4.11：MODIFIED 只沿用主 spec 原有 ID、且都不在 Covered-FRIDs 时，addressed 计为空，V4.5/V4.6 都看不见——
+    # 改的是别的 change 负责的需求（真实运行：补「口令」的 MODIFIED 越出覆盖范围，trace 全过）。
+    # -ruled 是前缀名，同时钉住例外匹配不串到 case-mod-outside
+    ('repo', 'case-mod-outside', [], 1, ['V4.11', '覆盖范围外', 'Old Name'], []),
+    ('repo', 'case-mod-outside-ruled', [], 0, ['V4.11', '已有裁决', '错误 0'], []),
     ('repo', 'case-added', ['--stage', 'pre-archive'], 0, ['trace(pre-archive)'], ['trace(pre-apply)']),
     ('repo-dual', 'case-added', [], 1, ['多个 active 基线'], []),
     ('repo-broken', 'case-x', [], 2, ['TOOL ERROR', 'prd_release'], []),

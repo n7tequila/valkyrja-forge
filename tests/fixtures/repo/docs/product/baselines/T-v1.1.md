@@ -54,7 +54,16 @@ date: 2026-01-02
 覆盖：REQ-T-003
 ### case-mod-ghost
 覆盖：REQ-T-001
+### case-newcap
+覆盖：REQ-T-001
+### case-newcap-ok
+覆盖：REQ-T-001
+### case-mod-outside
+覆盖：REQ-T-001
+### case-mod-outside-ruled
+覆盖：REQ-T-001
 
 ## 例外记录
 
 - case-creep 范围蔓延（REQ-T-005）：夹具裁决放行
+- case-mod-outside-ruled 沿袭修改（REQ-T-003 措辞）：夹具裁决放行

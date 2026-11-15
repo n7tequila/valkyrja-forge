@@ -6,9 +6,11 @@
 > SKILL.md 只保留检测清单与结论；条件分支与理由在这里。
 >
 > 以下行为均为对 OpenSpec **v1.9.0 实测确认**，非文档推断；
-> 标注 (1.10.0) 的条目在 v1.10.0 上补测。trace.py 的 V1.1 以
-> **[1.9, 1.10] 为已实测验证区间**：高于区间只 WARNING 不拦，
-> 但升级后应回到本文件逐条复验第六节的依赖行为再抬区间上界。
+> 标注 (1.10.0) 的条目在 v1.10.0 上补测，标注 (2.0.0) 的在 v2.0.0 上实测（2026-11-13）。
+> trace.py 的 V1.1 以 **[1.9, 2.0] 为已实测验证区间**：端点 1.10.0 与 2.0.0 实测，
+> 1.11–1.17 未逐版安装，按官方发布说明逐条核对过与第六节相关的改动。
+> 高于区间只 WARNING 不拦，但升级后应回到本文件逐条复验第六节的依赖行为再抬区间上界。
+> npm 安装自 1.16 起要求 Node ≥ 22.12；不满足时用官方独立安装包。
 >
 > **Codex 适配依据（2026-10-06）**：宿主目录、skills-only 与调用名来自
 > [OpenSpec 官方支持工具表](https://github.com/Fission-AI/OpenSpec/blob/main/docs/supported-tools.md)
@@ -20,11 +22,18 @@
 
 ### `openspec init` 的副作用
 
-宿主由当前会话或用户显式指定，不由仓库里的目录推断。Claude 用
-`openspec init --tools claude`，按**当前 profile 与 delivery 设置**在 `.claude/`
-生成 workflow skills 与 `/opsx:*` 命令；Codex 用 `openspec init --tools codex`，
-在 `.agents/skills/openspec-*/SKILL.md` 安装 **skills-only**，使用 `$openspec-*`。
-Codex 即使 delivery=commands 也写 skills，不生成 `.codex/prompts/` 命令。
+宿主由当前会话或用户显式指定，不由仓库里的目录推断。
+
+(2.0.0) **所有宿主共用 `.agents/skills/openspec-*/SKILL.md` 一份正文**，按当前 profile 生成；
+Claude 用 `openspec init --tools claude`，在 `.claude/skills/openspec-*` 放**指向
+`.agents/skills/` 的目录软链**（实测 Claude Code 经软链正常加载），调用为 `/openspec-*`；
+Codex 用 `openspec init --tools codex`，直接读 `.agents/skills/`，调用为 `$openspec-*`。
+`/opsx:*` 命令已删除，`delivery` 设置不再需要；`openspec update` 会清理旧版生成且未被
+编辑的命令与重复技能（编辑过的保留并列出）。同仓两宿主可一次 `--tools claude,codex`，
+`.agents/skills/.openspec-target` 逐行记宿主（Claude 一行为 `claude own-files`）。
+
+1.x 旧项目：Claude 在 `.claude/` 下生成独立 skills 与 `/opsx:*` 命令（受 delivery 影响），
+Codex 为 skills-only；遇到时建议升级 CLI 后在项目内跑 `openspec update`（经确认，会改项目文件）。
 **数量随 profile 而变，不要向用户断言固定数量**。
 本技能代跑前须回显完整命令行与将创建的文件清单，经人确认。
 
@@ -57,12 +66,11 @@ openspec config get workflows
               属特权动作，必须经人确认后才执行；选择后在项目运行 update。
 ```
 
-检测以当前宿主根下完整 `SKILL.md` 为准：Claude `.claude/skills/`、Codex
-`.agents/skills/`。profile 含 workflow 但 Claude delivery=commands 时技能可能未生成；
-可使用已存在的官方 `/opsx:*` 命令委托，或经确认调整 delivery，不能仅靠 update 凭空补技能。
-Codex 没有这个 commands-only 分支。propose/apply/verify 委托前分别检测实际入口，
+检测以当前宿主根下完整 `SKILL.md` 为准（软链按解析后的目标判定）：Claude `.claude/skills/`、
+Codex `.agents/skills/`。仅 1.x 旧项目可能出现 Claude delivery=commands 而技能未生成：
+此时可用已存在的 `/opsx:*` 命令委托，或建议升级 CLI 后 `openspec update`；2.0 起无此分支。propose/apply/verify 委托前分别检测实际入口，
 其 Codex 名为 `$openspec-propose`、`$openspec-apply-change`、`$openspec-verify-change`，
-sync 为 `$openspec-sync-specs`；不要把 `/opsx:apply` 写成不存在的 `$openspec-apply`。
+sync 为 `$openspec-sync-specs`；不要把 Claude 的 `/openspec-apply-change`（1.x 为 `/opsx:apply`）写成不存在的 `$openspec-apply`。
 
 若同时提示 CLI 有新版本，先建议升级 CLI 再 `openspec update`——新版本可能带来新 workflow。
 
@@ -150,7 +158,7 @@ openspec instructions specs --change <任一change> --json
 
 ### 已知治理缺口（诚实写明）
 
-若用户直接调用 Claude `/opsx:apply`、`/opsx:archive`，Codex
+若用户直接调用 Claude `/openspec-apply-change`、`/openspec-archive-change`（1.x 为 `/opsx:*`），Codex
 `$openspec-apply-change`、`$openspec-archive-change` 或 `openspec archive`，
 本技能**无法拦截**——官方 archive skill 的原则是「警告不阻塞」，
 且它不会执行本技能的门禁。本技能只能保证：**经由本技能执行的 apply 与归档，
@@ -177,6 +185,16 @@ openspec instructions specs --change <任一change> --json
   时静默不含任何 rules——**无 change 的仓里验证注入必须先
   `openspec new change` 造一次性探针 change**，验证后删除其目录，
   否则「探针为空」与「注入失效」不可区分（零对象 ≠ 零发现）
+- (2.0.0) 以上各条与下面的嵌套 capability 在 2.0.0 上复验通过；另实测：
+  delta 中的 `## Purpose` 只在**新建** capability 时带进主 spec，未写则归档留下占位
+  Purpose，主 spec 的 `validate --strict` 会因占位失败（所以模板要求新 capability 写 Purpose）；
+  1.16 起 `config.yaml` 无法解析时 `validate` 退出 1（V5 因此能暴露），但 `instructions`
+  仍只警告并忽略，注入后的实跑验证仍须保留
+- (2.0.0) **tasks.md 末尾追加的任务组被识别**：`openspec instructions apply --json`
+  列出追加组里的未勾选项（带行号），状态从 `all_done` 回到 `ready`；不带复选框的说明文字
+  不计入进度，`validate --strict` 照常通过——cross-host.md 复审组格式依赖这一点
+- (2.0.0) 官方 spec-driven schema 指引在 tasks.md 末尾可选 `## Workflow follow-up` 节，以普通列表
+  记录归档等需在归档时/之后做的步骤，不计入任务进度；本技能追加的复审组排在其后，不与之冲突
 - (1.10.0) **嵌套 capability 是一等语义**：delta 放
   `specs/payments/refunds/spec.md` 时 `validate --strict` 通过，`archive` 输出
   「Applying changes to openspec/specs/payments/refunds/spec.md」——

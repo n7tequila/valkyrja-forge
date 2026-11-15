@@ -62,6 +62,7 @@ class PackagingTests(unittest.TestCase):
         # 三个技能可独立安装，只能各带一份；逐字一致由这里守，不靠人工 md5。
         starts = {'宿主适配': '## 宿主适配（共享协议）\n',
                   '回显可读性': '**回显可读性（代号不裸奔）**',
+                  '回显范围': '**回显范围（列出的才执行）**',
                   '消费仓宿主治理块': '**消费仓宿主治理块**'}
         texts = {path.parent.name: path.read_text()
                  for path in sorted((ROOT / 'valk/skills').glob('*/SKILL.md'))}

@@ -7,7 +7,8 @@
 
 <!-- 仅当本 delta 引入全新 capability 时才写 Purpose；
      已存在的 capability 不要写（其 delta 的 Purpose 会被忽略）。
-     需 50 字符以上，否则 --strict 报 too brief。 -->
+     需 50 字符以上（去首尾空白后计；中文同样按字计，46 个汉字会失败），否则归档后主 spec 的
+     --strict 报 too brief。trace V4.10 在 pre-apply 机检这一点。 -->
 ## Purpose
 
 <一到两句说明该 capability 是做什么的。>

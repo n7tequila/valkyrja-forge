@@ -98,7 +98,7 @@ RENAMED    addressed = 主 spec 中 FROM 所指 Requirement 的 Sources
 ## 检查清单 V1–V6
 
 **V1 前提**
-- V1.1 CLI 可用且版本落在**已实测验证区间**（当前 [1.9, 1.10]，区间常量在 trace.py 顶部）：
+- V1.1 CLI 可用且版本落在**已实测验证区间**（当前 [1.9, 2.0]，区间常量在 trace.py 顶部）：
   未安装/低于下界 → ERROR；高于上界 → WARNING「兼容性断言可能失效，核对
   openspec-compatibility.md 第六节」——本仓的全部兼容断言都钉在实测版本上，
   无上界告警时 CLI 大版本变更会让 trace 以假结果运行（机制静默失效教训的自我应用）
@@ -209,6 +209,19 @@ RENAMED    addressed = 主 spec 中 FROM 所指 Requirement 的 Sources
   首版按试点 JS 栈写死曾使 Python/Java 仓每次门禁全量遍历依赖树。
   pre-apply 时扫描数通常为 0，**必须报数**（零对象≠零发现）。边界同 V4.8：
   只查引用完整性，不查「该标注未标注」、不查技术正确性——后者属仓库测试/lint（宪法 8）。
+- V4.10 **新建 capability 的 Purpose**：capability（按完整路径）在 `openspec/specs/` 下尚无主 spec 时，
+  其 delta 必须有 `## Purpose` 节，且正文去首尾空白后按 UTF-16 码元计 ≥ 50 → 缺失或不足均 ERROR。
+  理由：archive 只在新建 capability 时读取 delta 的 Purpose，缺失落占位、过短使主 spec 的
+  `validate --strict` 报 too brief；change 级 validate（V5.1）不查这一点，归档后才暴露，
+  且届时只能直接改主 spec 补救。计数口径为 2.0.0 实测（49 个汉字失败、50 个通过，emoji 按 2 计）。
+  已存在的 capability 不检查（其 delta 的 Purpose 会被忽略）。
+- V4.11 **覆盖范围外的 MODIFIED**：某个 MODIFIED 块按契约三算出的 addressed 为空——它只沿用主 spec 原有的
+  来源 ID，且这些 ID 都不在 Covered-FRIDs 里，`historical_exempt` 把它们全部豁免——说明本 change 改了别的
+  change 负责的需求的规格文字，而 V4.5（蔓延）与 V4.6（漏做）都看不见。判定与 V4.5 同构：无裁决 → ERROR；
+  基线「例外记录」已有裁决（行含 change 名与 `沿袭修改`）→ WARNING 放行。正道是经 decompose 把该 FRID 收编进
+  本 change 的 Covered-FRIDs（基线 Change 划分标跨 change），收编后 addressed 含它，此项自然消失。
+  沿袭旧 ID 同时新增 ID 的正常 MODIFIED（addressed 非空）不受影响。真实运行：补「口令」的 MODIFIED
+  越出覆盖范围，trace 26 项全过，由异宿主复审发现。
 
 **V5 委托原生**
 - V5.1 `openspec validate <change> --type change --strict --json` 退出码 0
@@ -264,7 +277,7 @@ WARNING 可带裁决放行，裁决记入回显与基线的例外记录。
 
 ## 确定性实现
 
-V1–V5（含 V4.8/V4.9）的确定性部分已实现为本技能 `tools/trace.py`：
+V1–V5（含 V4.8–V4.11）的确定性部分已实现为本技能 `tools/trace.py`：
 
 ```
 用法   trace.py <产品仓库根> <change-name> [--skip-cli] [--stage pre-apply|pre-archive]
@@ -288,7 +301,7 @@ V1–V5（含 V4.8/V4.9）的确定性部分已实现为本技能 `tools/trace.p
 |---|---|
 | 基线节标题 | `需求裁决`、`延期项（deferred）`、`外部系统项（external）`、`非软件项（non-software）`、`Change 划分（计划，非现状）`、`例外记录` |
 | 处置枚举 | `处置：直通 / 拆分 / 冲突`（其余三类登记在各自专节，机检以专节标题为准） |
-| 例外记录关键词 | 行须同时含 change 名（边界匹配——`pay` 不蹭 `pay-v2` 的裁决）与类型词：`欠账`（V2.5）/ `蔓延`（V4.5）/ `skip_specs`（V4.7）/ `计划外`（V3.5 探索备案，只消他 change 提醒、不放行本 change） |
+| 例外记录关键词 | 行须同时含 change 名（边界匹配——`pay` 不蹭 `pay-v2` 的裁决）与类型词：`欠账`（V2.5）/ `蔓延`（V4.5）/ `skip_specs`（V4.7）/ `沿袭修改`（V4.11）/ `计划外`（V3.5 探索备案，只消他 change 提醒、不放行本 change） |
 | 依据标注 | `依据[:：]?\s*(A?DEC-…-\d{3})`（CITE_RE，V4.8/V4.9 共用） |
 | DEC 豁免标记 | frontmatter 行首 `frid-impact: none`（拼写与位置都机读，写错即豁免静默失效） |
 

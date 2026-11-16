@@ -15,9 +15,17 @@ execution:
   max_turns: 40
   timeout_seconds: 900
   # Write/Edit 必须给：阅读稿要落盘；「没改治理文件」也只有给了写权限才有意义。
-  allowed_tools: [Read, Glob, Grep, Skill, Write, Edit]
+  allowed_tools: [Read, Glob, Grep, Skill, Bash, Write, Edit]
 
 graders:
+  # Bash 只许读（view 第 3 步解析真实路径用）：任何改写、移动、删除、重定向到 docs/ 的命令都算越界。
+  - type: tool_used
+    name: no-bash-mutation
+    tool: Bash
+    input_match: '\b(rm|mv|cp|ln|tee|touch|unlink|rmdir|mkdir)\b|sed\s+-i|>>?\s*\S*docs/'
+    min: 0
+    max: 0
+
   - type: tool_used
     name: routes-to-valkyrja-arch
     tool: Skill
@@ -112,14 +120,14 @@ graders:
   - type: tool_used
     name: no-write-into-governance
     tool: Write
-    input_match: 'docs/architecture/(decisions|conventions|contracts|discussions)/|docs/architecture/(STATUS|inventory|backlog)\.md'
+    input_match: '"file_path"\s*:\s*"[^"]*(?:docs/architecture/(decisions|conventions|contracts|discussions)/|docs/architecture/(STATUS|inventory|backlog)\.md)'
     min: 0
     max: 0
 
   - type: tool_used
     name: no-edit-into-governance
     tool: Edit
-    input_match: 'docs/architecture/(decisions|conventions|contracts|discussions)/|docs/architecture/(STATUS|inventory|backlog)\.md'
+    input_match: '"file_path"\s*:\s*"[^"]*(?:docs/architecture/(decisions|conventions|contracts|discussions)/|docs/architecture/(STATUS|inventory|backlog)\.md)'
     min: 0
     max: 0
 

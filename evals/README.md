@@ -43,16 +43,16 @@ python3 evals/run_codex.py --model <当前实际模型> --case constraint-arch-q
 
 ```bash
 # 冒烟（先用 1 run 验管道，别急着烧 3 run）
-claude plugin eval . --tag smoke --runs 1 --scaffold --allow-tools Write Edit
+claude plugin eval . --tag smoke --runs 1 --scaffold --allow-tools Write Edit Bash
 
 # routing 组：跑消融，看「装/不装插件」的分差
 claude plugin eval . --tag routing --ablation with-without --scaffold
 
 # constraint 组：不跑消融——无插件基线臂对「没铸 ADEC」是平凡通过，delta 无信息量
-claude plugin eval . --tag constraint --ablation none --scaffold --allow-tools Write Edit
+claude plugin eval . --tag constraint --ablation none --scaffold --allow-tools Write Edit Bash
 
 # 发版门禁：按真实使用的模型跑，低于阈值 exit 1
-claude plugin eval . --model opus --threshold 0.9 --scaffold --allow-tools Write Edit
+claude plugin eval . --model opus --threshold 0.9 --scaffold --allow-tools Write Edit Bash
 ```
 
 首次在终端里运行会询问是否信任本目录；非交互环境（脚本、CI）加 `--trust-plugin`。
@@ -63,6 +63,10 @@ claude plugin eval . --model opus --threshold 0.9 --scaffold --allow-tools Write
 `--scaffold` 是必须的：每个用例的 `scaffold.sh` 负责在沙箱空工作区里造出该用例假设的仓库形态，
 默认关闭（它以你的身份跑作者提供的 bash）。`--allow-tools Write Edit` 只有 constraint 组需要——
 不给写权限的话，「没有写盘」是被权限挡住的，断言会平凡通过、失去意义。
+view 组（constraint 的子集）还必须加 `Bash`：阅读稿写入前要用命令工具解析真实路径，拿不到命令工具
+就按规则不写。用例 `allowed_tools` 里列了 Bash 也不够，Bash 是受管控工具，没有 `--allow-tools`
+放行就始终不可用（2026-11-16 踩坑：漏放 Bash，view 组整组不写盘）。Bash 只许读，由各用例的
+`no-bash-mutation` 判据把关。
 
 ## 写法纪律（比用例本身更重要）
 

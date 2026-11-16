@@ -36,6 +36,8 @@ bash scripts/check-sanitization.sh    # D6 脱敏门禁，期望「0 命中」
 
 动了 `.claude-plugin/` 或准备发版时另加 `claude plugin validate .`。
 Codex 行为冒烟见 `evals/README.md`；模型行为检查不等于确定性 trace 全覆盖。
+发版提交推送后打带说明的 tag 并推送：`<plugin>-v<版本>`（如 `valk-v0.14.0`、`valk-tools-v0.5.1`），
+`git tag -a <tag> -m "<说明>" <提交> && git push origin <tag>`；两个 plugin 各打各的，同一提交同时发两版就打两个。
 
 ## 这是公开 MIT 仓：脱敏是硬门禁
 
